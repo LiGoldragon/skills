@@ -1,0 +1,25 @@
+[]
+[]
+{
+  Operation [(Generate GenerationRequest)]
+  GenerationOutcome [(Generated GenerationReport)]
+  GenerationRequest { SourceRoot WorkspaceRoot Manifests GenerationMode }
+  SourceRoot Path {| Display AsRef PartialEq |}
+  WorkspaceRoot Path {| Display AsRef PartialEq |}
+  ManifestPath Path {| Display AsRef PartialEq |}
+  Manifests (Vector ManifestPath)
+  GenerationMode [Write Check]
+  GenerationReport { GeneratedFiles }
+  GeneratedFiles (Vector GeneratedFile)
+  GeneratedFile { OutputPath ByteCount }
+  OutputPath Path {| Display AsRef PartialEq |}
+  ByteCount Integer {| Display PartialEq PartialOrd |}
+  Manifest { OutputPath OutputKind Frontmatter Modules }
+  OutputKind [Markdown Nota]
+  Frontmatter (Vector FrontmatterEntry)
+  FrontmatterEntry { FrontmatterKey FrontmatterValue }
+  FrontmatterKey String {| Display AsRef PartialEq |}
+  FrontmatterValue String {| Display AsRef PartialEq |}
+  ModulePath Path {| Display AsRef PartialEq |}
+  Modules (Vector ModulePath)
+}

@@ -1,0 +1,634 @@
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+};
+
+use pathdiff::diff_paths;
+use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
+
+use crate::{
+    error::{Error, Result},
+    schema::assembly::FrontmatterEntry,
+    workspace_path::WorkspacePath,
+};
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MarkdownAssembly {
+    output_path: WorkspacePath,
+    frontmatter: Vec<FrontmatterEntry>,
+    fragments: Vec<MarkdownFragment>,
+}
+
+impl MarkdownAssembly {
+    pub fn new(
+        output_path: WorkspacePath,
+        frontmatter: Vec<FrontmatterEntry>,
+        fragments: Vec<MarkdownFragment>,
+    ) -> Self {
+        Self {
+            output_path,
+            frontmatter,
+            fragments,
+        }
+    }
+
+    pub fn render(&self) -> Result<String> {
+        let mut output = String::new();
+        let frontmatter = FrontmatterBlock::new(self.output_path.full_path(), &self.frontmatter);
+        output.push_str(&frontmatter.render()?);
+        let title = self.title();
+        for (index, fragment) in self.fragments.iter().enumerate() {
+            if !output.is_empty() && !output.ends_with("\n\n") {
+                output.push('\n');
+            }
+            output.push_str(&fragment.normalized_text(
+                index,
+                title.as_deref(),
+                &self.output_path,
+            )?);
+            if !output.ends_with('\n') {
+                output.push('\n');
+            }
+        }
+        MarkdownStructure::new(self.output_path.full_path(), output).validate()
+    }
+
+    fn title(&self) -> Option<String> {
+        self.fragments
+            .iter()
+            .find_map(MarkdownFragment::first_title)
+            .map(|title| HeadingName::new(&title).normalized())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MarkdownFragment {
+    path: WorkspacePath,
+    text: String,
+}
+
+impl MarkdownFragment {
+    pub fn read(path: WorkspacePath) -> Result<Self> {
+        let full_path = path.full_path();
+        fs::read_to_string(&full_path)
+            .map(|text| Self { path, text })
+            .map_err(|source| Error::ReadFile {
+                path: full_path,
+                source,
+            })
+    }
+
+    pub fn normalized_text(
+        &self,
+        index: usize,
+        title: Option<&str>,
+        output_path: &WorkspacePath,
+    ) -> Result<String> {
+        let body =
+            MarkdownBody::new(self.path.full_path(), self.text.as_str()).without_frontmatter()?;
+        let links_rebased = MarkdownLinks::new(&body, &self.path, output_path).rebased();
+        let heading_normalized = HeadingNormalizer::new(links_rebased, index, title).normalized();
+        Ok(heading_normalized)
+    }
+
+    fn first_title(&self) -> Option<String> {
+        MarkdownBody::new(self.path.full_path(), self.text.as_str())
+            .without_frontmatter()
+            .ok()
+            .and_then(|body| HeadingText::from_markdown(&body).first_title())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NotaAssembly {
+    fragments: Vec<NotaFragment>,
+}
+
+impl NotaAssembly {
+    pub fn new(fragments: Vec<NotaFragment>) -> Self {
+        Self { fragments }
+    }
+
+    pub fn render(&self) -> Result<String> {
+        let mut output = String::new();
+        for fragment in &self.fragments {
+            if !output.is_empty() && !output.ends_with("\n\n") {
+                output.push('\n');
+            }
+            output.push_str(fragment.text.trim_end());
+            output.push('\n');
+        }
+        Ok(output)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NotaFragment {
+    path: WorkspacePath,
+    text: String,
+}
+
+impl NotaFragment {
+    pub fn read(path: WorkspacePath) -> Result<Self> {
+        let full_path = path.full_path();
+        fs::read_to_string(&full_path)
+            .map(|text| Self { path, text })
+            .map_err(|source| Error::ReadFile {
+                path: full_path,
+                source,
+            })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct FrontmatterBlock<'a> {
+    path: PathBuf,
+    entries: &'a [FrontmatterEntry],
+}
+
+impl<'a> FrontmatterBlock<'a> {
+    fn new(path: PathBuf, entries: &'a [FrontmatterEntry]) -> Self {
+        Self { path, entries }
+    }
+
+    fn render(&self) -> Result<String> {
+        if self.entries.is_empty() {
+            return Ok(String::new());
+        }
+        let mut output = String::from("---\n");
+        for entry in self.entries {
+            let key = entry.frontmatter_key.as_ref();
+            FrontmatterKey::new(self.path.clone(), key).validate()?;
+            output.push_str(key);
+            output.push_str(": ");
+            output.push_str(entry.frontmatter_value.as_ref());
+            output.push('\n');
+        }
+        output.push_str("---\n\n");
+        Ok(output)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct FrontmatterKey<'a> {
+    path: PathBuf,
+    text: &'a str,
+}
+
+impl<'a> FrontmatterKey<'a> {
+    fn new(path: PathBuf, text: &'a str) -> Self {
+        Self { path, text }
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self
+            .text
+            .chars()
+            .all(|character| character.is_ascii_lowercase() || character == '-')
+        {
+            Ok(())
+        } else {
+            Err(Error::InvalidFrontmatterKey {
+                path: self.path.clone(),
+                key: self.text.to_owned(),
+            })
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownBody<'a> {
+    path: PathBuf,
+    text: &'a str,
+}
+
+impl<'a> MarkdownBody<'a> {
+    fn new(path: PathBuf, text: &'a str) -> Self {
+        Self { path, text }
+    }
+
+    fn without_frontmatter(&self) -> Result<String> {
+        let mut lines = self.text.lines();
+        if matches!(lines.next(), Some("---")) {
+            let mut body = Vec::new();
+            let mut closing_seen = false;
+            for line in lines.by_ref() {
+                if line == "---" {
+                    closing_seen = true;
+                    break;
+                }
+            }
+            for line in lines {
+                if body.is_empty() && line.is_empty() {
+                    continue;
+                }
+                body.push(line);
+            }
+            if closing_seen {
+                return Ok(Self::join_lines(body));
+            }
+        }
+        if self.text.lines().skip(1).any(|line| line == "---") {
+            return Err(Error::NestedFrontmatter {
+                path: self.path.clone(),
+            });
+        }
+        Ok(self.text.to_owned())
+    }
+
+    fn join_lines(lines: Vec<&str>) -> String {
+        if lines.is_empty() {
+            String::new()
+        } else {
+            let mut output = lines.join("\n");
+            output.push('\n');
+            output
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HeadingNormalizer<'a> {
+    text: String,
+    fragment_index: usize,
+    title: Option<&'a str>,
+}
+
+impl<'a> HeadingNormalizer<'a> {
+    fn new(text: String, fragment_index: usize, title: Option<&'a str>) -> Self {
+        Self {
+            text,
+            fragment_index,
+            title,
+        }
+    }
+
+    fn normalized(&self) -> String {
+        if self.fragment_index == 0 {
+            return self.text.clone();
+        }
+        let mut output = String::new();
+        let mut first_heading_seen = false;
+        for line in self.text.lines() {
+            if let Some(heading) = AtxHeading::parse(line) {
+                let normalized = HeadingName::new(heading.text()).normalized();
+                if !first_heading_seen
+                    && heading.level() == 1
+                    && self.title == Some(normalized.as_str())
+                {
+                    first_heading_seen = true;
+                    continue;
+                }
+                first_heading_seen = true;
+                output.push_str(&heading.demoted_line());
+            } else {
+                output.push_str(line);
+            }
+            output.push('\n');
+        }
+        output
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct AtxHeading<'a> {
+    level: usize,
+    text: &'a str,
+}
+
+impl<'a> AtxHeading<'a> {
+    fn parse(line: &'a str) -> Option<Self> {
+        let trimmed = line.trim_start();
+        let level = trimmed
+            .chars()
+            .take_while(|character| *character == '#')
+            .count();
+        if level == 0 || level > 6 || !trimmed.chars().nth(level).is_some_and(char::is_whitespace) {
+            return None;
+        }
+        Some(Self {
+            level,
+            text: trimmed[level..].trim(),
+        })
+    }
+
+    fn level(&self) -> usize {
+        self.level
+    }
+
+    fn text(&self) -> &str {
+        self.text
+    }
+
+    fn demoted_line(&self) -> String {
+        let next_level = (self.level + 1).min(6);
+        format!("{} {}", "#".repeat(next_level), self.text)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownLinks<'a> {
+    text: &'a str,
+    module_path: &'a WorkspacePath,
+    output_path: &'a WorkspacePath,
+}
+
+impl<'a> MarkdownLinks<'a> {
+    fn new(text: &'a str, module_path: &'a WorkspacePath, output_path: &'a WorkspacePath) -> Self {
+        Self {
+            text,
+            module_path,
+            output_path,
+        }
+    }
+
+    fn rebased(&self) -> String {
+        let mut output = String::new();
+        for line in self.text.lines() {
+            output.push_str(
+                &MarkdownLineLinks::new(line, self.module_path, self.output_path).rebased(),
+            );
+            output.push('\n');
+        }
+        output
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownLineLinks<'a> {
+    line: &'a str,
+    module_path: &'a WorkspacePath,
+    output_path: &'a WorkspacePath,
+}
+
+impl<'a> MarkdownLineLinks<'a> {
+    fn new(line: &'a str, module_path: &'a WorkspacePath, output_path: &'a WorkspacePath) -> Self {
+        Self {
+            line,
+            module_path,
+            output_path,
+        }
+    }
+
+    fn rebased(&self) -> String {
+        let mut output = String::new();
+        let mut remaining = self.line;
+        while let Some(opening) = remaining.find("](") {
+            let (before, after_opening) = remaining.split_at(opening + 2);
+            output.push_str(before);
+            if let Some(closing) = after_opening.find(')') {
+                let (target, rest) = after_opening.split_at(closing);
+                output.push_str(
+                    &LinkTarget::new(target, self.module_path, self.output_path).rebased(),
+                );
+                output.push(')');
+                remaining = &rest[1..];
+            } else {
+                output.push_str(after_opening);
+                remaining = "";
+            }
+        }
+        output.push_str(remaining);
+        output
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct LinkTarget<'a> {
+    text: &'a str,
+    module_path: &'a WorkspacePath,
+    output_path: &'a WorkspacePath,
+}
+
+impl<'a> LinkTarget<'a> {
+    fn new(text: &'a str, module_path: &'a WorkspacePath, output_path: &'a WorkspacePath) -> Self {
+        Self {
+            text,
+            module_path,
+            output_path,
+        }
+    }
+
+    fn rebased(&self) -> String {
+        if self.is_external() {
+            return self.text.to_owned();
+        }
+        let module_directory = self
+            .module_path
+            .relative_path()
+            .parent()
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        let source_target = RelativePath::new(module_directory.join(self.text)).normalized();
+        let output_directory = self
+            .output_path
+            .relative_path()
+            .parent()
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        diff_paths(source_target, output_directory)
+            .unwrap_or_else(|| PathBuf::from(self.text))
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    fn is_external(&self) -> bool {
+        self.text.starts_with('#')
+            || self.text.starts_with('/')
+            || self.text.contains("://")
+            || self.text.starts_with("mailto:")
+            || self.text.starts_with("tel:")
+            || self.text.contains(' ')
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RelativePath {
+    path: PathBuf,
+}
+
+impl RelativePath {
+    fn new(path: PathBuf) -> Self {
+        Self { path }
+    }
+
+    fn normalized(&self) -> PathBuf {
+        let mut parts = Vec::new();
+        for component in self.path.components() {
+            match component {
+                std::path::Component::CurDir => {}
+                std::path::Component::ParentDir => {
+                    parts.pop();
+                }
+                std::path::Component::Normal(part) => parts.push(part.to_owned()),
+                std::path::Component::RootDir | std::path::Component::Prefix(_) => {}
+            }
+        }
+        parts.into_iter().collect()
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownStructure {
+    path: PathBuf,
+    text: String,
+}
+
+impl MarkdownStructure {
+    fn new(path: PathBuf, text: String) -> Self {
+        Self { path, text }
+    }
+
+    fn validate(self) -> Result<String> {
+        let headings = HeadingText::from_markdown(&self.text);
+        headings.validate(&self.path)?;
+        Ok(self.text)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HeadingText {
+    headings: Vec<Heading>,
+}
+
+impl HeadingText {
+    fn from_markdown(text: &str) -> Self {
+        let mut headings = Vec::new();
+        let mut active = Option::<HeadingCapture>::None;
+        for event in Parser::new(text) {
+            match event {
+                Event::Start(Tag::Heading { level, .. }) => {
+                    active = Some(HeadingCapture::new(level));
+                }
+                Event::End(TagEnd::Heading(_)) => {
+                    if let Some(capture) = active.take() {
+                        headings.push(capture.into_heading());
+                    }
+                }
+                Event::Text(text) | Event::Code(text) => {
+                    if let Some(capture) = &mut active {
+                        capture.push_text(text.as_ref());
+                    }
+                }
+                _ => {}
+            }
+        }
+        Self { headings }
+    }
+
+    fn first_title(&self) -> Option<String> {
+        self.headings
+            .iter()
+            .find(|heading| heading.level == 1)
+            .map(|heading| heading.text.clone())
+    }
+
+    fn validate(&self, path: &Path) -> Result<()> {
+        let mut seen = BTreeSet::new();
+        let mut previous = 0;
+        let mut title_count = 0;
+        for heading in &self.headings {
+            if heading.level == 1 {
+                title_count += 1;
+            }
+            let normalized = HeadingName::new(&heading.text).normalized();
+            if !seen.insert(normalized.clone()) {
+                return Err(Error::DuplicateHeading {
+                    path: path.to_path_buf(),
+                    heading: heading.text.clone(),
+                });
+            }
+            if previous > 0 && heading.level > previous + 1 {
+                return Err(Error::HeadingLevelJump {
+                    path: path.to_path_buf(),
+                    previous,
+                    current: heading.level,
+                    heading: heading.text.clone(),
+                });
+            }
+            previous = heading.level;
+        }
+        if title_count == 1 {
+            Ok(())
+        } else {
+            Err(Error::InvalidTitleCount {
+                path: path.to_path_buf(),
+                count: title_count,
+            })
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HeadingCapture {
+    level: HeadingLevel,
+    text: String,
+}
+
+impl HeadingCapture {
+    fn new(level: HeadingLevel) -> Self {
+        Self {
+            level,
+            text: String::new(),
+        }
+    }
+
+    fn push_text(&mut self, text: &str) {
+        self.text.push_str(text);
+    }
+
+    fn into_heading(self) -> Heading {
+        Heading {
+            level: HeadingLevelNumber::new(self.level).as_usize(),
+            text: self.text.trim().to_owned(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HeadingLevelNumber {
+    level: HeadingLevel,
+}
+
+impl HeadingLevelNumber {
+    fn new(level: HeadingLevel) -> Self {
+        Self { level }
+    }
+
+    fn as_usize(&self) -> usize {
+        match self.level {
+            HeadingLevel::H1 => 1,
+            HeadingLevel::H2 => 2,
+            HeadingLevel::H3 => 3,
+            HeadingLevel::H4 => 4,
+            HeadingLevel::H5 => 5,
+            HeadingLevel::H6 => 6,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct Heading {
+    level: usize,
+    text: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HeadingName<'a> {
+    text: &'a str,
+}
+
+impl<'a> HeadingName<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn normalized(&self) -> String {
+        self.text
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_ascii_lowercase()
+    }
+}
