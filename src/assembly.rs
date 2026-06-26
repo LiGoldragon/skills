@@ -105,8 +105,8 @@ impl Operation {
 
 impl GenerationRequest {
     pub fn generate(&self) -> Result<GenerationReport> {
-        let source_root = PathBuf::from(self.source_root.as_ref());
-        let workspace_root = PathBuf::from(self.workspace_root.as_ref());
+        let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
+        let workspace_root = RootPath::new(self.workspace_root.as_ref()).to_path_buf()?;
         let mode = self.generation_mode;
         let mut files = Vec::new();
         for manifest_path in self.manifests.payload() {
@@ -119,6 +119,28 @@ impl GenerationRequest {
             files.push(report);
         }
         Ok(GenerationReport::new(GeneratedFiles::new(files)))
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RootPath<'a> {
+    text: &'a str,
+}
+
+impl<'a> RootPath<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn to_path_buf(&self) -> Result<PathBuf> {
+        if let Some(name) = self.text.strip_prefix('$') {
+            return env::var_os(name).map(PathBuf::from).ok_or_else(|| {
+                Error::MissingEnvironmentRoot {
+                    variable: name.to_owned(),
+                }
+            });
+        }
+        Ok(PathBuf::from(self.text))
     }
 }
 

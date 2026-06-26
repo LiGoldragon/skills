@@ -25,6 +25,9 @@ pub enum Error {
     #[error("decode NOTA argument: {0}")]
     DecodeNotaArgument(nota::NotaDecodeError),
 
+    #[error("environment variable {variable} must name a generation root")]
+    MissingEnvironmentRoot { variable: String },
+
     #[error("duplicate markdown heading `{heading}` in {path}")]
     DuplicateHeading { path: PathBuf, heading: String },
 

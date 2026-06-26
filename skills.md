@@ -10,7 +10,7 @@ This repo owns source modules, NOTA manifests, and the Rust CLI that assembles g
 - Preserve prose. Normalization is limited to frontmatter placement, heading structure, relative links, and duplicate title handling.
 - Treat duplicate headings as generation failures, not warnings.
 - Do not add provenance headers to generated outputs.
-- Regenerate `intent-led-orchestration` with `cargo run -- intent-led-orchestration-generate.nota`; check drift with `cargo run -- intent-led-orchestration-check.nota`.
+- Regenerate `intent-led-orchestration` with `nix run github:LiGoldragon/skills#generate-intent-led-orchestration -- <workspace-root>`; check drift with `nix run github:LiGoldragon/skills#check-intent-led-orchestration -- <workspace-root>`.
 
 ## See also
 
