@@ -1,0 +1,1 @@
+(.agents/skills/nix-usage/SKILL.md Markdown (Harness Pi) [(name nix-usage) (description [|The daily Nix command shapes for builder checks, output capture, and store-path hygiene — use nix eval / flake show / path-info, not filesystem search. Read when running Nix commands.|])] [modules/nix-usage/full.md])

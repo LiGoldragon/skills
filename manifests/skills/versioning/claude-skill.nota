@@ -1,0 +1,1 @@
+(.claude/skills/versioning/SKILL.md Markdown (Harness Claude) [(name versioning) (description [|How to keep component, wire-contract, storage-schema, and deploy-slot versions truthful when behavior changes. Applies whenever you change code or logic that affects a running component.|])] [modules/versioning/full.md])

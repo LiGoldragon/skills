@@ -1,0 +1,1 @@
+(.claude/skills/rust-crate-layout/SKILL.md Markdown (Harness Claude) [(name rust-crate-layout) (description [|The crate-layout conventions: tests in separate files, bin / lib / examples split. Read when laying out or restructuring a crate.|])] [modules/rust-crate-layout/full.md])

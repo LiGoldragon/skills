@@ -1,0 +1,1 @@
+(.claude/skills/rust-errors/SKILL.md Markdown (Harness Claude) [(name rust-errors) (description [|How to define typed errors at the crate boundary with thiserror, avoiding anyhow at edges. Read when designing a crate's Error type.|])] [modules/rust-errors/full.md])

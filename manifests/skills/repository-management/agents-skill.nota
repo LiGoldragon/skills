@@ -1,0 +1,1 @@
+(.agents/skills/repository-management/SKILL.md Markdown (Harness Pi) [(name repository-management) (description [|The ghq / gh mechanics for creating remotes, changing repo metadata, basic issue/PR operations, and finding or fetching local clones. Reach for it when a repo needs GitHub or clone management.|])] [modules/repository-management/full.md])

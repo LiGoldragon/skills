@@ -9,25 +9,6 @@
 ;;   mechanism — procedural; consulted when the named mechanism is in play
 
 [
-  (Role operator skills/operator.md Apex
-    [The discipline an operator-lane agent brings when landing code. Read when your lane is operator.])
-  (Role designer skills/designer.md Apex
-    [The discipline a designer-lane agent brings to architecture, skills, and reports. Read when your lane is designer.])
-  (Role schema-designer skills/schema-designer.md Apex
-    [The discipline for the scoped schema-designer lane: nota / schema-next grammar, signal-* wire contracts, rkyv round-trip, schema-help introspection. Read when designing the schema stack or contract shapes, paired with schema-operator.])
-  (Role system-operator skills/system-operator.md Apex
-    [The discipline a system-operator-lane agent brings to OS, platform, and deploy work. Read when your lane is system-operator.])
-  (Role system-maintainer skills/system-maintainer.md Apex
-    [The discipline for maintaining, debugging, updating, and deploying Crayon OS and Logic across hosts. Read when your lane is system-maintainer.])
-  (Role poet skills/poet.md Apex
-    [The discipline a poet-lane agent brings when prose is the load-bearing craft. Read when your lane is poet.])
-  (Role editor skills/editor.md Apex
-    [The discipline an editor-lane agent brings to source-grounded research, quotation, and synthesis. Read when your lane is editor.])
-  (Role assistant skills/assistant.md Apex
-    [The discipline for personal-affairs support of the psyche. Read when your lane is assistant.])
-  (Role counselor skills/counselor.md Apex
-    [The discipline for personal-affairs advisory to the psyche, working with the assistant lane. Read when your lane is counselor.])
-
   (Architecture component-triad skills/component-triad.md Apex
     [How a component is split into daemon + thin CLI + signal-* contract, and how the Signal/Nexus/SEMA runtime carries async mail. Read when building or reasoning about a component's shape.])
   (Architecture structural-forms skills/structural-forms.md Apex
@@ -69,12 +50,14 @@
     [How to apply the no-polling rule: design a subscription where producers push events, and escalate when a producer can't push. Read when designing any producer-consumer interaction.])
   (Craft reporting skills/reporting.md Keystroke
     [How to decide between chat, harness output, and writing a report — chat for the user, reports for agent pickup points — and the report-hygiene rules. Applies whenever you produce substantive output.])
+
   (Workflow report-naming skills/report-naming.md Mechanism
     [The everyday report-naming and supersession convention: filename shape, -v2/v3 iteration, commit-before-delete. Reach for it before naming or retiring a report.])
   (Workflow workspace-update-report skills/workspace-update-report.md Mechanism
     [How to write the recurring workspace-update report that surveys major changes since the last one — files, intent captures, skill evolution, reports landed/retired, component state. Reach for it when synthesizing workspace direction across a busy period.])
   (Workflow versioning skills/versioning.md Keystroke
     [How to keep component, wire-contract, storage-schema, and deploy-slot versions truthful when behavior changes. Applies whenever you change code or logic that affects a running component.])
+
   (Craft typed-records-over-flags skills/typed-records-over-flags.md Keystroke
     [The rule to prefer closed typed records over bool flags so the variant set lives in the type system. Applies whenever you reach for a boolean parameter or field.])
   (Craft prose skills/prose.md Topic
@@ -160,6 +143,7 @@
     [How to walk Spirit records and manifest recorded intent into the right guidance file — ESSENCE, AGENTS, INTENT, skills, or per-repo INTENT — quoting verbatim. Reach for it when reflecting captured intent into docs.])
   (Meta keep-working skills/keep-working.md Keystroke
     [Why mid-task psyche info-injection is not a stop signal: absorb the context, capture any durable intent, and keep working unless explicitly stopped or redirected. Applies whenever the psyche speaks mid-task.])
+
   (Workflow main-next skills/main-next.md Keystroke
     [Why each CODE repo under /git keeps a main (operator-owned) line plus a long-lived next (designer) line, and how designer uses next while operator integrates — NOT for primary. Applies whenever you choose a branch in a code repo.])
   (Workflow main-feature-integration skills/main-feature-integration.md Mechanism

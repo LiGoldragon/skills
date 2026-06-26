@@ -29,8 +29,48 @@ fn generation_writes_manifest_frontmatter_and_strips_module_frontmatter() {
     let generated = fixture.read_workspace_file("skills/example.md");
     assert_eq!(
         generated,
-        "---\nname: example\ndescription: Example skill.\n---\n\n# Skill — example\n\n## Rule\n\nKeep the prose.\n"
+        "---\nname: example\ndescription: 'Example skill.'\n---\n\n# Skill — example\n\n## Rule\n\nKeep the prose.\n"
     );
+}
+
+#[test]
+fn generation_allows_fenced_frontmatter_examples_inside_modules() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "modules/example.md",
+        "# Skill — example\n\n## Rule\n\n```markdown\n---\nname: example\n---\n```\n",
+    );
+    fixture.write_source_file(
+        "manifests/example.nota",
+        "(skills/example.md Markdown Workspace [] [modules/example.md])\n",
+    );
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("fenced frontmatter example is ordinary markdown");
+
+    let generated = fixture.read_workspace_file("skills/example.md");
+    assert!(generated.contains("```markdown\n---\nname: example\n---\n```"));
+}
+
+#[test]
+fn generation_does_not_rebase_link_syntax_inside_code_spans() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "modules/example/full.md",
+        "# Skill — example\n\n## Rule\n\nUse `[text](url)` only as a literal example.\n",
+    );
+    fixture.write_source_file(
+        "manifests/example.nota",
+        "(.agents/skills/example/SKILL.md Markdown Workspace [] [modules/example/full.md])\n",
+    );
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("code span link syntax is preserved");
+
+    let generated = fixture.read_workspace_file(".agents/skills/example/SKILL.md");
+    assert!(generated.contains("`[text](url)`"));
 }
 
 #[test]
@@ -62,22 +102,47 @@ fn migration_model_covers_current_skills_and_marks_deleted_worker_surface() {
     assert_eq!(plan.archive_root.as_ref(), "skills/archive");
     assert_eq!(plan.migration_modules.payload().len(), 76);
 
-    let active = plan
+    let active_modules: Vec<_> = plan
         .migration_modules
         .payload()
         .iter()
-        .find(|module| module.module_name.payload() == "intent-led-orchestration")
-        .expect("intent-led-orchestration modeled");
-    assert_eq!(active.module_status, ModuleStatus::Active);
-    assert_eq!(active.emission_policy, EmissionPolicy::FirstClassSkill);
-    assert_eq!(
-        active.target_set.payload(),
-        &[
-            HarnessTarget::Pi,
-            HarnessTarget::Claude,
-            HarnessTarget::Codex
-        ]
-    );
+        .filter(|module| module.module_status == ModuleStatus::Active)
+        .collect();
+    assert_eq!(active_modules.len(), 66);
+    for module in active_modules {
+        assert_eq!(module.emission_policy, EmissionPolicy::FirstClassSkill);
+        assert_eq!(
+            module.target_set.payload(),
+            &[
+                HarnessTarget::Pi,
+                HarnessTarget::Claude,
+                HarnessTarget::Codex
+            ]
+        );
+    }
+
+    let archived_role_names = [
+        "operator",
+        "designer",
+        "schema-designer",
+        "system-operator",
+        "system-maintainer",
+        "poet",
+        "editor",
+        "assistant",
+        "counselor",
+    ];
+    for role_name in archived_role_names {
+        let module = plan
+            .migration_modules
+            .payload()
+            .iter()
+            .find(|module| module.module_name.payload() == role_name)
+            .expect("role module modeled");
+        assert!(matches!(module.module_status, ModuleStatus::Archived(_)));
+        assert_eq!(module.emission_policy, EmissionPolicy::NoEmission);
+        assert!(module.target_set.payload().is_empty());
+    }
 
     let deleted = plan
         .migration_modules

@@ -162,11 +162,38 @@ impl<'a> FrontmatterBlock<'a> {
             FrontmatterKey::new(self.path.clone(), key).validate()?;
             output.push_str(key);
             output.push_str(": ");
-            output.push_str(entry.frontmatter_value.as_ref());
+            output.push_str(&YamlScalar::new(entry.frontmatter_value.as_ref()).rendered());
             output.push('\n');
         }
         output.push_str("---\n\n");
         Ok(output)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct YamlScalar<'a> {
+    text: &'a str,
+}
+
+impl<'a> YamlScalar<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn rendered(&self) -> String {
+        if self.is_plain() {
+            self.text.to_owned()
+        } else {
+            format!("'{}'", self.text.replace('\'', "''"))
+        }
+    }
+
+    fn is_plain(&self) -> bool {
+        matches!(self.text, "true" | "false")
+            || self
+                .text
+                .chars()
+                .all(|character| character.is_ascii_alphanumeric() || character == '-')
     }
 }
 
@@ -228,11 +255,6 @@ impl<'a> MarkdownBody<'a> {
             if closing_seen {
                 return Ok(Self::join_lines(body));
             }
-        }
-        if self.text.lines().skip(1).any(|line| line == "---") {
-            return Err(Error::NestedFrontmatter {
-                path: self.path.clone(),
-            });
         }
         Ok(self.text.to_owned())
     }
@@ -374,9 +396,16 @@ impl<'a> MarkdownLineLinks<'a> {
     fn rebased(&self) -> String {
         let mut output = String::new();
         let mut remaining = self.line;
+        let mut consumed = 0;
         while let Some(opening) = remaining.find("](") {
             let (before, after_opening) = remaining.split_at(opening + 2);
             output.push_str(before);
+            let global_opening = consumed + opening;
+            if MarkdownCodeSpans::new(&self.line[..global_opening]).inside_code_span() {
+                remaining = after_opening;
+                consumed += opening + 2;
+                continue;
+            }
             if let Some(closing) = after_opening.find(')') {
                 let (target, rest) = after_opening.split_at(closing);
                 output.push_str(
@@ -384,6 +413,7 @@ impl<'a> MarkdownLineLinks<'a> {
                 );
                 output.push(')');
                 remaining = &rest[1..];
+                consumed += opening + 2 + closing + 1;
             } else {
                 output.push_str(after_opening);
                 remaining = "";
@@ -391,6 +421,26 @@ impl<'a> MarkdownLineLinks<'a> {
         }
         output.push_str(remaining);
         output
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownCodeSpans<'a> {
+    prefix: &'a str,
+}
+
+impl<'a> MarkdownCodeSpans<'a> {
+    fn new(prefix: &'a str) -> Self {
+        Self { prefix }
+    }
+
+    fn inside_code_span(&self) -> bool {
+        self.prefix
+            .chars()
+            .filter(|character| *character == '`')
+            .count()
+            % 2
+            == 1
     }
 }
 

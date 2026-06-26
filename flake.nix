@@ -151,8 +151,10 @@
             program = "${skillsPackage}/bin/skills";
             meta.description = "Run the skills generator CLI";
           };
-          generate-intent-led-orchestration = generatorApp "generate-intent-led-orchestration" "intent-led-orchestration-generate.nota";
-          check-intent-led-orchestration = generatorApp "check-intent-led-orchestration" "intent-led-orchestration-check.nota";
+          generate-skills = generatorApp "generate-skills" "skills-generate.nota";
+          check-skills = generatorApp "check-skills" "skills-check.nota";
+          generate-intent-led-orchestration = generatorApp "generate-intent-led-orchestration" "skills-generate.nota";
+          check-intent-led-orchestration = generatorApp "check-intent-led-orchestration" "skills-check.nota";
           default = skills;
         };
 
@@ -169,34 +171,35 @@
             }
           );
           no-hard-coded-generation-roots = pkgs.runCommand "skills-no-hard-coded-generation-roots" { } ''
-            grep -F '$SKILLS_SOURCE_ROOT' ${cleanSource}/intent-led-orchestration-check.nota >/dev/null
-            grep -F '$SKILLS_WORKSPACE_ROOT' ${cleanSource}/intent-led-orchestration-check.nota >/dev/null
-            grep -F '$SKILLS_SOURCE_ROOT' ${cleanSource}/intent-led-orchestration-generate.nota >/dev/null
-            grep -F '$SKILLS_WORKSPACE_ROOT' ${cleanSource}/intent-led-orchestration-generate.nota >/dev/null
-            if grep -n -E '/(home|git)/' ${cleanSource}/intent-led-orchestration-check.nota ${cleanSource}/intent-led-orchestration-generate.nota; then
+            grep -F '$SKILLS_SOURCE_ROOT' ${cleanSource}/skills-check.nota >/dev/null
+            grep -F '$SKILLS_WORKSPACE_ROOT' ${cleanSource}/skills-check.nota >/dev/null
+            grep -F '$SKILLS_SOURCE_ROOT' ${cleanSource}/skills-generate.nota >/dev/null
+            grep -F '$SKILLS_WORKSPACE_ROOT' ${cleanSource}/skills-generate.nota >/dev/null
+            if grep -n -E '/(home|git)/' ${cleanSource}/skills-check.nota ${cleanSource}/skills-generate.nota; then
               echo "generation requests must not hard-code source or workspace roots" >&2
               exit 1
             fi
             touch "$out"
           '';
           check-request-is-non-writing = pkgs.runCommand "skills-check-request-is-non-writing" { } ''
-            grep -F ' Check))' ${cleanSource}/intent-led-orchestration-check.nota >/dev/null
-            if grep -F ' Write))' ${cleanSource}/intent-led-orchestration-check.nota; then
+            grep -F ' Check))' ${cleanSource}/skills-check.nota >/dev/null
+            if grep -F ' Write))' ${cleanSource}/skills-check.nota; then
               echo "check request must not use Write mode" >&2
               exit 1
             fi
             touch "$out"
           '';
-          all-intent-led-orchestration-manifests-configured =
-            pkgs.runCommand "skills-all-intent-led-orchestration-manifests-configured" { }
-              ''
-                for manifest in ${cleanSource}/manifests/intent-led-orchestration/*.nota; do
-                  manifest_path="manifests/intent-led-orchestration/$(basename "$manifest")"
-                  grep -F "$manifest_path" ${cleanSource}/intent-led-orchestration-check.nota >/dev/null
-                  grep -F "$manifest_path" ${cleanSource}/intent-led-orchestration-generate.nota >/dev/null
-                done
-                touch "$out"
-              '';
+          all-skill-manifests-configured = pkgs.runCommand "skills-all-skill-manifests-configured" { } ''
+            while IFS= read -r manifest; do
+              manifest_path="''${manifest#${cleanSource}/}"
+              case "$manifest_path" in
+                manifests/migration/*) continue ;;
+              esac
+              grep -F "$manifest_path" ${cleanSource}/skills-check.nota >/dev/null
+              grep -F "$manifest_path" ${cleanSource}/skills-generate.nota >/dev/null
+            done < <(find ${cleanSource}/manifests -type f -name '*.nota' | sort)
+            touch "$out"
+          '';
           default = test;
         };
 

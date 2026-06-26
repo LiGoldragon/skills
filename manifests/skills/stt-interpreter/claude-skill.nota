@@ -1,0 +1,1 @@
+(.claude/skills/stt-interpreter/SKILL.md Markdown (Harness Claude) [(name stt-interpreter) (description [|How to decode speech-to-text prompts that mis-transcribe workspace-specific words — guess the intended word and act, asking only if wrong. Reach for it when a prompt contains a phonetic near-miss for a known workspace term.|])] [modules/stt-interpreter/full.md])

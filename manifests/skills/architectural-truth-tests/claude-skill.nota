@@ -1,0 +1,1 @@
+(.claude/skills/architectural-truth-tests/SKILL.md Markdown (Harness Claude) [(name architectural-truth-tests) (description [|How to write tests that catch architectural drift rather than mere regression. Read when deciding what a component's tests should witness.|])] [modules/architectural-truth-tests/full.md])

@@ -1,0 +1,1 @@
+(.agents/skills/autonomous-agent/SKILL.md Markdown (Harness Pi) [(name autonomous-agent) (description [|How to decide when to act versus ask within work, and the claim/work/close/release loop. Reach for it when running the work loop autonomously; pairs with human-interaction for the psyche boundary.|])] [modules/autonomous-agent/full.md])
