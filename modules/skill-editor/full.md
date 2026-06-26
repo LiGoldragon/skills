@@ -44,22 +44,24 @@ helped (one cross-cuts the other), it's one capability. If hindered
 
 ## Naming and location
 
-| Scale | Path | Example |
+| Scale | Source path | Generated / consumed path |
 |---|---|---|
-| Workspace skill | `<workspace>/skills/<name>.md` | `~/primary/skills/autonomous-agent.md` |
-| Repo skill | `<repo-root>/skills.md` | `criome/skills.md` |
+| Workspace skill | `skills` repo: `modules/<name>/full.md` | primary index entry points at `.agents/skills/<name>/SKILL.md`; Claude also receives `.claude/skills/<name>/SKILL.md` |
+| Repo skill | `<repo-root>/skills.md` | read in place |
 
 One `skills.md` per repo. Workspace skill names are
-lowercase-with-hyphens.
+lowercase-with-hyphens. Primary keeps `skills/skills.nota` as the
+workspace discovery index; primary `skills/*.md` bodies are not a
+canonical target.
 
 ## Format
 
 Markdown, present tense throughout. Structure comes from `##`/`###`
 headings only — never `---` horizontal rules (allowed solely inside a
 fenced code block illustrating markdown). The opening heading marks the
-file as a skill and matches its name; the skill's one-line description
-lives in `skills.nota`, not in the file, so a skill body carries no
-purpose tagline:
+file as a skill and matches its name. In source modules, the skill's
+one-line description lives in `skills.nota`, not in the file, so a
+source skill body carries no purpose tagline:
 
 ```markdown
 # Skill — <name>
@@ -75,10 +77,12 @@ purpose tagline:
 
 ## The index entry is the description
 
-Every skill has one entry in `skills/skills.nota`, the typed index. That
-entry — `(Kind name path Tier [Description])` — is the single source of
-the skill's identity and description; the skill file repeats none of it
-(no YAML frontmatter, no purpose tagline). Keep the data in one place.
+Every workspace skill has one entry in `skills/skills.nota`, the typed
+index. That entry — `(Kind name path Tier [Description])` — is the
+source of the skill's identity and browsing description. Harness
+`SKILL.md` frontmatter repeats the name and description only because the
+harness loaders require it; source modules do not carry YAML
+frontmatter or purpose taglines.
 
 Write the `[Description]` as **purpose plus trigger, in at most two
 sentences, framed positively**: what decision or task the skill guides,
@@ -93,12 +97,12 @@ A short "See also" of at most 2-3 genuinely-useful sibling skills is
 fine; a sprawling cross-reference web is not.
 
 When you do reference another skill, **use the repo name plus the
-filename**, never a full HTTPS URL: "see criome's `skills.md`", "see
-this workspace's `skills/abstractions.md`". Deep file URLs silently
-break when files move or get renamed; a repo-name reference stays
-valid because the reader knows the convention (the skill is at the
-repo root, named `skills.md`). For a repo-level pointer with no
-specific file, use the nix-flake form: `github:<org>/<repo>`.
+filename or indexed skill name**, never a full HTTPS URL: "see
+criome's `skills.md`", "see this workspace's `abstractions` skill in
+`skills/skills.nota`". Deep file URLs silently break when files move or
+get renamed; a repo-name or index reference stays valid because the
+reader knows the convention. For a repo-level pointer with no specific
+file, use the nix-flake form: `github:<org>/<repo>`.
 
 ## Skills cite no reports and no intent records
 
