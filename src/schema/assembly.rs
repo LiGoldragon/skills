@@ -150,6 +150,7 @@ pub struct ByteCount(Integer);
 pub struct Manifest {
     pub output_path: OutputPath,
     pub output_kind: OutputKind,
+    pub output_surface: OutputSurface,
     pub frontmatter: Frontmatter,
     pub modules: Modules,
 }
@@ -172,6 +173,38 @@ pub struct Manifest {
 pub enum OutputKind {
     Markdown,
     Nota,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum OutputSurface {
+    Workspace,
+    Harness(HarnessTarget),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum HarnessTarget {
+    Pi,
+    Claude,
+    Codex,
 }
 
 #[rustfmt::skip]
@@ -224,6 +257,164 @@ pub struct ModulePath(Path);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Modules(Vec<ModulePath>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MigrationPlan {
+    pub archive_root: ArchiveRoot,
+    pub migration_modules: MigrationModules,
+    pub entry_points: EntryPoints,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ArchiveRoot(Path);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MigrationModules(Vec<MigrationModule>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MigrationModule {
+    pub module_name: ModuleName,
+    pub module_path: ModulePath,
+    pub module_status: ModuleStatus,
+    pub emission_policy: EmissionPolicy,
+    pub target_set: TargetSet,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModuleName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ModuleStatus {
+    Active,
+    Archived(ArchivePath),
+    Deleted,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ArchivePath(Path);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum EmissionPolicy {
+    FirstClassSkill,
+    InternalOnly,
+    NoEmission,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TargetSet(Vec<HarnessTarget>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct EntryPoints(Vec<EntryPoint>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct EntryPoint {
+    pub module_name: ModuleName,
+    pub entry_point_extras: EntryPointExtras,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct EntryPointExtras(Vec<EntryPointExtra>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct EntryPointExtra {
+    pub harness_target: HarnessTarget,
+    pub entry_point_kind: EntryPointKind,
+    pub manifest_path: ManifestPath,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum EntryPointKind {
+    Command,
+    Prompt,
+}
 
 #[rustfmt::skip]
 impl SourceRoot {
@@ -473,6 +664,139 @@ impl From<Vec<ModulePath>> for Modules {
 }
 
 #[rustfmt::skip]
+impl ArchiveRoot {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &Path {
+        &self.0
+    }
+    pub fn into_payload(self) -> Path {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Path> for ArchiveRoot {
+    fn from(payload: Path) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl MigrationModules {
+    pub fn new(payload: Vec<MigrationModule>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<MigrationModule> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<MigrationModule> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<MigrationModule>> for MigrationModules {
+    fn from(payload: Vec<MigrationModule>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModuleName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ModuleName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ArchivePath {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &Path {
+        &self.0
+    }
+    pub fn into_payload(self) -> Path {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Path> for ArchivePath {
+    fn from(payload: Path) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TargetSet {
+    pub fn new(payload: Vec<HarnessTarget>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<HarnessTarget> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<HarnessTarget> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<HarnessTarget>> for TargetSet {
+    fn from(payload: Vec<HarnessTarget>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl EntryPoints {
+    pub fn new(payload: Vec<EntryPoint>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<EntryPoint> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<EntryPoint> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<EntryPoint>> for EntryPoints {
+    fn from(payload: Vec<EntryPoint>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl EntryPointExtras {
+    pub fn new(payload: Vec<EntryPointExtra>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<EntryPointExtra> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<EntryPointExtra> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<EntryPointExtra>> for EntryPointExtras {
+    fn from(payload: Vec<EntryPointExtra>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl std::fmt::Display for SourceRoot {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
@@ -641,6 +965,69 @@ impl PartialEq<&str> for ModulePath {
 }
 
 #[rustfmt::skip]
+impl std::fmt::Display for ArchiveRoot {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for ArchiveRoot {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for ArchiveRoot {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for ModuleName {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for ModuleName {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for ModuleName {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for ArchivePath {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for ArchivePath {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for ArchivePath {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
 impl Operation {
     pub fn generate(payload: GenerationRequest) -> Self {
         Self::Generate(payload)
@@ -655,6 +1042,20 @@ impl GenerationOutcome {
 }
 
 #[rustfmt::skip]
+impl OutputSurface {
+    pub fn harness(payload: HarnessTarget) -> Self {
+        Self::Harness(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModuleStatus {
+    pub fn archived(payload: Path) -> Self {
+        Self::Archived(ArchivePath::new(payload))
+    }
+}
+
+#[rustfmt::skip]
 impl From<GenerationRequest> for Operation {
     fn from(payload: GenerationRequest) -> Self {
         Self::Generate(payload)
@@ -665,5 +1066,19 @@ impl From<GenerationRequest> for Operation {
 impl From<GenerationReport> for GenerationOutcome {
     fn from(payload: GenerationReport) -> Self {
         Self::Generated(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<HarnessTarget> for OutputSurface {
+    fn from(payload: HarnessTarget) -> Self {
+        Self::Harness(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ArchivePath> for ModuleStatus {
+    fn from(payload: ArchivePath) -> Self {
+        Self::Archived(payload)
     }
 }

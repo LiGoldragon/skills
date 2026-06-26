@@ -23,3 +23,5 @@ SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- inte
 ```
 
 The checked-in manifests live under `manifests/intent-led-orchestration/`; source modules live under `modules/intent-led-orchestration/` and `modules/index/`.
+
+The full migration model for the current primary skill inventory lives at `manifests/migration/current-skills.nota`. It records active, archived, and deleted module status, Pi/Claude/Codex first-class target sets, and entrypoint command/prompt extras without migrating every skill module in this bead.

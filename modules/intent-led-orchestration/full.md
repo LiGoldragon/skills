@@ -89,14 +89,14 @@ actually warranted.
 ## Dispatch
 
 Every subagent brief states task, authority, working directory, dependency
-position, allowed sources, and return shape, then includes:
+position, allowed sources, return shape, claim/worktree expectations,
+verification expectations, and commit/push policy, then includes:
 
 ```text
-Read `AGENTS.md`, `skills/skills.nota`, and
-`skills/subagent-session-workflow.md`; select any additional triggered skills;
-then follow the subagent session workflow for lane choice, orchestration claims,
-worktree handling, verification, return schema, and the default commit/push
-policy.
+Read `AGENTS.md` and `skills/skills.nota`; select any additional triggered
+skills; then follow this brief's worker instructions for lane choice,
+orchestration claims, worktree handling, verification, return shape, and
+commit/push policy.
 ```
 
 Before both gates, briefs must say `read-only` and forbid implementation,

@@ -1,9 +1,11 @@
 use std::{fs, path::Path};
 
+use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
-        GenerationMode, GenerationRequest, ManifestPath, Manifests, SourceRoot, WorkspaceRoot,
+        EmissionPolicy, EntryPointKind, GenerationMode, GenerationRequest, HarnessTarget,
+        ManifestPath, Manifests, MigrationPlan, ModuleStatus, SourceRoot, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -17,7 +19,7 @@ fn generation_writes_manifest_frontmatter_and_strips_module_frontmatter() {
     );
     fixture.write_source_file(
         "manifests/example.nota",
-        "(skills/example.md Markdown [(name example) (description [Example skill.])] [modules/example.md])\n",
+        "(skills/example.md Markdown (Harness Pi) [(name example) (description [Example skill.])] [modules/example.md])\n",
     );
 
     fixture
@@ -40,7 +42,7 @@ fn generation_fails_on_duplicate_headings() {
     );
     fixture.write_source_file(
         "manifests/example.nota",
-        "(skills/example.md Markdown [] [modules/example.md])\n",
+        "(skills/example.md Markdown Workspace [] [modules/example.md])\n",
     );
 
     let error = fixture
@@ -48,6 +50,62 @@ fn generation_fails_on_duplicate_headings() {
         .expect_err("duplicate headings fail");
 
     assert!(matches!(error, Error::DuplicateHeading { .. }), "{error:?}");
+}
+
+#[test]
+fn migration_model_covers_current_skills_and_marks_deleted_worker_surface() {
+    let text = include_str!("../manifests/migration/current-skills.nota");
+    let plan = NotaSource::new(text)
+        .parse::<MigrationPlan>()
+        .expect("migration model parses");
+
+    assert_eq!(plan.archive_root.as_ref(), "skills/archive");
+    assert_eq!(plan.migration_modules.payload().len(), 76);
+
+    let active = plan
+        .migration_modules
+        .payload()
+        .iter()
+        .find(|module| module.module_name.payload() == "intent-led-orchestration")
+        .expect("intent-led-orchestration modeled");
+    assert_eq!(active.module_status, ModuleStatus::Active);
+    assert_eq!(active.emission_policy, EmissionPolicy::FirstClassSkill);
+    assert_eq!(
+        active.target_set.payload(),
+        &[
+            HarnessTarget::Pi,
+            HarnessTarget::Claude,
+            HarnessTarget::Codex
+        ]
+    );
+
+    let deleted = plan
+        .migration_modules
+        .payload()
+        .iter()
+        .find(|module| module.module_name.payload() == "subagent-session-workflow")
+        .expect("deleted subagent workflow modeled");
+    assert_eq!(deleted.module_status, ModuleStatus::Deleted);
+    assert_eq!(deleted.emission_policy, EmissionPolicy::NoEmission);
+    assert!(deleted.target_set.payload().is_empty());
+
+    let entry_point = plan
+        .entry_points
+        .payload()
+        .iter()
+        .find(|entry_point| entry_point.module_name.payload() == "intent-led-orchestration")
+        .expect("entrypoint modeled");
+    assert_eq!(entry_point.entry_point_extras.payload().len(), 3);
+    assert!(
+        entry_point
+            .entry_point_extras
+            .payload()
+            .iter()
+            .any(|extra| {
+                extra.harness_target == HarnessTarget::Claude
+                    && extra.entry_point_kind == EntryPointKind::Command
+            })
+    );
 }
 
 #[test]
@@ -59,7 +117,7 @@ fn check_mode_reports_stale_output() {
     );
     fixture.write_source_file(
         "manifests/example.nota",
-        "(skills/example.md Markdown [] [modules/example.md])\n",
+        "(skills/example.md Markdown Workspace [] [modules/example.md])\n",
     );
     fixture.write_workspace_file(
         "skills/example.md",

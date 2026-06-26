@@ -138,8 +138,6 @@
     [How to make a helper carry the full required-reading envelope so the lead preserves its smart context. Reach for it when a helper is requested for context preservation, fresh-session restart, broad report cleanup, or a handover-style exploration.])
   (Meta intent-led-orchestration skills/intent-led-orchestration.md Mechanism
     [Canonical active protocol for fresh-context alignment interview gates, method approval, Spirit-centered intent maintenance, and tool-free lead orchestration through subagents. Reach for it at fresh-context startup when a request needs alignment or orchestration.])
-  (Meta subagent-session-workflow skills/subagent-session-workflow.md Mechanism
-    [Canonical worker operating protocol for intent-led orchestration subagents: startup envelope, lane claims, worktree targets, default commit/push, and return schema. Reach for it when dispatched as a subagent worker.])
   (Meta autonomous-agent skills/autonomous-agent.md Mechanism
     [How to decide when to act versus ask within work, and the claim/work/close/release loop. Reach for it when running the work loop autonomously; pairs with human-interaction for the psyche boundary.])
   (Meta context-maintenance skills/context-maintenance.md Mechanism

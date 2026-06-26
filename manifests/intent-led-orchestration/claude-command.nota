@@ -1,1 +1,1 @@
-(.claude/commands/intent-led-orchestration.md Markdown [(name intent-led-orchestration) (description [Displays the compact fresh-context intent-led orchestration protocol.]) (disable-model-invocation true) (context fork)] [modules/intent-led-orchestration/compact-command.md])
+(.claude/commands/intent-led-orchestration.md Markdown (Harness Claude) [(name intent-led-orchestration) (description [Displays the compact fresh-context intent-led orchestration protocol.]) (disable-model-invocation true) (context fork)] [modules/intent-led-orchestration/compact-command.md])

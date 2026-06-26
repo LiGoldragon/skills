@@ -14,12 +14,28 @@
   GeneratedFile { OutputPath ByteCount }
   OutputPath Path {| Display AsRef PartialEq |}
   ByteCount Integer {| Display PartialEq PartialOrd |}
-  Manifest { OutputPath OutputKind Frontmatter Modules }
+  Manifest { OutputPath OutputKind OutputSurface Frontmatter Modules }
   OutputKind [Markdown Nota]
+  OutputSurface [Workspace (Harness HarnessTarget)]
+  HarnessTarget [Pi Claude Codex]
   Frontmatter (Vector FrontmatterEntry)
   FrontmatterEntry { FrontmatterKey FrontmatterValue }
   FrontmatterKey String {| Display AsRef PartialEq |}
   FrontmatterValue String {| Display AsRef PartialEq |}
   ModulePath Path {| Display AsRef PartialEq |}
   Modules (Vector ModulePath)
+  MigrationPlan { ArchiveRoot MigrationModules EntryPoints }
+  ArchiveRoot Path {| Display AsRef PartialEq |}
+  MigrationModules (Vector MigrationModule)
+  MigrationModule { ModuleName ModulePath ModuleStatus EmissionPolicy TargetSet }
+  ModuleName String {| Display AsRef PartialEq |}
+  ModuleStatus [Active (Archived ArchivePath) Deleted]
+  ArchivePath Path {| Display AsRef PartialEq |}
+  EmissionPolicy [FirstClassSkill InternalOnly NoEmission]
+  TargetSet (Vector HarnessTarget)
+  EntryPoints (Vector EntryPoint)
+  EntryPoint { ModuleName EntryPointExtras }
+  EntryPointExtras (Vector EntryPointExtra)
+  EntryPointExtra { HarnessTarget EntryPointKind ManifestPath }
+  EntryPointKind [Command Prompt]
 }
