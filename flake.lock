@@ -111,7 +111,8 @@
         "nixpkgs": "nixpkgs",
         "nota-source": "nota-source",
         "rust-build": "rust-build",
-        "schema-rust-source": "schema-rust-source"
+        "schema-rust-source": "schema-rust-source",
+        "schema-source": "schema-source"
       }
     },
     "rust-analyzer-src": {
@@ -167,6 +168,22 @@
       "original": {
         "owner": "LiGoldragon",
         "repo": "schema-rust-next",
+        "type": "github"
+      }
+    },
+    "schema-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782313101,
+        "narHash": "sha256-17uebtXm+R1LaK83TXNaTfimEs9YXOCPNUNXTJ2d2hY=",
+        "owner": "LiGoldragon",
+        "repo": "schema-next",
+        "rev": "dea9b555d76a37f099db2477ead1c758a7517f37",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "schema-next",
         "type": "github"
       }
     },

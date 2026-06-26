@@ -12,6 +12,10 @@
       url = "github:LiGoldragon/nota-next";
       flake = false;
     };
+    schema-source = {
+      url = "github:LiGoldragon/schema-next";
+      flake = false;
+    };
     schema-rust-source = {
       url = "github:LiGoldragon/schema-rust-next";
       flake = false;
@@ -25,6 +29,7 @@
       flake-utils,
       rust-build,
       nota-source,
+      schema-source,
       schema-rust-source,
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -52,9 +57,18 @@
             chmod -R u+w "$out"
             mkdir -p "$out/vendor-sources"
             cp -R ${nota-source} "$out/vendor-sources/nota"
+            cp -R ${schema-source} "$out/vendor-sources/schema"
             cp -R ${schema-rust-source} "$out/vendor-sources/schema-rust"
             chmod -R u+w "$out/vendor-sources"
             cat >> "$out/Cargo.toml" <<'EOF'
+
+          [patch."https://github.com/LiGoldragon/nota-next.git"]
+          nota = { path = "vendor-sources/nota" }
+          nota-derive = { path = "vendor-sources/nota/derive" }
+
+          [patch."https://github.com/LiGoldragon/schema-next.git"]
+          schema = { path = "vendor-sources/schema" }
+          schema-cc = { path = "vendor-sources/schema/schema-cc" }
 
           [patch."https://github.com/LiGoldragon/schema-rust-next.git"]
           schema-rust = { path = "vendor-sources/schema-rust" }
@@ -66,7 +80,7 @@
           import re
           import sys
 
-          path_dependency_names = {"schema-rust"}
+          path_dependency_names = {"nota", "nota-derive", "schema", "schema-cc", "schema-rust"}
           source_text = open(sys.argv[1]).read()
           blocks = source_text.split("[[package]]")
           header, entries = blocks[0], blocks[1:]
