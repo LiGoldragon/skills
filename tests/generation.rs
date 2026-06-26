@@ -42,15 +42,60 @@ fn generation_allows_fenced_frontmatter_examples_inside_modules() {
     );
     fixture.write_source_file(
         "manifests/example.nota",
-        "(skills/example.md Markdown Workspace [] [modules/example.md])\n",
+        "(.agents/skills/example/SKILL.md Markdown (Harness Pi) [(name example) (description [Example skill.])] [modules/example.md])\n",
     );
 
     fixture
         .generate(GenerationMode::Write)
         .expect("fenced frontmatter example is ordinary markdown");
 
-    let generated = fixture.read_workspace_file("skills/example.md");
+    let generated = fixture.read_workspace_file(".agents/skills/example/SKILL.md");
+    assert!(generated.starts_with("---\nname: example\ndescription: 'Example skill.'\n---\n\n"));
     assert!(generated.contains("```markdown\n---\nname: example\n---\n```"));
+}
+
+#[test]
+fn generation_rejects_harness_skill_without_frontmatter() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "modules/example.md",
+        "# Skill — example\n\n## Rule\n\nKeep the prose.\n",
+    );
+    fixture.write_source_file(
+        "manifests/example.nota",
+        "(.agents/skills/example/SKILL.md Markdown (Harness Pi) [] [modules/example.md])\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("harness skill frontmatter is required");
+
+    assert!(
+        matches!(error, Error::MissingHarnessFrontmatter { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn generation_rejects_second_unfenced_frontmatter_delimiter_in_harness_skill() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "modules/example.md",
+        "# Skill — example\n\n## Rule\n\n---\n\nKeep the prose.\n",
+    );
+    fixture.write_source_file(
+        "manifests/example.nota",
+        "(.agents/skills/example/SKILL.md Markdown (Harness Pi) [(name example) (description [Example skill.])] [modules/example.md])\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("only the leading frontmatter delimiter pair is allowed");
+
+    assert!(
+        matches!(error, Error::NestedFrontmatter { .. }),
+        "{error:?}"
+    );
 }
 
 #[test]

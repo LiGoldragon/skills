@@ -227,6 +227,7 @@ impl ManifestAssembler {
         }
         MarkdownAssembly::new(
             output_path.clone(),
+            self.manifest.output_surface.clone(),
             self.manifest.frontmatter.payload().to_vec(),
             fragments,
         )

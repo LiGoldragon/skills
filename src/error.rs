@@ -42,11 +42,20 @@ pub enum Error {
         heading: String,
     },
 
+    #[error("harness skill {path} must define YAML frontmatter")]
+    MissingHarnessFrontmatter { path: PathBuf },
+
+    #[error("harness skill {path} frontmatter must define `{key}`")]
+    MissingHarnessFrontmatterKey { path: PathBuf, key: String },
+
     #[error("frontmatter is allowed only at the start of {path}")]
     NestedFrontmatter { path: PathBuf },
 
     #[error("frontmatter key `{key}` in {path} contains unsupported characters")]
     InvalidFrontmatterKey { path: PathBuf, key: String },
+
+    #[error("frontmatter value for `{key}` in {path} must be a single line")]
+    InvalidFrontmatterValue { path: PathBuf, key: String },
 
     #[error("relative path {path} escapes the workspace root {root}")]
     PathEscapesRoot { root: PathBuf, path: PathBuf },

@@ -1,6 +1,6 @@
 ;; NOTA records are positional. Type, then fields, no keywords.
 ;; The `(key value)` shape from Lisp/Clojure/JSON is not NOTA.
-;; If you're sketching a new NOTA record, read skills/nota-design.md first.
+;; If you're sketching a new NOTA record, read .agents/skills/nota-design/SKILL.md first.
 ;;
 ;; tier values (fourth positional field below):
 ;;   apex      — read once; recognise everywhere
@@ -9,143 +9,143 @@
 ;;   mechanism — procedural; consulted when the named mechanism is in play
 
 [
-  (Architecture component-triad skills/component-triad.md Apex
+  (Architecture component-triad .agents/skills/component-triad/SKILL.md Apex
     [How a component is split into daemon + thin CLI + signal-* contract, and how the Signal/Nexus/SEMA runtime carries async mail. Read when building or reasoning about a component's shape.])
-  (Architecture structural-forms skills/structural-forms.md Apex
+  (Architecture structural-forms .agents/skills/structural-forms/SKILL.md Apex
     [The structural-macro vocabulary for defining a language as data: positional struct syntax, pipe-parenthesis generics, pipe-brace traits, the dimensional principle, and positional special forms for streams and families. Read when authoring or editing schema-next grammar shapes.])
-  (Architecture contract-repo skills/contract-repo.md Topic
+  (Architecture contract-repo .agents/skills/contract-repo/SKILL.md Topic
     [How to shape a wire-contract crate: six-verb spine, signal_channel! macro, layered-effect pattern. Read when creating or editing a signal-* contract crate.])
-  (Architecture micro-components skills/micro-components.md Topic
+  (Architecture micro-components .agents/skills/micro-components/SKILL.md Topic
     [How to decide when to split out a new crate, apply the family-of-micro-components pattern, or extract a kernel. Read when a crate is growing past one responsibility.])
-  (Architecture actor-systems skills/actor-systems.md Topic
+  (Architecture actor-systems .agents/skills/actor-systems/SKILL.md Topic
     [How to design a dense actor topology: schema-root actors, async mail objects, supervised state-bearing actors. Read when actors are in play in a design.])
-  (Architecture architectural-truth-tests skills/architectural-truth-tests.md Topic
+  (Architecture architectural-truth-tests .agents/skills/architectural-truth-tests/SKILL.md Topic
     [How to write tests that catch architectural drift rather than mere regression. Read when deciding what a component's tests should witness.])
-  (Architecture engine-analysis skills/engine-analysis.md Topic
+  (Architecture engine-analysis .agents/skills/engine-analysis/SKILL.md Topic
     [How to analyze a daemon or engine's internals through the planes-and-actors lens. Read when you need to understand how an existing engine works inside.])
-  (Architecture engine-report skills/engine-report.md Topic
+  (Architecture engine-report .agents/skills/engine-report/SKILL.md Topic
     [The standard shape for an engine situation report: component ledgers, sizes, interfaces, runtime paths, witnesses, introspection tools. Read when writing up an engine's current state.])
-  (Architecture language-design skills/language-design.md Topic
+  (Architecture language-design .agents/skills/language-design/SKILL.md Topic
     [The discipline for designing a language or typed-record tree: closed enums, structural beauty over ad-hoc strings, branches/leaves vocabulary. Read when shaping a new language or record grammar.])
-  (Architecture library skills/library.md Topic
+  (Architecture library .agents/skills/library/SKILL.md Topic
     [How to decide when to extract a library crate from a daemon, and where the library/daemon line falls. Read when a daemon holds reusable logic that wants its own crate.])
-  (Architecture subscription-lifecycle skills/subscription-lifecycle.md Topic
+  (Architecture subscription-lifecycle .agents/skills/subscription-lifecycle/SKILL.md Topic
     [The close-vs-retract semantics and token-keyed cleanup for subscriptions. Read when designing subscription teardown.])
 
-  (Craft abstractions skills/abstractions.md Keystroke
+  (Craft abstractions .agents/skills/abstractions/SKILL.md Keystroke
     [The verb-belongs-to-noun rule: put logic in methods on data-bearing types, never a free helper where a method would do. Applies on every Rust edit.])
-  (Craft enum-contact-points skills/enum-contact-points.md Apex
+  (Craft enum-contact-points .agents/skills/enum-contact-points/SKILL.md Apex
     [How to express engine logic as enum-vs-enum cross-product matching: name the contact point as a nested match or trait, not scattered arms, string predicates, or flag soup. Read when writing an engine's load-bearing branching.])
-  (Craft naming skills/naming.md Keystroke
+  (Craft naming .agents/skills/naming/SKILL.md Keystroke
     [The full-English-words rule plus the offender table of forbidden abbreviations. Applies on every identifier you write.])
-  (Craft secrets skills/secrets.md Keystroke
+  (Craft secrets .agents/skills/secrets/SKILL.md Keystroke
     [How to handle secret values when an authorized task needs plaintext: keep them transient and out of chat, reports, logs, commits, traces, the Nix store, and checked-in files; prefer gopass, sops-nix, and blind pipe-to-sink. Read when a task touches tokens or other secrets.])
-  (Craft privacy skills/privacy.md Keystroke
+  (Craft privacy .agents/skills/privacy/SKILL.md Keystroke
     [How to keep private personal-affairs work off public workspace surfaces and out of privacy Zero Spirit, defaulting to private repositories. Read when a prompt or artifact touches personal affairs.])
-  (Craft workspace-vocabulary skills/workspace-vocabulary.md Topic
+  (Craft workspace-vocabulary .agents/skills/workspace-vocabulary/SKILL.md Topic
     [The canonical glossary for load-bearing workspace terms — PRD alignment, shared domain language, main/next, Persona, engine_manager — with scope and when-to-use. Read when a workspace term's meaning is uncertain.])
-  (Craft beauty skills/beauty.md Keystroke
+  (Craft beauty .agents/skills/beauty/SKILL.md Keystroke
     [Beauty as the gate on correctness: special cases should dissolve into the normal case. Applies whenever you judge whether a design or change is done.])
-  (Craft push-not-pull skills/push-not-pull.md Keystroke
+  (Craft push-not-pull .agents/skills/push-not-pull/SKILL.md Keystroke
     [How to apply the no-polling rule: design a subscription where producers push events, and escalate when a producer can't push. Read when designing any producer-consumer interaction.])
-  (Craft reporting skills/reporting.md Keystroke
+  (Craft reporting .agents/skills/reporting/SKILL.md Keystroke
     [How to decide between chat, harness output, and writing a report — chat for the user, reports for agent pickup points — and the report-hygiene rules. Applies whenever you produce substantive output.])
 
-  (Workflow report-naming skills/report-naming.md Mechanism
+  (Workflow report-naming .agents/skills/report-naming/SKILL.md Mechanism
     [The everyday report-naming and supersession convention: filename shape, -v2/v3 iteration, commit-before-delete. Reach for it before naming or retiring a report.])
-  (Workflow workspace-update-report skills/workspace-update-report.md Mechanism
+  (Workflow workspace-update-report .agents/skills/workspace-update-report/SKILL.md Mechanism
     [How to write the recurring workspace-update report that surveys major changes since the last one — files, intent captures, skill evolution, reports landed/retired, component state. Reach for it when synthesizing workspace direction across a busy period.])
-  (Workflow versioning skills/versioning.md Keystroke
+  (Workflow versioning .agents/skills/versioning/SKILL.md Keystroke
     [How to keep component, wire-contract, storage-schema, and deploy-slot versions truthful when behavior changes. Applies whenever you change code or logic that affects a running component.])
 
-  (Craft typed-records-over-flags skills/typed-records-over-flags.md Keystroke
+  (Craft typed-records-over-flags .agents/skills/typed-records-over-flags/SKILL.md Keystroke
     [The rule to prefer closed typed records over bool flags so the variant set lives in the type system. Applies whenever you reach for a boolean parameter or field.])
-  (Craft prose skills/prose.md Topic
+  (Craft prose .agents/skills/prose/SKILL.md Topic
     [The discipline for prose as craft. Read when writing is the load-bearing surface.])
 
-  (Programming kameo skills/kameo.md Topic
+  (Programming kameo .agents/skills/kameo/SKILL.md Topic
     [The Kameo actor-runtime discipline: lifecycle contract and the spawn-in-thread restart trap. Read when using Kameo actors.])
-  (Programming rust-discipline skills/rust-discipline.md Topic
+  (Programming rust-discipline .agents/skills/rust-discipline/SKILL.md Topic
     [The index into Rust craft — methods on types, typed errors, no ZST holders — linking the sub-files below. Read before authoring or editing any Rust.])
-  (Programming rust-methods skills/rust/methods.md Topic
+  (Programming rust-methods .agents/skills/rust-methods/SKILL.md Topic
     [The rule that every function is a method on a data-bearing type, with async mail modeled as object flow. Read before writing Rust functions.])
-  (Programming rust-errors skills/rust/errors.md Topic
+  (Programming rust-errors .agents/skills/rust-errors/SKILL.md Topic
     [How to define typed errors at the crate boundary with thiserror, avoiding anyhow at edges. Read when designing a crate's Error type.])
-  (Programming rust-storage-and-wire skills/rust/storage-and-wire.md Topic
+  (Programming rust-storage-and-wire .agents/skills/rust-storage-and-wire/SKILL.md Topic
     [The redb + rkyv pattern for persistence and wire encoding. Read when adding storage or a wire path.])
-  (Programming rust-parsers skills/rust/parsers.md Topic
+  (Programming rust-parsers .agents/skills/rust-parsers/SKILL.md Topic
     [The no-hand-rolled-parsers rule: reach for winnow or the NOTA codec. Read when you need to parse anything.])
-  (Programming rust-crate-layout skills/rust/crate-layout.md Topic
+  (Programming rust-crate-layout .agents/skills/rust-crate-layout/SKILL.md Topic
     [The crate-layout conventions: tests in separate files, bin / lib / examples split. Read when laying out or restructuring a crate.])
-  (Programming nix-discipline skills/nix-discipline.md Topic
+  (Programming nix-discipline .agents/skills/nix-discipline/SKILL.md Topic
     [The Nix module and flake conventions, including check derivations. Read when authoring Nix modules or flakes.])
-  (Programming nix-usage skills/nix-usage.md Topic
+  (Programming nix-usage .agents/skills/nix-usage/SKILL.md Topic
     [The daily Nix command shapes for builder checks, output capture, and store-path hygiene — use nix eval / flake show / path-info, not filesystem search. Read when running Nix commands.])
-  (Programming mermaid skills/mermaid.md Mechanism
+  (Programming mermaid .agents/skills/mermaid/SKILL.md Mechanism
     [The Mermaid renderer quirks, safe-syntax workarounds, and readability rules that make a diagram survive the strictest target renderer. Reach for it when authoring a Mermaid diagram.])
-  (Programming stt-interpreter skills/stt-interpreter.md Mechanism
+  (Programming stt-interpreter .agents/skills/stt-interpreter/SKILL.md Mechanism
     [How to decode speech-to-text prompts that mis-transcribe workspace-specific words — guess the intended word and act, asking only if wrong. Reach for it when a prompt contains a phonetic near-miss for a known workspace term.])
 
-  (Workflow session-lanes skills/session-lanes.md Mechanism
+  (Workflow session-lanes .agents/skills/session-lanes/SKILL.md Mechanism
     [How a lane is a fresh work-session identity named for its intent, carrying a discipline as metadata that loads its skills and authority. Read when opening, registering, naming, or draining a session lane.])
-  (Workflow architecture-editor skills/architecture-editor.md Mechanism
+  (Workflow architecture-editor .agents/skills/architecture-editor/SKILL.md Mechanism
     [How to name, scope, and maintain ARCHITECTURE.md files, which never reference reports. Reach for it when editing an ARCHITECTURE.md.])
-  (Workflow nota-schema-docs skills/nota-schema-docs.md Mechanism
+  (Workflow nota-schema-docs .agents/skills/nota-schema-docs/SKILL.md Mechanism
     [The pseudo-NOTA convention for documenting record schemas in markdown — angle-bracket placeholders, optional ?, enum |. Reach for it when writing schema documentation.])
-  (Workflow nota-design skills/nota-design.md Topic
+  (Workflow nota-design .agents/skills/nota-design/SKILL.md Topic
     [How to design NOTA records well: positional and typed, data in records not comments, enums named not numbered. Read before designing a new NOTA file or schema.])
-  (Workflow nota-comments skills/nota-comments.md Topic
+  (Workflow nota-comments .agents/skills/nota-comments/SKILL.md Topic
     [How to write a code comment's edit rationale as a positional NOTA (Why ...) record so it becomes a queryable typed signal. Reach for it when a comment explains why an edit was made.])
-  (Workflow jj skills/jj.md Mechanism
+  (Workflow jj .agents/skills/jj/SKILL.md Mechanism
     [The Jujutsu version-control discipline for concurrent agents, including the push-rejected escape hatch. Reach for it when running version-control commands.])
-  (Workflow testing skills/testing.md Mechanism
+  (Workflow testing .agents/skills/testing/SKILL.md Mechanism
     [How tests live in and run through Nix: pure tests as flake checks, stateful tests as named outputs, the -test suffix for test-only binaries. Reach for it when adding, reviewing, or debugging tests.])
-  (Workflow feature-development skills/feature-development.md Mechanism
+  (Workflow feature-development .agents/skills/feature-development/SKILL.md Mechanism
     [How to develop features on branches in worktrees and coordinate a multi-repo arc — for CODE repos under /git only, NOT primary. Reach for it when starting feature work in a code repo.])
-  (Workflow double-implementation-strategy skills/double-implementation-strategy.md Topic
+  (Workflow double-implementation-strategy .agents/skills/double-implementation-strategy/SKILL.md Topic
     [How to run two parallel implementation tracks for a major break — operator amalgamates best-of-prototypes toward main while designer iterates the forward design on a branch — using comparison to drive convergence. Reach for it when a major break needs an anti-drift strategy.])
-  (Workflow beads skills/beads.md Mechanism
+  (Workflow beads .agents/skills/beads/SKILL.md Mechanism
     [The short-tracked-item discipline, transitional until Persona-mind. Reach for it when claiming, working, or closing a bead.])
-  (Workflow bead-weaver skills/bead-weaver.md Mechanism
+  (Workflow bead-weaver .agents/skills/bead-weaver/SKILL.md Mechanism
     [How to turn an aligned prompt or design report into a dependency graph of BEADS tasks with clear completion criteria, source context, and handoff shape. Reach for it when filing multiple related beads or converting a prompt into a bead weave.])
-  (Workflow repository-management skills/repository-management.md Mechanism
+  (Workflow repository-management .agents/skills/repository-management/SKILL.md Mechanism
     [The ghq / gh mechanics for creating remotes, changing repo metadata, basic issue/PR operations, and finding or fetching local clones. Reach for it when a repo needs GitHub or clone management.])
-  (Workflow skill-editor skills/skill-editor.md Mechanism
+  (Workflow skill-editor .agents/skills/skill-editor/SKILL.md Mechanism
     [How skill files are written, named, located, and scoped without growing noisy, and why skills never reference reports. Reach for it when editing a skill file.])
 
-  (Meta human-interaction skills/human-interaction.md Apex
+  (Meta human-interaction .agents/skills/human-interaction/SKILL.md Apex
     [How psyche-facing agents handle the human boundary: load intent-log and spirit-cli fresh, capture intent first, shape chat, dispatch subagents, frame real-world tests, and report back. Read every session when your lane talks with the psyche.])
-  (Meta when-to-use-helpers skills/when-to-use-helpers.md Apex
+  (Meta when-to-use-helpers .agents/skills/when-to-use-helpers/SKILL.md Apex
     [The context-preserving dispatch discipline: run the minimal dispatch envelope, put delegated reading in the helper brief, and read helper-written files back for tool-scaffolding residue. Reach for it whenever the psyche asks you to spend a helper to explore, save context, or prepare a fan-out.])
-  (Meta helper-context-transfer skills/helper-context-transfer.md Mechanism
+  (Meta helper-context-transfer .agents/skills/helper-context-transfer/SKILL.md Mechanism
     [How to make a helper carry the full required-reading envelope so the lead preserves its smart context. Reach for it when a helper is requested for context preservation, fresh-session restart, broad report cleanup, or a handover-style exploration.])
-  (Meta intent-led-orchestration skills/intent-led-orchestration.md Mechanism
+  (Meta intent-led-orchestration .agents/skills/intent-led-orchestration/SKILL.md Mechanism
     [Canonical active protocol for fresh-context alignment interview gates, method approval, Spirit-centered intent maintenance, and tool-free lead orchestration through subagents. Reach for it at fresh-context startup when a request needs alignment or orchestration.])
-  (Meta autonomous-agent skills/autonomous-agent.md Mechanism
+  (Meta autonomous-agent .agents/skills/autonomous-agent/SKILL.md Mechanism
     [How to decide when to act versus ask within work, and the claim/work/close/release loop. Reach for it when running the work loop autonomously; pairs with human-interaction for the psyche boundary.])
-  (Meta context-maintenance skills/context-maintenance.md Mechanism
+  (Meta context-maintenance .agents/skills/context-maintenance/SKILL.md Mechanism
     [How to run an everyday single-lane sweep of reports and conversation, migrating substance to permanent homes. Reach for it when maintaining your own lane's accumulated context.])
-  (Meta context-handover skills/context-handover.md Mechanism
+  (Meta context-handover .agents/skills/context-handover/SKILL.md Mechanism
     [How to write a clean-session handover containing only psyche intent and useful matter-context, with no transcript dump, correction history, or restated skills. Reach for it when the psyche asks for a handover prompt or fresh-session restart context.])
-  (Meta context-maintenance-deep skills/context-maintenance-deep.md Mechanism
+  (Meta context-maintenance-deep .agents/skills/context-maintenance-deep/SKILL.md Mechanism
     [How to run the heavier maintenance patterns — cross-lane sweeps, the cross-lane meta-report directory, and lane retirement. Reach for it when a sweep spans more than one lane.])
-  (Meta intent-log skills/intent-log.md Topic
+  (Meta intent-log .agents/skills/intent-log/SKILL.md Topic
     [How to record explicit psyche intent through Spirit: the five-kind positional NOTA record, when to capture versus ask, and routing clarifications to existing records via edits. Read fresh before any Spirit use for capture.])
-  (Meta spirit-cli skills/spirit-cli.md Topic
+  (Meta spirit-cli .agents/skills/spirit-cli/SKILL.md Topic
     [How to invoke the deployed Spirit CLI to capture or query intent — RecordRequest shape, operations, query shape, inline-NOTA vs file argument, and reading the current wire shape from source. Reach for it before any Record or Observe.])
-  (Meta intent-maintenance skills/intent-maintenance.md Mechanism
+  (Meta intent-maintenance .agents/skills/intent-maintenance/SKILL.md Mechanism
     [How to sweep the Spirit intent log: fold mistaken standalone clarifications into their targets with ResolveClarification, run the supersession protocol, and verify against current state. Reach for it when cleaning up the intent log.])
-  (Meta intent-clarification skills/intent-clarification.md Topic
+  (Meta intent-clarification .agents/skills/intent-clarification/SKILL.md Topic
     [How to ask the psyche when intent is unclear, absent, or contradicted, offering structured options instead of inferring. Reach for it whenever a question's intent is uncertain.])
-  (Meta repo-intent skills/repo-intent.md Keystroke
+  (Meta repo-intent .agents/skills/repo-intent/SKILL.md Keystroke
     [Why per-repo INTENT.md is the first and most important file per repo, and how to write it — agent prose 100% backed by psyche statements, read on entry before code. Applies whenever you enter or update a repo.])
-  (Meta intent-manifestation skills/intent-manifestation.md Mechanism
+  (Meta intent-manifestation .agents/skills/intent-manifestation/SKILL.md Mechanism
     [How to walk Spirit records and manifest recorded intent into the right guidance file — ESSENCE, AGENTS, INTENT, skills, or per-repo INTENT — quoting verbatim. Reach for it when reflecting captured intent into docs.])
-  (Meta keep-working skills/keep-working.md Keystroke
+  (Meta keep-working .agents/skills/keep-working/SKILL.md Keystroke
     [Why mid-task psyche info-injection is not a stop signal: absorb the context, capture any durable intent, and keep working unless explicitly stopped or redirected. Applies whenever the psyche speaks mid-task.])
 
-  (Workflow main-next skills/main-next.md Keystroke
+  (Workflow main-next .agents/skills/main-next/SKILL.md Keystroke
     [Why each CODE repo under /git keeps a main (operator-owned) line plus a long-lived next (designer) line, and how designer uses next while operator integrates — NOT for primary. Applies whenever you choose a branch in a code repo.])
-  (Workflow main-feature-integration skills/main-feature-integration.md Mechanism
+  (Workflow main-feature-integration .agents/skills/main-feature-integration/SKILL.md Mechanism
     [How to update a code-repo main with new features: operator bookmark until green, test branch families together, rebase if main moved, then land producers before consumers. Reach for it when integrating features into main.])
 ]

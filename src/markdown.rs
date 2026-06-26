@@ -9,13 +9,14 @@ use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
 
 use crate::{
     error::{Error, Result},
-    schema::assembly::FrontmatterEntry,
+    schema::assembly::{FrontmatterEntry, HarnessTarget, OutputSurface},
     workspace_path::WorkspacePath,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MarkdownAssembly {
     output_path: WorkspacePath,
+    output_surface: OutputSurface,
     frontmatter: Vec<FrontmatterEntry>,
     fragments: Vec<MarkdownFragment>,
 }
@@ -23,11 +24,13 @@ pub struct MarkdownAssembly {
 impl MarkdownAssembly {
     pub fn new(
         output_path: WorkspacePath,
+        output_surface: OutputSurface,
         frontmatter: Vec<FrontmatterEntry>,
         fragments: Vec<MarkdownFragment>,
     ) -> Self {
         Self {
             output_path,
+            output_surface,
             frontmatter,
             fragments,
         }
@@ -51,6 +54,13 @@ impl MarkdownAssembly {
                 output.push('\n');
             }
         }
+        HarnessSkillFrontmatter::new(
+            self.output_path.clone(),
+            &self.output_surface,
+            &self.frontmatter,
+            &output,
+        )
+        .validate()?;
         MarkdownStructure::new(self.output_path.full_path(), output).validate()
     }
 
@@ -160,9 +170,15 @@ impl<'a> FrontmatterBlock<'a> {
         for entry in self.entries {
             let key = entry.frontmatter_key.as_ref();
             FrontmatterKey::new(self.path.clone(), key).validate()?;
+            let scalar = YamlScalar::new(
+                self.path.clone(),
+                key.to_owned(),
+                entry.frontmatter_value.as_ref(),
+            );
+            scalar.validate()?;
             output.push_str(key);
             output.push_str(": ");
-            output.push_str(&YamlScalar::new(entry.frontmatter_value.as_ref()).rendered());
+            output.push_str(&scalar.rendered());
             output.push('\n');
         }
         output.push_str("---\n\n");
@@ -171,13 +187,182 @@ impl<'a> FrontmatterBlock<'a> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+struct HarnessSkillFrontmatter<'a> {
+    output_path: WorkspacePath,
+    output_surface: &'a OutputSurface,
+    entries: &'a [FrontmatterEntry],
+    text: &'a str,
+}
+
+impl<'a> HarnessSkillFrontmatter<'a> {
+    fn new(
+        output_path: WorkspacePath,
+        output_surface: &'a OutputSurface,
+        entries: &'a [FrontmatterEntry],
+        text: &'a str,
+    ) -> Self {
+        Self {
+            output_path,
+            output_surface,
+            entries,
+            text,
+        }
+    }
+
+    fn validate(&self) -> Result<()> {
+        if !self.is_harness_skill_file() {
+            return Ok(());
+        }
+        HarnessSkillFrontmatterEntries::new(self.output_path.full_path(), self.entries)
+            .validate()?;
+        let body = RenderedFrontmatter::new(self.output_path.full_path(), self.text).body()?;
+        MarkdownDelimiterScan::new(self.output_path.full_path(), body).validate()
+    }
+
+    fn is_harness_skill_file(&self) -> bool {
+        let relative = self.output_path.relative_path().to_string_lossy();
+        matches!(
+            self.output_surface,
+            OutputSurface::Harness(HarnessTarget::Pi | HarnessTarget::Claude)
+        ) && ((relative.starts_with(".agents/skills/") && relative.ends_with("/SKILL.md"))
+            || (relative.starts_with(".claude/skills/") && relative.ends_with("/SKILL.md")))
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct HarnessSkillFrontmatterEntries<'a> {
+    path: PathBuf,
+    entries: &'a [FrontmatterEntry],
+}
+
+impl<'a> HarnessSkillFrontmatterEntries<'a> {
+    fn new(path: PathBuf, entries: &'a [FrontmatterEntry]) -> Self {
+        Self { path, entries }
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self.entries.is_empty() {
+            return Err(Error::MissingHarnessFrontmatter {
+                path: self.path.clone(),
+            });
+        }
+        self.require_key("name")?;
+        self.require_key("description")
+    }
+
+    fn require_key(&self, key: &str) -> Result<()> {
+        if self
+            .entries
+            .iter()
+            .any(|entry| entry.frontmatter_key.as_ref() == key)
+        {
+            Ok(())
+        } else {
+            Err(Error::MissingHarnessFrontmatterKey {
+                path: self.path.clone(),
+                key: key.to_owned(),
+            })
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RenderedFrontmatter<'a> {
+    path: PathBuf,
+    text: &'a str,
+}
+
+impl<'a> RenderedFrontmatter<'a> {
+    fn new(path: PathBuf, text: &'a str) -> Self {
+        Self { path, text }
+    }
+
+    fn body(&self) -> Result<&'a str> {
+        if !self.text.starts_with("---\n") {
+            return Err(Error::MissingHarnessFrontmatter {
+                path: self.path.clone(),
+            });
+        }
+        let Some(closing_start) = self.text[4..].find("\n---\n") else {
+            return Err(Error::MissingHarnessFrontmatter {
+                path: self.path.clone(),
+            });
+        };
+        let body_start = 4 + closing_start + "\n---\n".len();
+        Ok(&self.text[body_start..])
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MarkdownDelimiterScan<'a> {
+    path: PathBuf,
+    text: &'a str,
+}
+
+impl<'a> MarkdownDelimiterScan<'a> {
+    fn new(path: PathBuf, text: &'a str) -> Self {
+        Self { path, text }
+    }
+
+    fn validate(&self) -> Result<()> {
+        let mut fence = Option::<FenceMarker>::None;
+        for line in self.text.lines() {
+            let trimmed = line.trim_start();
+            if let Some(marker) = FenceMarker::opening(trimmed) {
+                match fence {
+                    Some(active) if active == marker => fence = None,
+                    None => fence = Some(marker),
+                    _ => {}
+                }
+            } else if fence.is_none() && trimmed == "---" {
+                return Err(Error::NestedFrontmatter {
+                    path: self.path.clone(),
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum FenceMarker {
+    Backtick,
+    Tilde,
+}
+
+impl FenceMarker {
+    fn opening(line: &str) -> Option<Self> {
+        if line.starts_with("```") {
+            Some(Self::Backtick)
+        } else if line.starts_with("~~~") {
+            Some(Self::Tilde)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct YamlScalar<'a> {
+    path: PathBuf,
+    key: String,
     text: &'a str,
 }
 
 impl<'a> YamlScalar<'a> {
-    fn new(text: &'a str) -> Self {
-        Self { text }
+    fn new(path: PathBuf, key: String, text: &'a str) -> Self {
+        Self { path, key, text }
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self.text.contains('\n') || self.text.contains('\r') {
+            Err(Error::InvalidFrontmatterValue {
+                path: self.path.clone(),
+                key: self.key.clone(),
+            })
+        } else {
+            Ok(())
+        }
     }
 
     fn rendered(&self) -> String {

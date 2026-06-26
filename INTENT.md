@@ -38,4 +38,5 @@ Synthesised from psyche statements; not embellished.
 - Codex first-class skills: the Codex skill surface selected by the migration bead
 - Claude command extras for entrypoints: `.claude/commands/*.md`
 - Codex prompt/command extras for entrypoints: `.codex/prompts/*.md` and `.codex/commands/*.md`
-- Transitional primary outputs while a consuming harness still needs them: `skills/*.md` and `skills/skills.nota`
+- Primary discovery index: `skills/skills.nota`, whose entries point at harness-native generated skill files
+- Primary `skills/*.md` skill bodies are not emitted when no consuming harness needs them
