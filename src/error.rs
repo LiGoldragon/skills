@@ -13,6 +13,9 @@ pub enum Error {
     #[error("write {path}: {source}")]
     WriteFile { path: PathBuf, source: io::Error },
 
+    #[error("remove generated path {path}: {source}")]
+    RemovePath { path: PathBuf, source: io::Error },
+
     #[error("create directory {path}: {source}")]
     CreateDirectory { path: PathBuf, source: io::Error },
 
@@ -60,8 +63,15 @@ pub enum Error {
     #[error("relative path {path} escapes the workspace root {root}")]
     PathEscapesRoot { root: PathBuf, path: PathBuf },
 
-    #[error("generated output is stale: {path}")]
+    #[error(
+        "generated output is stale: {path}. Update the locked `skills` input, run `nix run github:LiGoldragon/skills#generate-skills -- <workspace-root>`, then rerun `nix run github:LiGoldragon/skills#check-skills -- <workspace-root>`."
+    )]
     StaleOutput { path: PathBuf },
+
+    #[error(
+        "stale generated archived/deleted skill output remains: {path}. Update the locked `skills` input, run `nix run github:LiGoldragon/skills#generate-skills -- <workspace-root>`, then rerun `nix run github:LiGoldragon/skills#check-skills -- <workspace-root>`."
+    )]
+    StaleGeneratedOutput { path: PathBuf },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

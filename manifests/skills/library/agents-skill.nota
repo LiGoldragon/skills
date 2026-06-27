@@ -1,1 +1,0 @@
-(.agents/skills/library/SKILL.md Markdown (Harness Pi) [(name library) (description [|How to decide when to extract a library crate from a daemon, and where the library/daemon line falls. Read when a daemon holds reusable logic that wants its own crate.|])] [modules/library/full.md])

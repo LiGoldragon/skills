@@ -1,1 +1,0 @@
-(.agents/skills/subscription-lifecycle/SKILL.md Markdown (Harness Pi) [(name subscription-lifecycle) (description [|The close-vs-retract semantics and token-keyed cleanup for subscriptions. Read when designing subscription teardown.|])] [modules/subscription-lifecycle/full.md])

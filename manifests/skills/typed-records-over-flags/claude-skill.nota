@@ -1,1 +1,0 @@
-(.claude/skills/typed-records-over-flags/SKILL.md Markdown (Harness Claude) [(name typed-records-over-flags) (description [|The rule to prefer closed typed records over bool flags so the variant set lives in the type system. Applies whenever you reach for a boolean parameter or field.|])] [modules/typed-records-over-flags/full.md])

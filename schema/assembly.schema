@@ -3,11 +3,10 @@
 {
   Operation [(Generate GenerationRequest)]
   GenerationOutcome [(Generated GenerationReport)]
-  GenerationRequest { SourceRoot WorkspaceRoot Manifests GenerationMode }
+  GenerationRequest { SourceRoot WorkspaceRoot RosterPath GenerationMode }
   SourceRoot Path {| Display AsRef PartialEq |}
   WorkspaceRoot Path {| Display AsRef PartialEq |}
-  ManifestPath Path {| Display AsRef PartialEq |}
-  Manifests (Vector ManifestPath)
+  RosterPath Path {| Display AsRef PartialEq |}
   GenerationMode [Write Check]
   GenerationReport { GeneratedFiles }
   GeneratedFiles (Vector GeneratedFile)
@@ -16,26 +15,31 @@
   ByteCount Integer {| Display PartialEq PartialOrd |}
   Manifest { OutputPath OutputKind OutputSurface Frontmatter Modules }
   OutputKind [Markdown Nota]
-  OutputSurface [Workspace (Harness HarnessTarget)]
-  HarnessTarget [Pi Claude Codex]
+  OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeCommand CodexPrompt CodexCommand]
   Frontmatter (Vector FrontmatterEntry)
   FrontmatterEntry { FrontmatterKey FrontmatterValue }
   FrontmatterKey String {| Display AsRef PartialEq |}
   FrontmatterValue String {| Display AsRef PartialEq |}
   ModulePath Path {| Display AsRef PartialEq |}
   Modules (Vector ModulePath)
-  MigrationPlan { ArchiveRoot MigrationModules EntryPoints }
+  SkillRoster { ArchiveRoot SkillModules EntryPoints }
   ArchiveRoot Path {| Display AsRef PartialEq |}
-  MigrationModules (Vector MigrationModule)
-  MigrationModule { ModuleName ModulePath ModuleStatus EmissionPolicy TargetSet }
+  SkillModules (Vector SkillModule)
+  SkillModule { ModuleName ModulePath ModuleLifecycle EmissionPolicy TargetSurfaces }
   ModuleName String {| Display AsRef PartialEq |}
-  ModuleStatus [Active (Archived ArchivePath) Deleted]
+  ModuleLifecycle [(Active SkillMetadata) (Archived ArchivePath) Deleted]
   ArchivePath Path {| Display AsRef PartialEq |}
+  SkillMetadata { SkillCategory SkillTier SkillDescription }
+  SkillCategory [Architecture Craft Programming Workflow Meta]
+  SkillTier [Apex Keystroke Topic Mechanism]
+  SkillDescription String {| Display AsRef PartialEq |}
   EmissionPolicy [FirstClassSkill InternalOnly NoEmission]
-  TargetSet (Vector HarnessTarget)
+  TargetSurfaces (Vector TargetSurface)
+  TargetSurface [AgentsSkill ClaudeSkill]
   EntryPoints (Vector EntryPoint)
   EntryPoint { ModuleName EntryPointExtras }
   EntryPointExtras (Vector EntryPointExtra)
-  EntryPointExtra { HarnessTarget EntryPointKind ManifestPath }
-  EntryPointKind [Command Prompt]
+  EntryPointExtra { ExtraSurface ExtraModulePath }
+  ExtraSurface [ClaudeCommand CodexPrompt CodexCommand]
+  ExtraModulePath Path {| Display AsRef PartialEq |}
 }

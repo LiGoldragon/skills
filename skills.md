@@ -2,18 +2,19 @@
 
 ## Role
 
-This repo owns source modules, NOTA manifests, and the Rust CLI that assembles generated skill surfaces for consuming workspaces.
+This repo owns source modules, the NOTA roster, and the Rust CLI that assembles generated skill surfaces for consuming workspaces.
 
 ## Working rules
 
-- Keep module order explicit in each manifest; v1 has no imports, dependencies, or conditionals.
-- Put harness-specific frontmatter in the output manifest, not in reusable module prose.
-- Model migration status explicitly: active modules emit skills, archived modules live under `skills/archive/` with no emission manifests, and deleted modules do not emit.
-- Treat Pi, Claude, and Codex as first-class targets; entrypoint command/prompt extras are separate from first-class skill emission.
+- Keep module order explicit in the NOTA roster; v1 has no imports, dependencies, or conditionals.
+- Put harness-specific frontmatter metadata in the roster, not in reusable module prose.
+- Model migration status explicitly: active modules emit configured target surfaces, archived modules live under `skills/archive/` with no emission, and deleted modules do not emit.
+- Treat `AgentsSkill` and `ClaudeSkill` as first-class target surfaces; `AgentsSkill` is the shared `.agents/skills/<name>/SKILL.md` surface used by Pi and Codex. Entrypoint command/prompt extras are separate from first-class skill emission.
 - Preserve prose. Normalization is limited to frontmatter placement, heading structure, relative links, and duplicate title handling.
 - Treat duplicate headings as generation failures, not warnings.
 - Do not add provenance headers to generated outputs.
 - Regenerate all configured outputs with `nix run github:LiGoldragon/skills#generate-skills -- <workspace-root>`; check drift with `nix run github:LiGoldragon/skills#check-skills -- <workspace-root>`.
+- `generate-skills` may prune only generated harness surfaces (`.agents/skills`, `.claude/skills`, and configured generated command/prompt extras). `check-skills` remains non-writing and reports stale archived/deleted skill outputs with update/regenerate/rerun guidance.
 
 ## See also
 

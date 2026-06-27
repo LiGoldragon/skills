@@ -1,1 +1,0 @@
-(.agents/skills/rust-storage-and-wire/SKILL.md Markdown (Harness Pi) [(name rust-storage-and-wire) (description [|The redb + rkyv pattern for persistence and wire encoding. Read when adding storage or a wire path.|])] [modules/rust-storage-and-wire/full.md])

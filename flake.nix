@@ -153,8 +153,6 @@
           };
           generate-skills = generatorApp "generate-skills" "skills-generate.nota";
           check-skills = generatorApp "check-skills" "skills-check.nota";
-          generate-intent-led-orchestration = generatorApp "generate-intent-led-orchestration" "skills-generate.nota";
-          check-intent-led-orchestration = generatorApp "check-intent-led-orchestration" "skills-check.nota";
           default = skills;
         };
 
@@ -189,15 +187,24 @@
             fi
             touch "$out"
           '';
-          all-skill-manifests-configured = pkgs.runCommand "skills-all-skill-manifests-configured" { } ''
-            while IFS= read -r manifest; do
-              manifest_path="''${manifest#${cleanSource}/}"
-              case "$manifest_path" in
-                manifests/migration/*) continue ;;
-              esac
-              grep -F "$manifest_path" ${cleanSource}/skills-check.nota >/dev/null
-              grep -F "$manifest_path" ${cleanSource}/skills-generate.nota >/dev/null
-            done < <(find ${cleanSource}/manifests -type f -name '*.nota' | sort)
+          generation-requests-use-roster = pkgs.runCommand "skills-generation-requests-use-roster" { } ''
+            grep -F 'manifests/skills-roster.nota' ${cleanSource}/skills-check.nota >/dev/null
+            grep -F 'manifests/skills-roster.nota' ${cleanSource}/skills-generate.nota >/dev/null
+            if find ${cleanSource}/manifests -mindepth 2 -type f -name '*.nota' | grep .; then
+              echo "generation must be driven by the single skills roster, not per-output manifests" >&2
+              exit 1
+            fi
+            touch "$out"
+          '';
+          obsolete-intent-led-wrappers-removed = pkgs.runCommand "skills-obsolete-intent-led-wrappers-removed" { } ''
+            generate_wrapper='generate-intent-led-orchestration'
+            check_wrapper='check-intent-led-orchestration'
+            generate_request='intent-led-orchestration-generate'
+            check_request='intent-led-orchestration-check'
+            if grep -R -F -e "$generate_wrapper" -e "$check_wrapper" -e "$generate_request" -e "$check_request" ${cleanSource}/apps ${cleanSource}/manifests ${cleanSource}/skills-check.nota ${cleanSource}/skills-generate.nota 2>/dev/null; then
+              echo "obsolete narrow intent-led wrappers or requests remain" >&2
+              exit 1
+            fi
             touch "$out"
           '';
           default = test;

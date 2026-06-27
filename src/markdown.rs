@@ -9,7 +9,7 @@ use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
 
 use crate::{
     error::{Error, Result},
-    schema::assembly::{FrontmatterEntry, HarnessTarget, OutputSurface},
+    schema::assembly::{FrontmatterEntry, OutputSurface},
     workspace_path::WorkspacePath,
 };
 
@@ -111,47 +111,6 @@ impl MarkdownFragment {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct NotaAssembly {
-    fragments: Vec<NotaFragment>,
-}
-
-impl NotaAssembly {
-    pub fn new(fragments: Vec<NotaFragment>) -> Self {
-        Self { fragments }
-    }
-
-    pub fn render(&self) -> Result<String> {
-        let mut output = String::new();
-        for fragment in &self.fragments {
-            if !output.is_empty() && !output.ends_with("\n\n") {
-                output.push('\n');
-            }
-            output.push_str(fragment.text.trim_end());
-            output.push('\n');
-        }
-        Ok(output)
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct NotaFragment {
-    path: WorkspacePath,
-    text: String,
-}
-
-impl NotaFragment {
-    pub fn read(path: WorkspacePath) -> Result<Self> {
-        let full_path = path.full_path();
-        fs::read_to_string(&full_path)
-            .map(|text| Self { path, text })
-            .map_err(|source| Error::ReadFile {
-                path: full_path,
-                source,
-            })
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
 struct FrontmatterBlock<'a> {
     path: PathBuf,
     entries: &'a [FrontmatterEntry],
@@ -223,7 +182,7 @@ impl<'a> HarnessSkillFrontmatter<'a> {
         let relative = self.output_path.relative_path().to_string_lossy();
         matches!(
             self.output_surface,
-            OutputSurface::Harness(HarnessTarget::Pi | HarnessTarget::Claude)
+            OutputSurface::AgentsSkill | OutputSurface::ClaudeSkill
         ) && ((relative.starts_with(".agents/skills/") && relative.ends_with("/SKILL.md"))
             || (relative.starts_with(".claude/skills/") && relative.ends_with("/SKILL.md")))
     }

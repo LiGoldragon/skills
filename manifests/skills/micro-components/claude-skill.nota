@@ -1,1 +1,0 @@
-(.claude/skills/micro-components/SKILL.md Markdown (Harness Claude) [(name micro-components) (description [|How to decide when to split out a new crate, apply the family-of-micro-components pattern, or extract a kernel. Read when a crate is growing past one responsibility.|])] [modules/micro-components/full.md])

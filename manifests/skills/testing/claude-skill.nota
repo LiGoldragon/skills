@@ -1,1 +1,0 @@
-(.claude/skills/testing/SKILL.md Markdown (Harness Claude) [(name testing) (description [|How tests live in and run through Nix: pure tests as flake checks, stateful tests as named outputs, the -test suffix for test-only binaries. Reach for it when adding, reviewing, or debugging tests.|])] [modules/testing/full.md])
