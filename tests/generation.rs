@@ -4,8 +4,8 @@ use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
-        EmissionPolicy, ExtraSurface, GenerationMode, GenerationRequest, ModuleLifecycle,
-        RosterPath, SkillRoster, SourceRoot, TargetSurface, WorkspaceRoot,
+        EmissionPolicy, GenerationMode, GenerationRequest, ModuleLifecycle, RosterPath,
+        SkillRoster, SourceRoot, TargetSurface, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -110,7 +110,7 @@ fn generation_fails_on_duplicate_headings() {
 }
 
 #[test]
-fn roster_model_covers_current_skills_and_entrypoint_extras() {
+fn roster_model_covers_current_skills_without_entrypoint_extras() {
     let text = include_str!("../manifests/skills-roster.nota");
     let roster = NotaSource::new(text)
         .parse::<SkillRoster>()
@@ -170,33 +170,9 @@ fn roster_model_covers_current_skills_and_entrypoint_extras() {
     assert_eq!(deleted.emission_policy, EmissionPolicy::NoEmission);
     assert!(deleted.target_surfaces.payload().is_empty());
 
-    let entry_point = roster
-        .entry_points
-        .payload()
-        .iter()
-        .find(|entry_point| entry_point.module_name.payload() == "intent-led-orchestration")
-        .expect("entrypoint modeled");
-    assert_eq!(entry_point.entry_point_extras.payload().len(), 3);
     assert!(
-        entry_point
-            .entry_point_extras
-            .payload()
-            .iter()
-            .any(|extra| extra.extra_surface == ExtraSurface::ClaudeCommand)
-    );
-    assert!(
-        entry_point
-            .entry_point_extras
-            .payload()
-            .iter()
-            .any(|extra| extra.extra_surface == ExtraSurface::CodexCommand)
-    );
-    assert!(
-        entry_point
-            .entry_point_extras
-            .payload()
-            .iter()
-            .any(|extra| extra.extra_surface == ExtraSurface::CodexPrompt)
+        roster.entry_points.payload().is_empty(),
+        "no entrypoint command/prompt extras are currently generated"
     );
 }
 

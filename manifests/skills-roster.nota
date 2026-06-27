@@ -82,10 +82,4 @@
     (main-feature-integration modules/main-feature-integration/full.md (Active (Workflow Mechanism [|How to update a code-repo main with new features: operator bookmark until green, test branch families together, rebase if main moved, then land producers before consumers. Reach for it when integrating features into main.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (subagent-session-workflow skills/subagent-session-workflow.md Deleted NoEmission [])
   ]
-  [
-    (intent-led-orchestration [
-      (ClaudeCommand modules/intent-led-orchestration/compact-command.md)
-      (CodexCommand modules/intent-led-orchestration/compact-command.md)
-      (CodexPrompt modules/intent-led-orchestration/compact-prompt.md)
-    ])
-  ])
+  [])

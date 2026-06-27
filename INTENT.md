@@ -19,7 +19,7 @@ Synthesised from psyche statements; not embellished.
 - A skill file is a source module; modules assemble through explicit roster entries.
 - Module source files may carry reusable metadata, but harness-specific frontmatter belongs in the roster.
 - Every active migrated module emits first-class `AgentsSkill` and `ClaudeSkill` surfaces unless it is explicitly internal/building-block only; `AgentsSkill` is shared by Pi and Codex.
-- Only selected entrypoint modules emit command/prompt extras; the only current entrypoint is `intent-led-orchestration`.
+- Command/prompt extra surfaces are not current generated invocation surfaces; `intent-led-orchestration` remains available through first-class skill surfaces only.
 - Module status distinguishes active, archived, and deleted modules; archived modules live under `skills/archive/` with no emission manifests.
 - `subagent-session-workflow` is obsolete and must not migrate or emit harness surfaces.
 - Assembly is ordered concatenation.
@@ -36,7 +36,5 @@ Synthesised from psyche statements; not embellished.
 - Pi first-class skills: `.agents/skills/*/SKILL.md`
 - Claude first-class skills: `.claude/skills/*/SKILL.md`
 - Codex first-class skills: the Codex skill surface selected by the migration bead
-- Claude command extras for entrypoints: `.claude/commands/*.md`
-- Codex prompt/command extras for entrypoints: `.codex/prompts/*.md` and `.codex/commands/*.md`
 - Primary discovery index: `skills/skills.nota`, generated from the roster, whose entries point at harness-native generated skill files
 - Primary `skills/*.md` skill bodies are not emitted when no consuming harness needs them
