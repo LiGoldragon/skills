@@ -46,7 +46,7 @@ helped (one cross-cuts the other), it's one capability. If hindered
 
 | Scale | Source path | Generated / consumed path |
 |---|---|---|
-| Workspace skill | `skills` repo: `modules/<name>/full.md` | primary index entry points at `.agents/skills/<name>/SKILL.md`; Claude also receives `.claude/skills/<name>/SKILL.md` |
+| Workspace skill | `/git/github.com/LiGoldragon/skills/modules/<name>/full.md` | primary index entry points at `.agents/skills/<name>/SKILL.md`; Claude also receives `.claude/skills/<name>/SKILL.md` |
 | Repo skill | `<repo-root>/skills.md` | read in place |
 
 One `skills.md` per repo. Workspace skill names are

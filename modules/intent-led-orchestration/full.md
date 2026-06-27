@@ -12,8 +12,7 @@ subagent returns are locators for future workers, not lead-readable context.
 
 All task work goes through subagents. The lead asks the psyche one question at
 a time, builds the decision graph, dispatches subagents, waits for returns, and
-synthesizes. If the lead uses a tool or reads the workspace, stop, disclose the
-protocol break, and offer a fresh restart or handoff.
+synthesizes.
 
 ## Alignment interview
 
