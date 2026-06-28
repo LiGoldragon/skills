@@ -6,14 +6,16 @@
 
 This repository owns source modules, output manifests, and the Rust generator
 that assembles harness-native skill and role files into consuming workspaces.
-The current V1 surface is manifest-driven: active outputs are listed in one
-NOTA manifest, module source paths and dependencies live in a sidecar NOTA
-index, and generated files are written into the workspace root passed to the
-CLI.
+The active surface is manifest-driven: active outputs are listed in one NOTA
+manifest, module source paths and dependencies live in a sidecar NOTA index,
+and generated files are written into the workspace root passed to the CLI.
 
 The generator treats instruction prose as reusable source material. Harness
 metadata and output identity live in manifests, while markdown modules stay
 focused on the instruction body they contribute to generated files.
+Generated role packets are the normal runtime doctrine bundle: the role body
+is emitted with curated included modules and dependency-expanded modules, so
+workers do not discover doctrine through a runtime index.
 
 ## Source Surfaces
 
@@ -41,7 +43,6 @@ Role targets:
 
 Derived inventory:
 
-- `skills/skills.nota`: primary discovery index for generated skill surfaces.
 - `skills/generated-role-outputs.nota`: stale generated role cleanup inventory.
 
 ## Assembly Model
@@ -49,7 +50,10 @@ Derived inventory:
 Assembly is ordered concatenation of source modules after manifest expansion.
 For skills, the active skill's module expands through the dependency index. For
 roles, the role body is emitted first, followed by any included modules and
-their dependencies.
+their dependencies. A generated role packet is the curated runtime bundle for
+normal role work; additional doctrine is named by the prompt, role packet,
+dispatch envelope, or local context rather than discovered through a generated
+index.
 
 Module dependencies are typed by module identifier rather than inferred from
 markdown links or filesystem layout. The dependency index is dependency-only:
@@ -72,7 +76,7 @@ Deleted modules are modeled by compatibility checks and emit no surfaces.
 
 - The generator is a Rust CLI.
 - Generator inputs are NOTA where practical, including the active manifest and module dependency index.
-- Generator outputs are NOTA where applicable, including discovery and generated-role inventory files.
+- Generator outputs are NOTA where applicable, including generated-role inventory files.
 - Interfaces are schema-authored in `schema/assembly.schema`; Rust schema types are generated, not hand-authored in parallel.
 - Normalization changes only structure required for valid output: one frontmatter block, heading levels, relative links, and duplicate-title handling.
 - Prose is preserved through generation.

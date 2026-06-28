@@ -22,7 +22,8 @@ reading the files:
 
 - required-reading paths named by the psyche;
 - AGENTS/INTENT/ESSENCE paths required by the workspace contract;
-- skills named by the task, the role, or `skills/skills.nota`;
+- skills or doctrine named by the task, generated role packet, or explicit
+  dispatch envelope;
 - source locators the helper must inspect, such as reports, beads, Spirit
   search terms, branches, commands, or repo files;
 - exact psyche instructions that constrain the helper's behavior.

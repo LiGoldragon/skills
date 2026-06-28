@@ -1,8 +1,18 @@
-;; Dependency-only module index for V1 generation.
+;; Dependency-only module index for SkillDoctrineV2 generation.
 ;; Each record is: module id, source path, dependency module ids.
 ;; The active output manifest decides what emits; this file only records source module edges.
 [
   (agent-output-protocol modules/agent-output-protocol/full.md [])
+  (worker-output-core modules/worker-output-core/full.md [])
+  (code-implementation-core modules/code-implementation-core/full.md [])
+  (rust-core modules/rust-core/full.md [])
+  (nix-core modules/nix-core/full.md [])
+  (intent-core modules/intent-core/full.md [])
+  (safety-core modules/safety-core/full.md [])
+  (workspace-context-core modules/workspace-context-core/full.md [])
+  (repo-scaffold-core modules/repo-scaffold-core/full.md [])
+  (repo-operation-core modules/repo-operation-core/full.md [])
+  (skill-source-core modules/skill-source-core/full.md [])
   (component-triad modules/component-triad/full.md [])
   (structural-forms modules/structural-forms/full.md [])
   (contract-repo modules/contract-repo/full.md [])

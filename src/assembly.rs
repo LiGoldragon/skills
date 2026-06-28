@@ -16,7 +16,7 @@ use crate::{
         GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
         ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleLifecycle, ModulePath,
         Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
-        SkillCategory, SkillMetadata, SkillModule, SkillRoster, SkillTier, TargetSurface,
+        SkillMetadata, SkillModule, SkillRoster, TargetSurface,
     },
     workspace_path::WorkspacePath,
 };
@@ -251,11 +251,6 @@ impl GenerationJobs {
 
     fn jobs(&self) -> Result<Vec<GenerationJob>> {
         let mut jobs = Vec::new();
-        jobs.push(GenerationJob::Rendered(RenderedOutput::new(
-            self.workspace_root.clone(),
-            OutputPath::new("skills/skills.nota"),
-            SkillIndex::new(self.configuration.active_skills()).render(),
-        )?));
         for manifest in self.configuration.skill_manifests()? {
             jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
                 self.source_root.clone(),
@@ -380,7 +375,6 @@ impl GenerationConfiguration {
 
     fn expected_outputs(&self) -> Result<BTreeSet<String>> {
         let mut expected = BTreeSet::new();
-        expected.insert("skills/skills.nota".to_owned());
         for manifest in self.skill_manifests()? {
             expected.insert(manifest.output_path.as_ref().to_owned());
         }
@@ -987,82 +981,6 @@ impl<'a> TomlString<'a> {
         }
         output.push('"');
         output
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct SkillIndex {
-    active_skills: Vec<ActiveSkill>,
-}
-
-impl SkillIndex {
-    fn new(active_skills: Vec<ActiveSkill>) -> Self {
-        Self { active_skills }
-    }
-
-    fn render(&self) -> String {
-        let mut output = String::from(
-            ";; NOTA records are positional. Type, then fields, no keywords.\n\
-             ;; The `(key value)` shape from Lisp/Clojure/JSON is not NOTA.\n\
-             ;; If you're sketching a new NOTA record, read .agents/skills/nota-design/SKILL.md first.\n\
-             ;;\n\
-             ;; tier values (fourth positional field below):\n\
-             ;;   apex      — read once; recognise everywhere\n\
-             ;;   keystroke — applies on every keystroke and every report\n\
-             ;;   topic     — consulted when the topic comes up\n\
-             ;;   mechanism — procedural; consulted when the named mechanism is in play\n\n[\n",
-        );
-        let mut previous_category = None;
-        for skill in &self.active_skills {
-            if previous_category
-                .as_ref()
-                .is_some_and(|category| category != &skill.skill_category)
-            {
-                output.push('\n');
-            }
-            previous_category = Some(skill.skill_category);
-            output.push_str("  ");
-            output.push_str(&skill.index_record());
-            output.push('\n');
-        }
-        output.push_str("]\n");
-        output
-    }
-}
-
-impl ActiveSkill {
-    fn index_record(&self) -> String {
-        format!(
-            "({} {} .agents/skills/{}/SKILL.md {} {})",
-            self.skill_category.as_str(),
-            self.output_identifier.as_ref(),
-            self.output_identifier.as_ref(),
-            self.skill_tier.as_str(),
-            self.skill_description.to_nota()
-        )
-    }
-}
-
-impl SkillCategory {
-    fn as_str(&self) -> &'static str {
-        match self {
-            Self::Architecture => "Architecture",
-            Self::Craft => "Craft",
-            Self::Programming => "Programming",
-            Self::Workflow => "Workflow",
-            Self::Meta => "Meta",
-        }
-    }
-}
-
-impl SkillTier {
-    fn as_str(&self) -> &'static str {
-        match self {
-            Self::Apex => "Apex",
-            Self::Keystroke => "Keystroke",
-            Self::Topic => "Topic",
-            Self::Mechanism => "Mechanism",
-        }
     }
 }
 

@@ -2,7 +2,9 @@
 
 Source repository for generated workspace skill and role surfaces.
 
-The generator assembles active skill modules from a single NOTA roster and writes generated outputs into a caller-supplied workspace root.
+The generator assembles active modules from a NOTA output manifest and a module
+dependency index, then writes generated outputs into a caller-supplied workspace
+root.
 
 Regenerate all configured outputs:
 
@@ -22,7 +24,11 @@ For local Cargo iteration, set roots explicitly before passing a checked-in requ
 SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- skills-check.nota
 ```
 
-The V1 source-side active output manifest lives at `manifests/active-outputs.nota`; module paths and dependencies live at `manifests/module-dependencies.nota`. The CLI consumes that active manifest for normal generation. The compatibility roster at `manifests/skills-roster.nota` remains parseable for legacy checks and archived/deleted skill modeling.
+The source-side active output manifest lives at
+`manifests/active-outputs.nota`; module paths and dependencies live at
+`manifests/module-dependencies.nota`. The CLI consumes that active manifest for
+normal generation. The compatibility roster at `manifests/skills-roster.nota`
+remains parseable for legacy checks and archived/deleted skill modeling.
 
 Source skill modules live under `modules/<name>/`. Role modules live under `roles/<name>/`. Archived modules live under `skills/archive/` and are not emitted.
 
@@ -34,6 +40,11 @@ Role outputs emit harness-native worker packets:
 - Codex: `.codex/agents/<role>.toml`
 - Pi: `.pi/agents/<role>.md`
 
-Primary discovery currently emits `skills/skills.nota`, whose entries point at harness-native generated skill files. Primary `skills/*.md` skill bodies are not emitted when no consuming harness needs them.
+Generated role packets are the normal runtime doctrine bundle. Each packet
+carries its role source plus curated included modules and dependency-expanded
+modules from the manifest/index model. Additional doctrine comes from the
+prompt, generated role packet, explicit dispatch envelope, or local context; it
+does not come from runtime index discovery. Primary `skills/*.md` skill bodies
+are not emitted when no consuming harness needs them.
 
 `generate-skills` prunes generated skill directories (`.agents/skills`, `.claude/skills`) before writing. Role packet directories are not whole-directory pruned; stale role cleanup uses `skills/generated-role-outputs.nota` so only previously generated role paths are removed. `check-skills` is non-writing and reports stale generated outputs with regeneration guidance.

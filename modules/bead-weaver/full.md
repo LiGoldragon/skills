@@ -6,17 +6,17 @@ Use this skill after the intent is already aligned enough to decompose into
 work. If the prompt is still deciding what should exist, continue the alignment
 pass or ask the psyche; do not file speculative beads to force shape.
 
-Before filing a weave, load the local skills that govern the surface you are
-about to touch:
+Before filing a weave, load the generated harness skills or dispatch-envelope
+doctrine that govern the surface you are about to touch:
 
-- `skills/beads.md` for BEADS lifecycle and close notes.
-- `skills/reporting.md` when the weave depends on a design report or other
+- `beads` for BEADS lifecycle and close notes.
+- `reporting` when the weave depends on a design report or other
   fresh-context pickup surface.
-- `skills/intent-log.md` and `skills/spirit-cli.md` when new durable psyche
-  intent appears while weaving.
-- `skills/architecture-editor.md` when the weave depends on an architecture
+- `intent-log` and `spirit-cli` when new durable psyche intent appears while
+  weaving.
+- `architecture-editor` when the weave depends on an architecture
   claim that is not yet in the owning `ARCHITECTURE.md`.
-- `skills/nota-design.md` when a bead asks for a new NOTA record or schema.
+- `nota-design` when a bead asks for a new NOTA record or schema.
 
 If the aligned prompt names a source report, architecture file, Spirit record,
 worker return, or harness answer, read or use that source. If it names only
@@ -106,6 +106,6 @@ Never return a list of bare bead ids as the useful answer.
 
 ## See also
 
-- `skills/beads.md`
-- `skills/reporting.md`
-- `skills/nota-design.md`
+- `beads`
+- `reporting`
+- `nota-design`

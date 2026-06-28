@@ -6,7 +6,11 @@ Read this before designing a new NOTA file or schema. Designed badly, NOTA becom
 
 A PascalCase tag at the start of `(…)` is an enum variant. If every record in the file would carry the same tag, there is no enum — it's a struct, and structs have **no tag** in the wire form. Drop it.
 
-`skills.nota` has actual variants — `Role`, `Architecture`, `Craft`, `Programming`, `Workflow`, `Meta` — so each record IS an enum variant and the tag tells the reader which kind of skill this is. A deployment plan with one kind of step drops the tag: `(zeus apply 2026-05-19)`. If steps vary (`Build`, `Verify`, `Deploy`), the variant tags appear.
+`manifests/active-outputs.nota` has actual variants — `Skill` and `Role` — so
+each record IS an enum variant and the tag tells the reader which kind of
+generated output this is. A deployment plan with one kind of step drops the
+tag: `(zeus apply 2026-05-19)`. If steps vary (`Build`, `Verify`, `Deploy`),
+the variant tags appear.
 
 The test: *can the same position carry more than one shape?* If yes, you have an enum and the variant tag names which shape this record is. If no, you have a struct and write the fields directly with no tag.
 
@@ -17,30 +21,36 @@ NOTA comments explain the schema — what fields mean, what variants exist, the 
 Bad:
 
 ```nota
-;; Roles
-(Skill operator skills/operator.md role 1 [...])
-(Skill designer skills/designer.md role 1 [...])
+;; Skills
+(Output component-triad component-triad Skill Architecture Apex [...])
+(Output structural-forms structural-forms Skill Architecture Apex [...])
 
-;; Architecture
-(Skill component-triad skills/component-triad.md architecture 1 [...])
+;; Roles
+(Output scout role-scout Role [...] [...])
 ```
 
-Two faults: every record wears a redundant `Skill` wrapper, and the categories are duplicated as both comment and field. Fix both — the type IS the category:
+Two faults: every record wears a redundant `Output` wrapper, and the output
+kind is duplicated as both comment and field. Fix both — the variant tag IS the
+kind:
 
 ```nota
-(Role operator skills/operator.md Apex [...])
-(Role designer skills/designer.md Apex [...])
+(Skill (component-triad component-triad Architecture Apex [...] [AgentsSkill ClaudeSkill]))
+(Skill (structural-forms structural-forms Architecture Apex [...] [AgentsSkill ClaudeSkill]))
 
-(Architecture component-triad skills/component-triad.md Apex [...])
+(Role (scout role-scout [agent-output-protocol] [...] [ClaudeAgent CodexAgent PiAgent]))
 ```
 
-Same data, fewer tokens, grep-able category. Instance names (`operator`, `component-triad`) are lowercase/kebab-case because they're runtime instances; the tier value (`Apex`) is PascalCase because it's a compile-time enum variant.
+Same data, fewer tokens, grep-able kind. Instance names (`scout`,
+`component-triad`) are lowercase/kebab-case because they're runtime instances;
+the tier value (`Apex`) and target surfaces (`AgentsSkill`, `CodexAgent`) are
+PascalCase because they're compile-time enum variants.
 
 ## Rule 3 — Enums get PascalCase names, not numbers
 
 Integer codes for enum variants are a smell. `tier 1` / `tier 2` means nothing without a key; `tier Apex` / `tier Keystroke` / `tier Topic` is self-documenting and grep-able from a cold read.
 
-Bad: `(Skill component-triad ... 1 ...)`. Good: `(Architecture component-triad ... Apex ...)`.
+Bad: `(Skill (component-triad component-triad Architecture 1 [...] [AgentsSkill]))`.
+Good: `(Skill (component-triad component-triad Architecture Apex [...] [AgentsSkill]))`.
 
 Variants are **PascalCase** because they're compile-time structural (PascalCase = compile-time structural; camelCase = instance). The parser dispatches on first-character case — a lowercase `apex` parses as an instance identifier, not a variant. Numbers are fine for actual numbers (counts, identifiers, slots, ordinals where ordering matters); not as stand-ins for named categorical distinctions. Grep for `Apex` finds every apex-tier record across every NOTA file that shares the vocabulary.
 
@@ -151,7 +161,14 @@ The recurring mistake (caught repeatedly, including by the psyche on the lojix t
 
 ## The canonical example
 
-`skills.nota` is the workspace's canonical example of NOTA designed well. Open it before designing a new file. Notice: no `(Skill ...)` wrapper (implied by the file); the type IS the category (`(Role ...)`, `(Architecture ...)`, etc.); tier values are PascalCase variants (`Apex`, `Keystroke`, `Topic`, `Mechanism`); comments only explain the schema.
+The skills repo manifests are stable examples of NOTA designed well. Open
+`manifests/active-outputs.nota` before designing a new file with multiple
+record kinds. Notice: `Skill` and `Role` are real variants with different
+payloads; tier and target values are PascalCase variants (`Apex`, `Keystroke`,
+`AgentsSkill`, `CodexAgent`); comments only explain the schema. Open
+`manifests/module-dependencies.nota` when you need the contrasting
+single-record-shape example: each dependency record is a struct in a homogeneous
+vector, so it has no per-record wrapper tag.
 
 ## Grammar facts that catch the recurring mistakes
 
@@ -282,12 +299,12 @@ Two are reserved at the syntax layer: `;;` for line comments, `#` for byte liter
 
 Before producing any new NOTA shape — in a report, chat, or proposal — do four things:
 
-1. **Open `skills.nota` and read three records.** That's your template. Re-read `nota/README.md` if you haven't recently — these grammar facts are easy to misremember.
+1. **Open `manifests/active-outputs.nota` and read three records.** That's your template for a multi-kind manifest. Re-read `nota/README.md` if you haven't recently — these grammar facts are easy to misremember.
 2. **Name the wrapping type that carries the most useful distinction** (Rule 1). Never a generic `Item`, `Entry`, or `Record` when the file already says so. The variant test: if you can't name another type that could go in this position, the wrapper is superfluous — drop it.
 3. **Heterogeneous positional structure is a record (struct), not a sequence.** Lists are homogeneous; mixed-type positional structure is a struct with positional fields, and the struct's type name is not written as a tag. A PascalCase token immediately after `(` is an enum variant tag; otherwise fields come directly.
 4. **Sketch fields positionally — no `(key value)` pairs, no nested wrappers when every record has the same inner shape.** Positional means `(Decision [description] Maximum)`, not `(Decision (description [...]) (magnitude Maximum))` and not `(Decision (Description [description]) Maximum)` when `Description` is the only thing ever in that slot. Variants are PascalCase (`Maximum`, not `maximum`); date and time are two bare positional fields (`2026-05-19 01:23`), not one bracket string.
 
-Most agent NOTA mistakes are the same mistake — labeled fields. The fix is the same: read the canonical example, and let the wrapping type carry the schema.
+Most agent NOTA mistakes are the same mistake — labeled fields. The fix is the same: read the stable manifest example, and let the wrapping type carry the schema.
 
 ## When you fight the rules
 
@@ -330,5 +347,6 @@ The decode side should not accept redundant brackets for a broad bare string; ca
 ## See also
 
 - `skills/nota-schema-docs.md` — pseudo-NOTA convention for documenting record schemas in markdown (angle-bracket placeholders, optional `?`, enum `|`).
-- `skills/skills.nota` — the canonical workspace example.
+- `manifests/active-outputs.nota` — a stable multi-kind manifest example.
+- `manifests/module-dependencies.nota` — a stable single-record-shape manifest example.
 - `nota/README.md` — the language grammar source of truth.

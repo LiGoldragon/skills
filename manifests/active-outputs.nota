@@ -1,4 +1,4 @@
-;; Active generated output manifest for V1 skill and role packet generation.
+;; Active generated output manifest for SkillDoctrineV2 skill and role packet generation.
 ;; This file lists active outputs only; absence means inactive.
 ;; Skill fields: output id, module id, category, tier, description, target surfaces.
 ;; Role fields: output id, role source module id, ordered included module ids, description, target surfaces.
@@ -72,14 +72,14 @@
   (Skill (main-next main-next Workflow Keystroke [|Why each CODE repo under /git keeps a main (operator-owned) line plus a long-lived next (designer) line, and how designer uses next while operator integrates — NOT for primary. Applies whenever you choose a branch in a code repo.|] [AgentsSkill ClaudeSkill]))
   (Skill (main-feature-integration main-feature-integration Workflow Mechanism [|How to update a code-repo main with new features: operator bookmark until green, test branch families together, rebase if main moved, then land producers before consumers. Reach for it when integrating features into main.|] [AgentsSkill ClaudeSkill]))
 
-  (Role (intent-translator role-intent-translator [agent-output-protocol] [|Translates clarified psyche intent into executable dependency graphs and handoff tasks.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (scout role-scout [agent-output-protocol] [|Maps local facts, separates observations from interpretations, and names unknowns for implementers.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (repo-scaffolder role-repo-scaffolder [agent-output-protocol] [|Creates or reshapes repository scaffolds from accepted intent and local conventions.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (general-code-implementer role-general-code-implementer [agent-output-protocol] [|Implements ordinary code changes from accepted designs with focused verification evidence.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (criomos-implementer role-criomos-implementer [agent-output-protocol] [|Implements CriomOS-specific system changes with deployment and host-safety discipline.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (rust-auditor role-rust-auditor [agent-output-protocol] [|Audits Rust changes for correctness, architecture drift, typed errors, tests, and workspace Rust discipline.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (nix-auditor role-nix-auditor [agent-output-protocol] [|Audits Nix changes for module shape, flake behavior, checks, and deployment-safety evidence.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (skill-editor role-skill-editor [agent-output-protocol] [|Edits skill and role source surfaces so settled instruction stays concise, current, and generator-owned.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (intent-maintainer role-intent-maintainer [agent-output-protocol] [|Maintains intent records and manifested repository guidance without duplicating or overextending psyche statements.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (repo-operator role-repo-operator [agent-output-protocol] [|Performs final repository status, commit, push, and closeout mechanics after validation and audit evidence exist.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (intent-translator role-intent-translator [agent-output-protocol worker-output-core bead-weaver workspace-context-core] [|Translates clarified psyche intent into executable dependency graphs and handoff tasks.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (scout role-scout [agent-output-protocol worker-output-core safety-core workspace-context-core] [|Maps local facts, separates observations from interpretations, and names unknowns for implementers.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (repo-scaffolder role-repo-scaffolder [agent-output-protocol worker-output-core repo-scaffold-core code-implementation-core rust-core nix-core] [|Creates or reshapes repository scaffolds from accepted intent and local conventions.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (general-code-implementer role-general-code-implementer [agent-output-protocol worker-output-core code-implementation-core rust-core nix-core] [|Implements ordinary code changes from accepted designs with focused verification evidence.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (criomos-implementer role-criomos-implementer [agent-output-protocol worker-output-core code-implementation-core nix-core safety-core] [|Implements CriomOS-specific system changes with deployment and host-safety discipline.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (rust-auditor role-rust-auditor [agent-output-protocol worker-output-core rust-core architectural-truth-tests] [|Audits Rust changes for correctness, architecture drift, typed errors, tests, and workspace Rust discipline.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (nix-auditor role-nix-auditor [agent-output-protocol worker-output-core nix-core safety-core] [|Audits Nix changes for module shape, flake behavior, checks, and deployment-safety evidence.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (skill-editor role-skill-editor [agent-output-protocol worker-output-core skill-source-core] [|Edits skill and role source surfaces so settled instruction stays concise, current, and generator-owned.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (intent-maintainer role-intent-maintainer [agent-output-protocol worker-output-core intent-core safety-core] [|Maintains intent records and manifested repository guidance without duplicating or overextending psyche statements.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (repo-operator role-repo-operator [agent-output-protocol worker-output-core repo-operation-core] [|Performs final repository status, commit, push, and closeout mechanics after validation and audit evidence exist.|] [ClaudeAgent CodexAgent PiAgent]))
 ]

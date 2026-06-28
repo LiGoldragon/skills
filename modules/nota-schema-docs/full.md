@@ -76,4 +76,5 @@ agent draft a payload without reading the Rust.
 
 - `skills/nota-design.md` — designing the records you actually write
   (this skill is about *documenting* schemas in markdown).
-- `skills/skills.nota` — the canonical workspace example of well-designed NOTA.
+- `manifests/active-outputs.nota` — a stable manifest example of well-designed
+  NOTA.

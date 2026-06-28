@@ -483,9 +483,9 @@ topology and trace tests should fail that implementation.
 
 ## See also
 
-- `skills/actor-systems.md` — actor-density, blocking-handler,
+- `actor-systems` — actor-density, blocking-handler,
   topology, and trace rules.
-- `skills/push-not-pull.md` — the `tokio-test` clock-pause pattern for
+- `push-not-pull` — the `tokio-test` clock-pause pattern for
   proving no-polling.
-- `skills/nix-discipline.md` — the chained-derivation pattern lives in
+- `nix-discipline` — the chained-derivation pattern lives in
   nix.

@@ -1,11 +1,16 @@
-use std::{fs, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+    path::Path,
+};
 
 use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
         ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
-        ModuleDependencies, ModuleLifecycle, SkillRoster, SourceRoot, TargetSurface, WorkspaceRoot,
+        ModuleDependencies, ModuleLifecycle, RoleTargetSurface, SkillRoster, SourceRoot,
+        TargetSurface, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -19,9 +24,19 @@ fn generation_writes_derived_skill_surfaces_with_roster_frontmatter() {
         "---\nname: stale\n---\n\n# Skill — example\n\n## Rule\n\nKeep the prose.\n",
     );
 
-    fixture
+    let report = fixture
         .generate(GenerationMode::Write)
         .expect("generation succeeds");
+
+    let generated_paths: Vec<&str> = report
+        .payload()
+        .payload()
+        .iter()
+        .map(|file| file.output_path.as_ref())
+        .collect();
+    assert!(generated_paths.contains(&".agents/skills/example/SKILL.md"));
+    assert!(generated_paths.contains(&".claude/skills/example/SKILL.md"));
+    assert!(!generated_paths.contains(&"skills/skills.nota"));
 
     let generated = fixture.read_workspace_file(".agents/skills/example/SKILL.md");
     assert_eq!(
@@ -32,11 +47,7 @@ fn generation_writes_derived_skill_surfaces_with_roster_frontmatter() {
         generated,
         fixture.read_workspace_file(".claude/skills/example/SKILL.md")
     );
-    assert!(
-        fixture
-            .read_workspace_file("skills/skills.nota")
-            .contains("(Craft example .agents/skills/example/SKILL.md Topic [Example skill.])")
-    );
+    assert!(!fixture.workspace.path().join("skills/skills.nota").exists());
 }
 
 #[test]
@@ -199,7 +210,154 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
     assert_eq!(skill_count, 66);
     assert_eq!(role_count, 10);
-    assert_eq!(module_dependencies.payload().len(), 77);
+
+    let dependency_modules: BTreeSet<&str> = module_dependencies
+        .payload()
+        .iter()
+        .map(|dependency| dependency.module_identifier.as_ref())
+        .collect();
+    let active_roles: BTreeMap<&str, _> = active_outputs
+        .payload()
+        .iter()
+        .filter_map(|output| match output {
+            skills::schema::assembly::ActiveOutput::Role(role) => {
+                Some((role.output_identifier.as_ref(), role))
+            }
+            skills::schema::assembly::ActiveOutput::Skill(_) => None,
+        })
+        .collect();
+    let expected_roles: &[(&str, &str, &[&str])] = &[
+        (
+            "intent-translator",
+            "role-intent-translator",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "bead-weaver",
+                "workspace-context-core",
+            ],
+        ),
+        (
+            "scout",
+            "role-scout",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "safety-core",
+                "workspace-context-core",
+            ],
+        ),
+        (
+            "repo-scaffolder",
+            "role-repo-scaffolder",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "repo-scaffold-core",
+                "code-implementation-core",
+                "rust-core",
+                "nix-core",
+            ],
+        ),
+        (
+            "general-code-implementer",
+            "role-general-code-implementer",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "code-implementation-core",
+                "rust-core",
+                "nix-core",
+            ],
+        ),
+        (
+            "criomos-implementer",
+            "role-criomos-implementer",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "code-implementation-core",
+                "nix-core",
+                "safety-core",
+            ],
+        ),
+        (
+            "rust-auditor",
+            "role-rust-auditor",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "rust-core",
+                "architectural-truth-tests",
+            ],
+        ),
+        (
+            "nix-auditor",
+            "role-nix-auditor",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "nix-core",
+                "safety-core",
+            ],
+        ),
+        (
+            "skill-editor",
+            "role-skill-editor",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "skill-source-core",
+            ],
+        ),
+        (
+            "intent-maintainer",
+            "role-intent-maintainer",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "intent-core",
+                "safety-core",
+            ],
+        ),
+        (
+            "repo-operator",
+            "role-repo-operator",
+            &[
+                "agent-output-protocol",
+                "worker-output-core",
+                "repo-operation-core",
+            ],
+        ),
+    ];
+
+    assert_eq!(active_roles.len(), expected_roles.len());
+    for (output_identifier, module_identifier, included_modules) in expected_roles {
+        let role = active_roles
+            .get(output_identifier)
+            .unwrap_or_else(|| panic!("{output_identifier} role output modeled"));
+        assert_eq!(role.module_identifier.as_ref(), *module_identifier);
+        assert_eq!(
+            role.included_modules
+                .payload()
+                .iter()
+                .map(|module| module.as_ref())
+                .collect::<Vec<_>>(),
+            *included_modules
+        );
+        assert_eq!(
+            role.role_target_surfaces.payload(),
+            &[
+                RoleTargetSurface::ClaudeAgent,
+                RoleTargetSurface::CodexAgent,
+                RoleTargetSurface::PiAgent,
+            ]
+        );
+        assert!(dependency_modules.contains(module_identifier));
+        for included_module in *included_modules {
+            assert!(dependency_modules.contains(included_module));
+        }
+    }
 }
 
 #[test]
@@ -414,6 +572,7 @@ fn check_mode_reports_stale_output_with_guidance() {
         .expect_err("stale output fails check mode");
 
     assert!(matches!(error, Error::StaleOutput { .. }), "{error:?}");
+    assert!(!error.to_string().contains("skills.nota"));
     assert!(error.to_string().contains("generate-skills"));
     assert!(error.to_string().contains("check-skills"));
 }
@@ -424,10 +583,7 @@ fn check_mode_reports_archived_or_deleted_stale_skill_outputs() {
     fixture.write_legacy_roster(
         "(skills/archive [(old modules/old/full.md Deleted NoEmission [])] [])\n",
     );
-    fixture.write_workspace_file(
-        "skills/skills.nota",
-        fixture.expected_empty_index().as_str(),
-    );
+    fixture.write_workspace_file("skills/skills.nota", "old retired index\n");
     fixture.write_workspace_file(".agents/skills/old/SKILL.md", "stale\n");
 
     let error = fixture
@@ -438,8 +594,27 @@ fn check_mode_reports_archived_or_deleted_stale_skill_outputs() {
         matches!(error, Error::StaleGeneratedOutput { .. }),
         "{error:?}"
     );
+    assert!(!error.to_string().contains("skills.nota"));
     assert!(error.to_string().contains("archived/deleted"));
     assert!(error.to_string().contains("generate-skills"));
+}
+
+#[test]
+fn check_mode_accepts_current_outputs_with_orphaned_retired_skill_index() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current generated outputs write to fixture workspace");
+    fixture.write_workspace_file("skills/skills.nota", "old retired index\n");
+
+    fixture
+        .generate_from_repo(GenerationMode::Check)
+        .expect("retired skill index is neither generated nor stale");
+
+    assert_eq!(
+        fixture.read_workspace_file("skills/skills.nota"),
+        "old retired index\n"
+    );
 }
 
 #[test]
@@ -519,19 +694,6 @@ impl Fixture {
         );
     }
 
-    fn expected_empty_index(&self) -> String {
-        ";; NOTA records are positional. Type, then fields, no keywords.\n\
-         ;; The `(key value)` shape from Lisp/Clojure/JSON is not NOTA.\n\
-         ;; If you're sketching a new NOTA record, read .agents/skills/nota-design/SKILL.md first.\n\
-         ;;\n\
-         ;; tier values (fourth positional field below):\n\
-         ;;   apex      — read once; recognise everywhere\n\
-         ;;   keystroke — applies on every keystroke and every report\n\
-         ;;   topic     — consulted when the topic comes up\n\
-         ;;   mechanism — procedural; consulted when the named mechanism is in play\n\n[\n]\n"
-            .to_owned()
-    }
-
     fn write_source_file(&self, path: &str, text: &str) {
         self.write_file(self.source.path(), path, text);
     }
@@ -578,6 +740,21 @@ impl Fixture {
                 self.workspace.path().to_string_lossy().into_owned(),
             ),
             manifest_path: ManifestPath::new(manifest_path),
+            generation_mode,
+        }
+        .generate()
+    }
+
+    fn generate_from_repo(
+        &self,
+        generation_mode: GenerationMode,
+    ) -> Result<skills::schema::assembly::GenerationReport, Error> {
+        GenerationRequest {
+            source_root: SourceRoot::new(env!("CARGO_MANIFEST_DIR")),
+            workspace_root: WorkspaceRoot::new(
+                self.workspace.path().to_string_lossy().into_owned(),
+            ),
+            manifest_path: ManifestPath::new("manifests/active-outputs.nota"),
             generation_mode,
         }
         .generate()

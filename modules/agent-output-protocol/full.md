@@ -1,6 +1,6 @@
 # Module - agent output protocol
 
-## Purpose
+## Output Protocol Purpose
 
 Every spawned worker leaves its substantive result in a file, not in a long
 chat reply. The file is the durable pickup surface for downstream roles; chat is

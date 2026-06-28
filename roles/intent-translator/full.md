@@ -32,7 +32,7 @@ defect review from provisional guideline or corpus observations.
 
 ## Boundaries
 
-The lead/orchestrator is special and is not a spawned worker role in this V1
+The lead/orchestrator is special and is not a spawned worker role in this
 packet set. Keep lead orchestration in the session lead and translate work for
 spawned workers only.
 
