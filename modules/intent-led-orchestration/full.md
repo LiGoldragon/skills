@@ -123,13 +123,12 @@ Chat and harness output are the normal transient artifact. Write a report only
 when the psyche explicitly wants one or a fresh-context pickup artifact is
 actually warranted.
 
-## Dispatch Boundary
+## Dispatch Ownership
 
-This skill does not define reusable subagent brief templates, Spirit-query
-requirements, claim mechanics, worktree mechanics, verification rules, or
-commit/push rules. Those fixed rules live in the generated role packets and
-agent skills. The orchestrator carries decisions and selected work, not worker
-doctrine.
+The orchestrator carries alignment, decision ownership, the approved method,
+the selected role, and the selected work. Generated role packets and agent
+skills carry reusable worker doctrine: briefing shape, Spirit-query discipline,
+claim and worktree mechanics, verification rules, and commit and push rules.
 
 ## Final synthesis
 

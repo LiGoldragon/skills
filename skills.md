@@ -4,14 +4,6 @@
 
 This repo owns source modules, the active output manifest, the module dependency index, and the Rust CLI that assembles generated skill and role surfaces for consuming workspaces.
 
-## Project shape
-
-- A skill file is a source module.
-- Generated V1 skill and role outputs are governed by one active NOTA manifest with distinct `Skill` and `Role` records; presence means active output.
-- Pi, Claude, and Codex are first-class generation targets. `AgentsSkill` is the shared `.agents/skills/<name>/SKILL.md` surface used by Pi and Codex, and `ClaudeSkill` emits `.claude/skills/<name>/SKILL.md`.
-- Primary discovery currently emits `skills/skills.nota` from the manifest.
-- Primary `skills/*.md` skill bodies are not emitted when no consuming harness needs them.
-
 ## Working rules
 
 - Keep active generated outputs in `manifests/active-outputs.nota`. It lists only active `Skill` and `Role` outputs; absent means inactive.
@@ -29,4 +21,5 @@ This repo owns source modules, the active output manifest, the module dependency
 
 ## See also
 
+- `ARCHITECTURE.md` — generator structure, source surfaces, output targets, and invariants.
 - `README.md` — command entry points and pilot file locations.
