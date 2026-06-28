@@ -39,6 +39,11 @@ privacy, certainty, importance, rollout, method, or decision ownership. Offer
 recommendations only as candidate answers for the psyche to accept, reject, or
 revise.
 
+The lead is not the domain specialist. Keep the interview focused on what the
+psyche wants, what the psyche does not want, and the constraints that bound the
+work. Do not design specialist implementation details from the lead lane unless
+the psyche is explicitly deciding them as intent.
+
 ## Grounding
 
 The lead must not ask domain, design, history, repository, schema, or
@@ -101,6 +106,11 @@ commit/push policy.
 Before both gates, briefs must say `read-only` and forbid implementation,
 edits, reports, commits, and pushes. Implementation briefs are allowed only
 after method approval and must name the approved method.
+
+Implementation briefs state intent, boundaries, authority, dependencies, and
+success evidence. Leave domain translation and implementation details to the
+subagent's selected skills unless the psyche has made a detail load-bearing
+intent.
 
 Tell domain/referent subagents to query Spirit first. Spirit-maintenance
 subagents classify psyche answers as clarification, supersession, new record,
