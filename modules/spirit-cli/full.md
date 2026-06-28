@@ -115,8 +115,11 @@ contradiction checks. Common rejections: `MissingTestimony` when no
 verbatim psyche quote is supplied, `Overstated` when the claimed
 certainty outruns the quote's modal strength, `ImportanceUnsupported`
 when an elevated importance rung lacks recurrence or blast-radius
-evidence, and `NonIntent` when a submission is task state rather than a
-durable arrow. Rejection replies include the supporting record set and
+evidence, and `NonIntent` when a submission is task state, a
+single-component or architectural decision, or an instruction about
+operating Spirit itself, rather than a durable universal arrow. Matter
+and task state belong in code, `ARCHITECTURE.md`, or skills, not the
+intent log — capture is rare (`skills/intent-log.md` §"Intent is rare"). Rejection replies include the supporting record set and
 can be very large; pipe through `head` when exploring. The deployed
 contract carries `Propose`, `Clarify`, `Supersede`, `Retire`, `Remove`,
 `ChangeCertainty`, `BumpImportance`, `ChangeRecord`, and
@@ -144,12 +147,20 @@ referent-guardian judges the new name, rejecting a verb or vague
 concept as `NonReferent` / `TooVague`. Tag the real particulars; leave
 the vector empty `[]` only when the record names none. A named instance
 is a referent, never a domain — `(... DeepSeek)` is wrong, `DeepSeek`
-is a referent (domains are universal subjects). Concrete example, with
-the named particulars in the trailing referent vector:
+is a referent (domains are universal subjects). Concrete example — a
+universal work principle, which names no single component and so carries
+an empty referent vector:
 
 ```sh
-spirit "(Record (([(Technology (Software (Engineering Architecture)))] Constraint [the sema-engine is the exclusive interface to the database] High Minimum Zero [sema-engine spirit]) ([([the engine is the only thing that opens the database] None)] [exclusive-DB rule; tags the named particulars it constrains])))"
+spirit "(Record (([(Information Documentation)] Principle [ask the psyche when intent is unclear instead of inferring it] High Minimum Zero []) ([([if you don't know what I want, ask me — don't make it up] None)] [universal work-conduct rule; it names no single particular, so the referent vector is empty])))"
 ```
+
+A single-component architectural constraint — "the sema-engine is the
+exclusive interface to the database" — is matter, not intent: it is
+scoped to one component, so it is written into that repo's
+`ARCHITECTURE.md`, never recorded in Spirit. Populate the referent vector
+when a universal rule genuinely concerns named particulars; leave it
+empty `[]` when the rule is a workspace-universal subject.
 
 Higher privacy values narrow the audience; `Zero` is the workspace
 default. Never put private personal substance in a `Zero` record.

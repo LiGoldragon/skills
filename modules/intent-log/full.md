@@ -25,6 +25,44 @@ agent reading still happens through skills, ARCHITECTURE.md, and
 reports; the intent log surfaces only when the author's voice is the
 question.
 
+## Intent is rare — the default is not to capture
+
+Intent is rare. Most of what the psyche says is not intent. The default
+response to any psyche utterance is not to capture; capture is the
+exception. Over-capture is the failure this discipline corrects — when
+unsure, do not capture: ask, or let it pass.
+
+A statement is **intent** only if it is all three of:
+
+- **Directive** — it directs, decides, or wants. It is the psyche's
+  direction about the work or the world, not an observation, belief, or
+  status.
+- **Durable** — it bears on future work or conduct, past the current
+  task.
+- **Universal** — a rule applicable across almost any scenario,
+  optionally with colour about specific areas.
+
+A statement is **not intent — do not capture** if any of these hold:
+
+- **No directive behind it** — durable-sounding but it directs nothing.
+  That is information, not intent.
+- **Private or personal** — personal, bodily, or private-affairs remarks
+  are never captured and never go to public Spirit. Route per
+  `skills/privacy.md`.
+- **Matter** — scoped to one mechanism, component, or architectural
+  decision, or about how to use or operate Spirit itself. Matter goes to
+  code, `ARCHITECTURE.md`, or skills, never the intent log.
+- **Ephemeral** — chatter with no bearing beyond the moment.
+
+### The strip test for matter
+
+Judge the matter line by the load-bearing directive stripped of framing.
+If the directive is an action performed on or with Spirit — read it,
+refresh from it, what it captures, how to format captures — it is matter.
+If it is a general work or world behaviour that Spirit merely records —
+ask instead of fabricating; match the effort to the ask — it is intent,
+even when a narrower version also appears in a manifested doc.
+
 ## Spirit gate — classify before any write
 
 Spirit writes are conservative. Before any `spirit "(Record …)"`,
@@ -96,10 +134,13 @@ recordable:
   identifiable target; ordinary clarification means edit.
 - `Constraint` — "never do Z".
 
-A task instruction may contain a durable statement: "rename
-signal-core to signal-frame" carries a naming decision; "write the
-report" does not. Record only the durable part; the task itself goes to
-beads, locks, reports, or chat. Repetition is signal, but duplicates,
+A task instruction may still carry a durable universal statement: "ask
+me when you're unsure instead of guessing" carries a Principle worth
+recording. "Write the report" carries only task state, and "rename this
+component" carries a single-component decision (matter); neither is
+intent. Record only the durable universal arrow; the task goes to beads,
+locks, reports, or chat, and the one-off matter decision goes to code,
+`ARCHITECTURE.md`, or skills. Repetition is signal, but duplicates,
 clarification, and supersession are maintenance work
 (`skills/intent-maintenance.md`), not an excuse to write uncertain
 entries.
@@ -372,9 +413,9 @@ the bracketed substance is the load-bearing citation. Especially in
 psyche-facing reports, and wherever an intent is central to a document,
 quote it literally in a prominent place.
 
-> Per Spirit abcd (Decision High): [Generated engine traits carry
-> minimal lifecycle hooks: on_start and on_stop with typed failure
-> results.]
+> Per Spirit abcd (Principle High): [Ask the psyche when intent is
+> unclear instead of inferring it; inferring intent is bearing false
+> witness.]
 
 The brackets are the citation marker. Spirit identifiers are random
 opaque lowercase base36 shortest-unique-prefix codes, minimum four

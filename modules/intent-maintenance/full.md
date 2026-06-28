@@ -39,7 +39,13 @@ The cleanup operation is **`ResolveClarification`**.
 A Spirit-maintenance worker starts by searching or inspecting the relevant
 Spirit domain and referent records. It decides whether the psyche answer is a
 clarification, supersession, new record, or non-Spirit material before it writes
-anything. When resolving a mistaken standalone clarification:
+anything. Non-Spirit material is anything that fails the intent gate: matter (a
+single-mechanism, single-component, or architectural decision, or an instruction
+about operating Spirit itself) and non-intent (information that directs nothing,
+private or personal substance, ephemeral chatter). It belongs in code,
+`ARCHITECTURE.md`, skills, or a private report — not the intent log
+(`skills/intent-log.md` §"Intent is rare"). When resolving a mistaken standalone
+clarification:
 
 1. Lookup the mistaken clarification record and preserve its full text in the
    maintenance report or commit notes.

@@ -12,6 +12,18 @@ This is currently a periodic manual sweep; the eventual target is
 entries as work. The discipline doesn't change when that lands — only
 the trigger does (agent-initiated to spirit-surfaced).
 
+## Matter never passed through Spirit
+
+Spirit holds only universal psyche intent. A single-mechanism,
+single-component, or architectural decision, and any instruction about
+operating Spirit itself, is matter — it was never recorded in Spirit, so
+it never arrives here through a sweep. Matter is written directly into
+its home (`ARCHITECTURE.md`, skills, or code) when it is decided, not
+captured into Spirit and routed out later. Manifestation routes captured
+*intent*; the architecture and skill destinations below are also the
+direct home for matter that bypasses Spirit entirely (`skills/intent-log.md`
+§"Intent is rare").
+
 ## The destinations
 
 | Guidance file | What lands there |
@@ -41,8 +53,11 @@ For each intent record, ask in order:
    `skills/<topic>.md`. If no skill exists, create one.
 5. **Project-specific** — intent about one repo's direction? → that
    repo's `INTENT.md`.
-6. **Architectural decision for one repo** → that repo's
-   `ARCHITECTURE.md`.
+6. **Architectural colour for one repo** → that repo's
+   `ARCHITECTURE.md`. A pure single-component architectural decision is
+   matter and was already written there directly, not via a Spirit
+   record; this step fires only for the architectural colour carried by a
+   genuinely universal record.
 
 One record can land in multiple destinations (a statement about NOTA
 grammar lands in both `skills/nota-design.md` and the relevant nota

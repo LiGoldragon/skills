@@ -13,13 +13,15 @@ Before any direct `spirit` use for intent capture or observation, reload
 `skills/intent-log.md` and `skills/spirit-cli.md` in the current context.
 Do not rely on memory of the Spirit wire shape or capture rules.
 
-## Capture intent FIRST
+## Capture intent FIRST — and capture is rare
 
-When a psyche prompt arrives, the absolute first action — before any report, code, or chat reply — is to read it for intent statements (Decision / Principle / Correction / Clarification / Constraint), classify each as public or private, and capture it through the right substrate. Public intent goes through the deployed Spirit CLI; private personal substance becomes a `Private intent` note in the relevant private report repository (see `skills/privacy.md`).
+When a psyche prompt arrives, the absolute first action — before any report, code, or chat reply — is to read it *for* intent: classify each statement, and capture the rare one that is genuine intent through the right substrate.
 
-Everything else the prompt asked for derives from intent and is done *after* the capture. Reports, code, and chat are all downstream of intent.
+Capture-first does not mean capture-everything. Intent is rare; most prompts carry none, and the default outcome is no capture. Capture only a statement that is directive, durable, and universal. Leave information (durable-sounding but directing nothing), matter (a single-component, architectural, or Spirit-operation instruction), ephemeral chatter, and anything you are unsure of uncaptured — ask, or let it pass. The five recordable kinds, the not-intent categories, and the full capture-vs-edit gate live in `skills/intent-log.md` §"Intent is rare" — read it fresh before any Spirit capture.
 
-The five recordable kinds, the certainty-versus-importance calibration, and the full capture-vs-edit gate live in `skills/intent-log.md` — read it fresh before any Spirit capture.
+When a prompt does carry intent, classify each piece as public or private. Public intent goes through the deployed Spirit CLI; private, personal, or bodily substance is never captured to public Spirit — it becomes a `Private intent` note in the relevant private report repository (see `skills/privacy.md`).
+
+Everything else the prompt asked for derives from intent and is done *after* the capture, or the decision not to capture. Reports, code, and chat are all downstream of intent.
 
 ## Ask the psyche when intent is unclear
 
