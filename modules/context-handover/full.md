@@ -1,57 +1,37 @@
 # Skill — context handover
 
-## Purpose
+## Rules
 
 Use when the psyche asks for a handover, clean-session prompt, restart context,
-or "bring this back next turn."
+or material to bring forward next turn.
 
-A context handover gives a fresh agent the least context needed to understand
-the matter accurately. It is not a transcript summary, status report, work log,
-or replay of agent reasoning.
+A handover gives a fresh agent the least context needed to understand the matter
+accurately. It is not a transcript digest, correction log, or display of agent
+reasoning.
 
-## Include
+Keep psyche intent and matter context distinct. Psyche intent is what the psyche
+wants, rejects, values, or explicitly decides. Matter context is terminology,
+constraints, source locators, observed facts, and live decisions that still affect
+the work.
 
-Include only information that furthers the fresh agent's understanding of the
-intent being discussed:
+State the final corrected truth. Do not preserve the mistaken path that led to
+it.
 
-- psyche intent: what the psyche wants, rejects, values, or has explicitly
-  decided;
-- useful matter-context: meanings of terms, relevant research results,
-  constraints, source locators, and open decisions that still affect the work;
-- current facts only when they are necessary for the intent or next decision.
+Include only facts whose absence would make a fresh agent misunderstand the
+matter or repeat a settled question.
 
-State resolved corrections as the final truth. Do not preserve the correction
-history. Write "psyche wants Y", not "the agent thought X but psyche meant Y".
+Exclude agent guesses, apologies, reasoning trails, tool chronology, and routine
+working-copy state.
 
-## Exclude
+Exclude restatements of skills, protocols, repository instructions, or command
+manuals the next agent will load from their owning surfaces.
 
-Exclude anything that does not improve the next agent's understanding:
+Exclude dead acronyms, resolved mistakes, stale branches, and trivia that no
+longer affects a decision.
 
-- agent guesses, confessions, apologies, and reasoning trails;
-- report/file/tool results unless they are useful matter-context;
-- implementation chronology, commit lists, and working-copy state unless the
-  psyche asked for operational continuation and the detail affects the next
-  move;
-- restatements of skills or protocols the next agent will read itself;
-- resolved mistakes, dead acronyms, and trivia that no longer affect a decision;
-- generic next-step advice not explicitly requested by the psyche.
+If operational continuation matters, name the exact live blocker, artifact,
+command result, or source locator the next agent needs. Otherwise delete
+implementation chronology.
 
-## Shape
-
-Prefer a compact prompt with two sections:
-
-```text
-Intent:
-- ...
-
-Useful context:
-- ...
-```
-
-Add `Open decisions:` only when the psyche has left live choices for the next
-agent to resolve. Do not add a plan unless the psyche asked for one.
-
-## Standard
-
-Every line must answer: "Would a fresh agent misunderstand the matter without
-this?" If not, delete it.
+Every line must answer: would a fresh agent misunderstand the matter without
+this? If not, delete it.
