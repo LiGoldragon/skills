@@ -117,11 +117,11 @@ impl GenerationRequest {
         let workspace_root = RootPath::new(self.workspace_root.as_ref()).to_path_buf()?;
         let configuration =
             GenerationSource::new(source_root.clone(), self.manifest_path.clone()).read()?;
+        let jobs = GenerationJobs::new(source_root, workspace_root.clone(), configuration.clone())
+            .jobs()?;
         if self.generation_mode == GenerationMode::Write {
             WorkspacePruner::new(workspace_root.clone(), configuration.clone()).prune()?;
         }
-        let jobs = GenerationJobs::new(source_root, workspace_root.clone(), configuration.clone())
-            .jobs()?;
         let mut files = Vec::new();
         for job in jobs {
             files.push(job.generate(self.generation_mode)?);
@@ -288,6 +288,7 @@ impl GenerationJobs {
                 }
             }
         }
+        OutputPathIndex::new().validate(&jobs)?;
         Ok(jobs)
     }
 }
@@ -413,6 +414,53 @@ impl GenerationJob {
             Self::Rendered(output) => output.write(mode),
         }
     }
+
+    fn output_path(&self) -> Result<WorkspacePath> {
+        match self {
+            Self::Manifest(assembler) => WorkspacePath::new(
+                assembler.workspace_root.clone(),
+                PathBuf::from(assembler.manifest.output_path.as_ref()),
+            ),
+            Self::Rendered(output) => Ok(output.output_path.clone()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct OutputPathIndex {
+    physical_paths: BTreeMap<PathBuf, String>,
+}
+
+impl OutputPathIndex {
+    fn new() -> Self {
+        Self {
+            physical_paths: BTreeMap::new(),
+        }
+    }
+
+    fn validate(mut self, jobs: &[GenerationJob]) -> Result<()> {
+        for job in jobs {
+            self.record(job)?;
+        }
+        Ok(())
+    }
+
+    fn record(&mut self, job: &GenerationJob) -> Result<()> {
+        let output_path = job.output_path()?;
+        let physical_path = output_path.full_path();
+        let relative_path = output_path.relative_path().to_string_lossy().into_owned();
+        if self
+            .physical_paths
+            .insert(physical_path.clone(), relative_path.clone())
+            .is_some()
+        {
+            return Err(Error::DuplicateOutputPath {
+                relative_path,
+                physical_path,
+            });
+        }
+        Ok(())
+    }
 }
 
 impl ActiveSkill {
@@ -464,13 +512,12 @@ impl ActiveRole {
     }
 
     fn assembled_modules(&self, module_index: &ModuleIndex) -> Result<Vec<ModulePath>> {
-        let mut resolved = BTreeSet::new();
-        let mut paths = vec![module_index.path(&self.module_identifier)?];
-        resolved.insert(self.module_identifier.clone());
+        let mut expansion = ModuleExpansion::new(module_index);
+        expansion.append_without_dependencies(&self.module_identifier)?;
         for module_identifier in self.included_modules.payload() {
-            module_index.append_with_dependencies(module_identifier, &mut resolved, &mut paths)?;
+            expansion.append(module_identifier)?;
         }
-        Ok(paths)
+        Ok(expansion.into_paths())
     }
 
     fn frontmatter(&self) -> Frontmatter {
@@ -521,34 +568,11 @@ impl ModuleIndex {
     }
 
     fn expanded_paths(&self, module_identifiers: &[ModuleIdentifier]) -> Result<Vec<ModulePath>> {
-        let mut resolved = BTreeSet::new();
-        let mut paths = Vec::new();
+        let mut expansion = ModuleExpansion::new(self);
         for module_identifier in module_identifiers {
-            self.append_with_dependencies(module_identifier, &mut resolved, &mut paths)?;
+            expansion.append(module_identifier)?;
         }
-        Ok(paths)
-    }
-
-    fn append_with_dependencies(
-        &self,
-        module_identifier: &ModuleIdentifier,
-        resolved: &mut BTreeSet<ModuleIdentifier>,
-        paths: &mut Vec<ModulePath>,
-    ) -> Result<()> {
-        if resolved.contains(module_identifier) {
-            return Ok(());
-        }
-        let dependency = self.dependency(module_identifier)?;
-        for dependency_identifier in dependency.dependency_modules.payload() {
-            self.append_with_dependencies(dependency_identifier, resolved, paths)?;
-        }
-        resolved.insert(module_identifier.clone());
-        paths.push(dependency.module_path.clone());
-        Ok(())
-    }
-
-    fn path(&self, module_identifier: &ModuleIdentifier) -> Result<ModulePath> {
-        Ok(self.dependency(module_identifier)?.module_path.clone())
+        Ok(expansion.into_paths())
     }
 
     fn dependency(&self, module_identifier: &ModuleIdentifier) -> Result<&ModuleDependency> {
@@ -557,6 +581,66 @@ impl ModuleIndex {
             .ok_or_else(|| Error::MissingModule {
                 module_identifier: module_identifier.as_ref().to_owned(),
             })
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct ModuleExpansion<'a> {
+    module_index: &'a ModuleIndex,
+    resolved: BTreeSet<ModuleIdentifier>,
+    visiting: Vec<ModuleIdentifier>,
+    paths: Vec<ModulePath>,
+}
+
+impl<'a> ModuleExpansion<'a> {
+    fn new(module_index: &'a ModuleIndex) -> Self {
+        Self {
+            module_index,
+            resolved: BTreeSet::new(),
+            visiting: Vec::new(),
+            paths: Vec::new(),
+        }
+    }
+
+    fn append_without_dependencies(&mut self, module_identifier: &ModuleIdentifier) -> Result<()> {
+        if self.resolved.contains(module_identifier) {
+            return Ok(());
+        }
+        let dependency = self.module_index.dependency(module_identifier)?;
+        self.resolved.insert(module_identifier.clone());
+        self.paths.push(dependency.module_path.clone());
+        Ok(())
+    }
+
+    fn append(&mut self, module_identifier: &ModuleIdentifier) -> Result<()> {
+        if self.resolved.contains(module_identifier) {
+            return Ok(());
+        }
+        if let Some(position) = self
+            .visiting
+            .iter()
+            .position(|visiting_identifier| visiting_identifier == module_identifier)
+        {
+            let mut module_identifiers: Vec<String> = self.visiting[position..]
+                .iter()
+                .map(|identifier| identifier.as_ref().to_owned())
+                .collect();
+            module_identifiers.push(module_identifier.as_ref().to_owned());
+            return Err(Error::ModuleDependencyCycle { module_identifiers });
+        }
+        let dependency = self.module_index.dependency(module_identifier)?;
+        self.visiting.push(module_identifier.clone());
+        for dependency_identifier in dependency.dependency_modules.payload() {
+            self.append(dependency_identifier)?;
+        }
+        self.visiting.pop();
+        self.resolved.insert(module_identifier.clone());
+        self.paths.push(dependency.module_path.clone());
+        Ok(())
+    }
+
+    fn into_paths(self) -> Vec<ModulePath> {
+        self.paths
     }
 }
 

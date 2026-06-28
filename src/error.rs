@@ -37,6 +37,17 @@ pub enum Error {
     #[error("module `{module_identifier}` is missing from module dependencies")]
     MissingModule { module_identifier: String },
 
+    #[error("module dependency cycle: {}", module_identifiers.join(" -> "))]
+    ModuleDependencyCycle { module_identifiers: Vec<String> },
+
+    #[error(
+        "generated output path `{relative_path}` resolves to duplicate physical path {physical_path}"
+    )]
+    DuplicateOutputPath {
+        relative_path: String,
+        physical_path: PathBuf,
+    },
+
     #[error("duplicate markdown heading `{heading}` in {path}")]
     DuplicateHeading { path: PathBuf, heading: String },
 

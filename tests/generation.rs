@@ -251,6 +251,103 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
+fn generation_rejects_direct_module_dependency_cycle() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example modules/example/full.md [example])]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("direct dependency cycle fails generation");
+
+    assert!(
+        matches!(
+            error,
+            Error::ModuleDependencyCycle {
+                ref module_identifiers
+            } if module_identifiers
+                .iter()
+                .map(String::as_str)
+                .eq(["example", "example"])
+        ),
+        "{error:?}"
+    );
+    assert!(error.to_string().contains("example -> example"));
+}
+
+#[test]
+fn generation_rejects_transitive_module_dependency_cycle() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example first Craft Topic [Example skill.] [AgentsSkill]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(first modules/first/full.md [second]) (second modules/second/full.md [third]) (third modules/third/full.md [second])]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("transitive dependency cycle fails generation");
+
+    assert!(
+        matches!(
+            error,
+            Error::ModuleDependencyCycle {
+                ref module_identifiers
+            } if module_identifiers
+                .iter()
+                .map(String::as_str)
+                .eq(["second", "third", "second"])
+        ),
+        "{error:?}"
+    );
+    assert!(error.to_string().contains("second -> third -> second"));
+}
+
+#[test]
+fn generation_rejects_duplicate_role_output_paths_before_write() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (worker worker [] [Worker role.] [ClaudeAgent ClaudeAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [])]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate role output path fails before rendering");
+
+    assert!(
+        matches!(
+            error,
+            Error::DuplicateOutputPath {
+                ref relative_path,
+                ..
+            } if relative_path == ".claude/agents/worker.md"
+        ),
+        "{error:?}"
+    );
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".claude/agents/worker.md")
+            .exists()
+    );
+}
+
+#[test]
 fn write_mode_removes_only_inventory_owned_stale_role_outputs() {
     let fixture = Fixture::new();
     fixture.write_role_generation_sources();
