@@ -1,6 +1,6 @@
 # skills repo — Agent Instructions
 
-Read `/home/li/primary/AGENTS.md`, then this repo's `INTENT.md` and `skills.md` before editing.
+Read `/home/li/primary/AGENTS.md`, then this repo's `skills.md` before editing.
 
 This repo is public. Keep private material out of modules, the roster, generated outputs, commits, and chat.
 

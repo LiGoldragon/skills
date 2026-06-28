@@ -78,9 +78,9 @@ required context, completion claims, and the evidence each implementer must
 produce.
 
 The lead proposes the method from that translation and waits for psyche approval
-before implementation dispatch. Implementers receive the Translation Brief plus
-concrete task material, preferably by path. The brief states what the worker may
-read, edit, verify, and publish.
+before implementation dispatch. Implementation dispatch names the approved task,
+selected role, and relevant source material. The selected role's generated
+packet and agent skills own the fixed worker rules.
 
 Substantial work gets a distinct auditor by default. The auditor receives the
 Translation Brief, implementer evidence, changed-file paths, and verification
@@ -123,32 +123,13 @@ Chat and harness output are the normal transient artifact. Write a report only
 when the psyche explicitly wants one or a fresh-context pickup artifact is
 actually warranted.
 
-## Dispatch
+## Dispatch Boundary
 
-Every subagent brief states task, authority, working directory, dependency
-position, allowed sources, return shape, claim/worktree expectations,
-verification expectations, and commit/push policy, then includes:
-
-```text
-Read `AGENTS.md` and `skills/skills.nota`; select any additional triggered
-skills; then follow this brief's worker instructions for lane choice,
-orchestration claims, worktree handling, verification, return shape, and
-commit/push policy.
-```
-
-Before both gates, briefs must say `read-only` and forbid implementation,
-edits, reports, commits, and pushes. Implementation briefs are allowed only
-after method approval and must name the approved method.
-
-Implementation briefs state intent, boundaries, authority, dependencies, and
-success evidence. They include the Translation Brief path and any concrete
-source, report, task, or evidence paths the worker needs. Leave domain
-translation and implementation details to the selected worker role unless the
-psyche has made a detail load-bearing intent.
-
-Tell domain/referent subagents to query Spirit first. Spirit-maintenance
-subagents classify psyche answers as clarification, supersession, new record,
-or non-Spirit task material.
+This skill does not define reusable subagent brief templates, Spirit-query
+requirements, claim mechanics, worktree mechanics, verification rules, or
+commit/push rules. Those fixed rules live in the generated role packets and
+agent skills. The orchestrator carries decisions and selected work, not worker
+doctrine.
 
 ## Final synthesis
 
