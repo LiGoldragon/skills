@@ -187,11 +187,11 @@
             fi
             touch "$out"
           '';
-          generation-requests-use-roster = pkgs.runCommand "skills-generation-requests-use-roster" { } ''
-            grep -F 'manifests/skills-roster.nota' ${cleanSource}/skills-check.nota >/dev/null
-            grep -F 'manifests/skills-roster.nota' ${cleanSource}/skills-generate.nota >/dev/null
+          generation-requests-use-active-manifest = pkgs.runCommand "skills-generation-requests-use-active-manifest" { } ''
+            grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-check.nota >/dev/null
+            grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-generate.nota >/dev/null
             if find ${cleanSource}/manifests -mindepth 2 -type f -name '*.nota' | grep .; then
-              echo "generation must be driven by the single skills roster, not per-output manifests" >&2
+              echo "generation must be driven by the single active output manifest, not per-output manifests" >&2
               exit 1
             fi
             touch "$out"

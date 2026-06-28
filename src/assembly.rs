@@ -1,15 +1,21 @@
-use std::{collections::BTreeSet, env, fs, io, path::PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    env, fs, io,
+    path::PathBuf,
+};
 
-use nota::{NotaEncode, NotaSource};
+use nota::{NotaDecode, NotaEncode, NotaSource};
 
 use crate::{
     error::{Error, Result},
     markdown::{MarkdownAssembly, MarkdownFragment},
     schema::assembly::{
-        ByteCount, EntryPoint, EntryPointExtra, ExtraSurface, Frontmatter, FrontmatterEntry,
-        FrontmatterKey, FrontmatterValue, GeneratedFile, GeneratedFiles, GenerationMode,
-        GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ModuleLifecycle,
-        ModulePath, Modules, Operation, OutputKind, OutputPath, OutputSurface, RosterPath,
+        ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, EntryPoint,
+        EntryPointExtra, ExtraSurface, Frontmatter, FrontmatterEntry, FrontmatterKey,
+        FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode,
+        GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
+        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleLifecycle, ModulePath,
+        Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
         SkillCategory, SkillMetadata, SkillModule, SkillRoster, SkillTier, TargetSurface,
     },
     workspace_path::WorkspacePath,
@@ -109,17 +115,18 @@ impl GenerationRequest {
     pub fn generate(&self) -> Result<GenerationReport> {
         let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
         let workspace_root = RootPath::new(self.workspace_root.as_ref()).to_path_buf()?;
-        let roster = RosterFile::new(source_root.clone(), self.roster_path.clone()).read()?;
+        let configuration =
+            GenerationSource::new(source_root.clone(), self.manifest_path.clone()).read()?;
         if self.generation_mode == GenerationMode::Write {
-            WorkspacePruner::new(workspace_root.clone(), roster.clone()).prune()?;
+            WorkspacePruner::new(workspace_root.clone(), configuration.clone()).prune()?;
         }
-        let jobs =
-            GenerationJobs::new(source_root, workspace_root.clone(), roster.clone()).jobs()?;
+        let jobs = GenerationJobs::new(source_root, workspace_root.clone(), configuration.clone())
+            .jobs()?;
         let mut files = Vec::new();
         for job in jobs {
             files.push(job.generate(self.generation_mode)?);
         }
-        StaleOutputScan::new(workspace_root, roster).validate()?;
+        StaleOutputScan::new(workspace_root, configuration).validate()?;
         Ok(GenerationReport::new(GeneratedFiles::new(files)))
     }
 }
@@ -147,31 +154,77 @@ impl<'a> RootPath<'a> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct RosterFile {
+struct GenerationSource {
     source_root: PathBuf,
-    roster_path: RosterPath,
+    manifest_path: ManifestPath,
 }
 
-impl RosterFile {
-    fn new(source_root: PathBuf, roster_path: RosterPath) -> Self {
+impl GenerationSource {
+    fn new(source_root: PathBuf, manifest_path: ManifestPath) -> Self {
         Self {
             source_root,
-            roster_path,
+            manifest_path,
         }
     }
 
-    fn read(&self) -> Result<SkillRoster> {
-        let roster_workspace_path = WorkspacePath::new(
+    fn read(&self) -> Result<GenerationConfiguration> {
+        if self.manifest_path.as_ref().ends_with("skills-roster.nota") {
+            return self.read_legacy_roster();
+        }
+        let active_outputs: ActiveOutputs = SourceFile::new(
             self.source_root.clone(),
-            PathBuf::from(self.roster_path.as_ref()),
-        )?;
-        let path = roster_workspace_path.full_path();
+            PathBuf::from(self.manifest_path.as_ref()),
+        )
+        .read()?;
+        let dependency_path = PathBuf::from(self.manifest_path.as_ref())
+            .parent()
+            .map(|parent| parent.join("module-dependencies.nota"))
+            .unwrap_or_else(|| PathBuf::from("module-dependencies.nota"));
+        let module_dependencies: ModuleDependencies =
+            SourceFile::new(self.source_root.clone(), dependency_path).read()?;
+        Ok(GenerationConfiguration::active(
+            active_outputs,
+            module_dependencies,
+        ))
+    }
+
+    fn read_legacy_roster(&self) -> Result<GenerationConfiguration> {
+        let roster: SkillRoster = SourceFile::new(
+            self.source_root.clone(),
+            PathBuf::from(self.manifest_path.as_ref()),
+        )
+        .read()?;
+        Ok(GenerationConfiguration::legacy(roster))
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct SourceFile {
+    source_root: PathBuf,
+    relative_path: PathBuf,
+}
+
+impl SourceFile {
+    fn new(source_root: PathBuf, relative_path: PathBuf) -> Self {
+        Self {
+            source_root,
+            relative_path,
+        }
+    }
+
+    fn read<T>(&self) -> Result<T>
+    where
+        T: NotaDecode,
+    {
+        let workspace_path =
+            WorkspacePath::new(self.source_root.clone(), self.relative_path.clone())?;
+        let path = workspace_path.full_path();
         let text = fs::read_to_string(&path).map_err(|source| Error::ReadFile {
             path: path.clone(),
             source,
         })?;
         NotaSource::new(&text)
-            .parse::<SkillRoster>()
+            .parse::<T>()
             .map_err(|source| Error::DecodeNota { path, source })
     }
 }
@@ -180,15 +233,19 @@ impl RosterFile {
 struct GenerationJobs {
     source_root: PathBuf,
     workspace_root: PathBuf,
-    roster: SkillRoster,
+    configuration: GenerationConfiguration,
 }
 
 impl GenerationJobs {
-    fn new(source_root: PathBuf, workspace_root: PathBuf, roster: SkillRoster) -> Self {
+    fn new(
+        source_root: PathBuf,
+        workspace_root: PathBuf,
+        configuration: GenerationConfiguration,
+    ) -> Self {
         Self {
             source_root,
             workspace_root,
-            roster,
+            configuration,
         }
     }
 
@@ -197,27 +254,149 @@ impl GenerationJobs {
         jobs.push(GenerationJob::Rendered(RenderedOutput::new(
             self.workspace_root.clone(),
             OutputPath::new("skills/skills.nota"),
-            SkillIndex::new(self.roster.clone()).render(),
+            SkillIndex::new(self.configuration.active_skills()).render(),
         )?));
-        for module in self.roster.skill_modules.payload() {
-            for manifest in module.first_class_manifests() {
-                jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
-                    self.source_root.clone(),
-                    self.workspace_root.clone(),
-                    manifest,
-                )));
-            }
+        for manifest in self.configuration.skill_manifests()? {
+            jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
+                self.source_root.clone(),
+                self.workspace_root.clone(),
+                manifest,
+            )));
         }
-        for entry_point in self.roster.entry_points.payload() {
-            for manifest in entry_point.extra_manifests()? {
-                jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
-                    self.source_root.clone(),
-                    self.workspace_root.clone(),
-                    manifest,
-                )));
+        for manifest in self.configuration.role_manifests()? {
+            jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
+                self.source_root.clone(),
+                self.workspace_root.clone(),
+                manifest,
+            )));
+        }
+        if self.configuration.uses_active_manifest() {
+            jobs.push(GenerationJob::Rendered(RenderedOutput::new(
+                self.workspace_root.clone(),
+                RoleOutputInventory::relative_path(),
+                self.configuration.role_output_inventory().render(),
+            )?));
+        }
+        if let Some(roster) = self.configuration.compatibility_roster() {
+            for entry_point in roster.entry_points.payload() {
+                for manifest in entry_point.extra_manifests()? {
+                    jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
+                        self.source_root.clone(),
+                        self.workspace_root.clone(),
+                        manifest,
+                    )));
+                }
             }
         }
         Ok(jobs)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct GenerationConfiguration {
+    active_outputs: ActiveOutputs,
+    module_dependencies: ModuleDependencies,
+    compatibility_roster: Option<SkillRoster>,
+}
+
+impl GenerationConfiguration {
+    fn active(active_outputs: ActiveOutputs, module_dependencies: ModuleDependencies) -> Self {
+        Self {
+            active_outputs,
+            module_dependencies,
+            compatibility_roster: None,
+        }
+    }
+
+    fn legacy(roster: SkillRoster) -> Self {
+        Self {
+            active_outputs: roster.active_outputs(),
+            module_dependencies: roster.module_dependencies(),
+            compatibility_roster: Some(roster),
+        }
+    }
+
+    fn uses_active_manifest(&self) -> bool {
+        self.compatibility_roster.is_none()
+    }
+
+    fn compatibility_roster(&self) -> Option<&SkillRoster> {
+        self.compatibility_roster.as_ref()
+    }
+
+    fn active_skills(&self) -> Vec<ActiveSkill> {
+        self.active_outputs
+            .payload()
+            .iter()
+            .filter_map(|output| match output {
+                ActiveOutput::Skill(skill) => Some(skill.clone()),
+                ActiveOutput::Role(_) => None,
+            })
+            .collect()
+    }
+
+    fn active_roles(&self) -> Vec<ActiveRole> {
+        self.active_outputs
+            .payload()
+            .iter()
+            .filter_map(|output| match output {
+                ActiveOutput::Role(role) => Some(role.clone()),
+                ActiveOutput::Skill(_) => None,
+            })
+            .collect()
+    }
+
+    fn skill_manifests(&self) -> Result<Vec<Manifest>> {
+        let module_index = ModuleIndex::new(self.module_dependencies.clone())?;
+        let mut manifests = Vec::new();
+        for skill in self.active_skills() {
+            for manifest in skill.first_class_manifests(&module_index)? {
+                manifests.push(manifest);
+            }
+        }
+        Ok(manifests)
+    }
+
+    fn role_manifests(&self) -> Result<Vec<Manifest>> {
+        let module_index = ModuleIndex::new(self.module_dependencies.clone())?;
+        let mut manifests = Vec::new();
+        for role in self.active_roles() {
+            for manifest in role.manifests(&module_index)? {
+                manifests.push(manifest);
+            }
+        }
+        Ok(manifests)
+    }
+
+    fn role_output_inventory(&self) -> RoleOutputInventory {
+        RoleOutputInventory::new(
+            self.active_roles()
+                .iter()
+                .flat_map(ActiveRole::output_paths)
+                .collect(),
+        )
+    }
+
+    fn expected_outputs(&self) -> Result<BTreeSet<String>> {
+        let mut expected = BTreeSet::new();
+        expected.insert("skills/skills.nota".to_owned());
+        for manifest in self.skill_manifests()? {
+            expected.insert(manifest.output_path.as_ref().to_owned());
+        }
+        for manifest in self.role_manifests()? {
+            expected.insert(manifest.output_path.as_ref().to_owned());
+        }
+        if self.uses_active_manifest() {
+            expected.insert(RoleOutputInventory::relative_path().into_payload());
+        }
+        if let Some(roster) = &self.compatibility_roster {
+            for entry_point in roster.entry_points.payload() {
+                for output_path in entry_point.extra_paths() {
+                    expected.insert(output_path.into_payload());
+                }
+            }
+        }
+        Ok(expected)
     }
 }
 
@@ -236,30 +415,198 @@ impl GenerationJob {
     }
 }
 
-impl SkillModule {
-    fn first_class_manifests(&self) -> Vec<Manifest> {
-        if self.emission_policy != crate::schema::assembly::EmissionPolicy::FirstClassSkill {
-            return Vec::new();
+impl ActiveSkill {
+    fn first_class_manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
+        let mut manifests = Vec::new();
+        for surface in self.target_surfaces.payload() {
+            let output_surface = OutputSurface::from(surface);
+            manifests.push(Manifest {
+                output_path: OutputPath::new(
+                    output_surface.skill_path(self.output_identifier.as_ref()),
+                ),
+                output_kind: OutputKind::Markdown,
+                output_surface,
+                frontmatter: self.frontmatter(),
+                modules: Modules::new(
+                    module_index.expanded_paths(std::slice::from_ref(&self.module_identifier))?,
+                ),
+            });
         }
-        let ModuleLifecycle::Active(metadata) = &self.module_lifecycle else {
-            return Vec::new();
-        };
-        self.target_surfaces
-            .payload()
-            .iter()
-            .map(|surface| self.first_class_manifest(surface, metadata))
-            .collect()
+        Ok(manifests)
     }
 
-    fn first_class_manifest(&self, surface: &TargetSurface, metadata: &SkillMetadata) -> Manifest {
-        let module_name = self.module_name.payload();
-        let output_surface = OutputSurface::from(surface);
-        Manifest {
-            output_path: OutputPath::new(output_surface.skill_path(module_name)),
-            output_kind: OutputKind::Markdown,
-            output_surface,
-            frontmatter: metadata.frontmatter(module_name),
-            modules: Modules::new(vec![self.module_path.clone()]),
+    fn frontmatter(&self) -> Frontmatter {
+        SkillMetadata {
+            skill_category: self.skill_category,
+            skill_tier: self.skill_tier,
+            skill_description: self.skill_description.clone(),
+        }
+        .frontmatter(self.output_identifier.as_ref())
+    }
+}
+
+impl ActiveRole {
+    fn manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
+        let mut manifests = Vec::new();
+        for surface in self.role_target_surfaces.payload() {
+            let output_surface = OutputSurface::from(surface);
+            manifests.push(Manifest {
+                output_path: OutputPath::new(
+                    output_surface.role_path(self.output_identifier.as_ref()),
+                ),
+                output_kind: output_surface.role_output_kind(),
+                output_surface,
+                frontmatter: self.frontmatter(),
+                modules: Modules::new(self.assembled_modules(module_index)?),
+            });
+        }
+        Ok(manifests)
+    }
+
+    fn assembled_modules(&self, module_index: &ModuleIndex) -> Result<Vec<ModulePath>> {
+        let mut resolved = BTreeSet::new();
+        let mut paths = vec![module_index.path(&self.module_identifier)?];
+        resolved.insert(self.module_identifier.clone());
+        for module_identifier in self.included_modules.payload() {
+            module_index.append_with_dependencies(module_identifier, &mut resolved, &mut paths)?;
+        }
+        Ok(paths)
+    }
+
+    fn frontmatter(&self) -> Frontmatter {
+        Frontmatter::new(vec![
+            FrontmatterEntry {
+                frontmatter_key: FrontmatterKey::new("name"),
+                frontmatter_value: FrontmatterValue::new(self.output_identifier.as_ref()),
+            },
+            FrontmatterEntry {
+                frontmatter_key: FrontmatterKey::new("description"),
+                frontmatter_value: FrontmatterValue::new(self.role_description.as_ref()),
+            },
+        ])
+    }
+
+    fn output_paths(&self) -> Vec<OutputPath> {
+        self.role_target_surfaces
+            .payload()
+            .iter()
+            .map(|surface| {
+                let output_surface = OutputSurface::from(surface);
+                OutputPath::new(output_surface.role_path(self.output_identifier.as_ref()))
+            })
+            .collect()
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ModuleIndex {
+    entries: BTreeMap<ModuleIdentifier, ModuleDependency>,
+}
+
+impl ModuleIndex {
+    fn new(module_dependencies: ModuleDependencies) -> Result<Self> {
+        let mut entries = BTreeMap::new();
+        for dependency in module_dependencies.into_payload() {
+            let module_identifier = dependency.module_identifier.clone();
+            if entries
+                .insert(module_identifier.clone(), dependency)
+                .is_some()
+            {
+                return Err(Error::DuplicateModule {
+                    module_identifier: module_identifier.into_payload(),
+                });
+            }
+        }
+        Ok(Self { entries })
+    }
+
+    fn expanded_paths(&self, module_identifiers: &[ModuleIdentifier]) -> Result<Vec<ModulePath>> {
+        let mut resolved = BTreeSet::new();
+        let mut paths = Vec::new();
+        for module_identifier in module_identifiers {
+            self.append_with_dependencies(module_identifier, &mut resolved, &mut paths)?;
+        }
+        Ok(paths)
+    }
+
+    fn append_with_dependencies(
+        &self,
+        module_identifier: &ModuleIdentifier,
+        resolved: &mut BTreeSet<ModuleIdentifier>,
+        paths: &mut Vec<ModulePath>,
+    ) -> Result<()> {
+        if resolved.contains(module_identifier) {
+            return Ok(());
+        }
+        let dependency = self.dependency(module_identifier)?;
+        for dependency_identifier in dependency.dependency_modules.payload() {
+            self.append_with_dependencies(dependency_identifier, resolved, paths)?;
+        }
+        resolved.insert(module_identifier.clone());
+        paths.push(dependency.module_path.clone());
+        Ok(())
+    }
+
+    fn path(&self, module_identifier: &ModuleIdentifier) -> Result<ModulePath> {
+        Ok(self.dependency(module_identifier)?.module_path.clone())
+    }
+
+    fn dependency(&self, module_identifier: &ModuleIdentifier) -> Result<&ModuleDependency> {
+        self.entries
+            .get(module_identifier)
+            .ok_or_else(|| Error::MissingModule {
+                module_identifier: module_identifier.as_ref().to_owned(),
+            })
+    }
+}
+
+impl SkillRoster {
+    fn active_outputs(&self) -> ActiveOutputs {
+        ActiveOutputs::new(
+            self.skill_modules
+                .payload()
+                .iter()
+                .filter_map(SkillModule::active_output)
+                .collect(),
+        )
+    }
+
+    fn module_dependencies(&self) -> ModuleDependencies {
+        ModuleDependencies::new(
+            self.skill_modules
+                .payload()
+                .iter()
+                .map(SkillModule::module_dependency)
+                .collect(),
+        )
+    }
+}
+
+impl SkillModule {
+    fn active_output(&self) -> Option<ActiveOutput> {
+        let ModuleLifecycle::Active(metadata) = &self.module_lifecycle else {
+            return None;
+        };
+        if self.emission_policy != crate::schema::assembly::EmissionPolicy::FirstClassSkill {
+            return None;
+        }
+        Some(ActiveOutput::Skill(ActiveSkill {
+            output_identifier: crate::schema::assembly::OutputIdentifier::new(
+                self.module_name.as_ref(),
+            ),
+            module_identifier: ModuleIdentifier::new(self.module_name.as_ref()),
+            skill_category: metadata.skill_category,
+            skill_tier: metadata.skill_tier,
+            skill_description: metadata.skill_description.clone(),
+            target_surfaces: self.target_surfaces.clone(),
+        }))
+    }
+
+    fn module_dependency(&self) -> ModuleDependency {
+        ModuleDependency {
+            module_identifier: ModuleIdentifier::new(self.module_name.as_ref()),
+            module_path: self.module_path.clone(),
+            dependency_modules: crate::schema::assembly::DependencyModules::new(Vec::new()),
         }
     }
 
@@ -276,6 +623,16 @@ impl From<&TargetSurface> for OutputSurface {
         match surface {
             TargetSurface::AgentsSkill => Self::AgentsSkill,
             TargetSurface::ClaudeSkill => Self::ClaudeSkill,
+        }
+    }
+}
+
+impl From<&RoleTargetSurface> for OutputSurface {
+    fn from(surface: &RoleTargetSurface) -> Self {
+        match surface {
+            RoleTargetSurface::ClaudeAgent => Self::ClaudeAgent,
+            RoleTargetSurface::CodexAgent => Self::CodexAgent,
+            RoleTargetSurface::PiAgent => Self::PiAgent,
         }
     }
 }
@@ -345,9 +702,13 @@ impl OutputSurface {
         match self {
             Self::AgentsSkill => format!(".agents/skills/{module_name}/SKILL.md"),
             Self::ClaudeSkill => format!(".claude/skills/{module_name}/SKILL.md"),
-            Self::Workspace | Self::ClaudeCommand | Self::CodexPrompt | Self::CodexCommand => {
-                unreachable!("not a first-class skill surface")
-            }
+            Self::Workspace
+            | Self::ClaudeCommand
+            | Self::CodexPrompt
+            | Self::CodexCommand
+            | Self::ClaudeAgent
+            | Self::CodexAgent
+            | Self::PiAgent => unreachable!("not a first-class skill surface"),
         }
     }
 
@@ -356,9 +717,39 @@ impl OutputSurface {
             Self::ClaudeCommand => format!(".claude/commands/{module_name}.md"),
             Self::CodexPrompt => format!(".codex/prompts/{module_name}.md"),
             Self::CodexCommand => format!(".codex/commands/{module_name}.md"),
-            Self::Workspace | Self::AgentsSkill | Self::ClaudeSkill => {
-                unreachable!("not an entrypoint extra surface")
-            }
+            Self::Workspace
+            | Self::AgentsSkill
+            | Self::ClaudeSkill
+            | Self::ClaudeAgent
+            | Self::CodexAgent
+            | Self::PiAgent => unreachable!("not an entrypoint extra surface"),
+        }
+    }
+
+    fn role_path(&self, role_name: &str) -> String {
+        match self {
+            Self::ClaudeAgent => format!(".claude/agents/{role_name}.md"),
+            Self::CodexAgent => format!(".codex/agents/{role_name}.toml"),
+            Self::PiAgent => format!(".pi/agents/{role_name}.md"),
+            Self::Workspace
+            | Self::AgentsSkill
+            | Self::ClaudeSkill
+            | Self::ClaudeCommand
+            | Self::CodexPrompt
+            | Self::CodexCommand => unreachable!("not a role target surface"),
+        }
+    }
+
+    fn role_output_kind(&self) -> OutputKind {
+        match self {
+            Self::CodexAgent => OutputKind::Toml,
+            Self::ClaudeAgent | Self::PiAgent => OutputKind::Markdown,
+            Self::Workspace
+            | Self::AgentsSkill
+            | Self::ClaudeSkill
+            | Self::ClaudeCommand
+            | Self::CodexPrompt
+            | Self::CodexCommand => unreachable!("not a role target surface"),
         }
     }
 }
@@ -396,6 +787,7 @@ impl ManifestAssembler {
     fn render(&self, output_path: &WorkspacePath) -> Result<String> {
         match self.manifest.output_kind {
             OutputKind::Markdown => self.render_markdown(output_path),
+            OutputKind::Toml => self.render_toml(output_path),
             OutputKind::Nota => {
                 unreachable!("derived NOTA outputs render without module manifests")
             }
@@ -418,6 +810,27 @@ impl ManifestAssembler {
         .render()
     }
 
+    fn render_toml(&self, output_path: &WorkspacePath) -> Result<String> {
+        let body = MarkdownAssembly::new(
+            output_path.clone(),
+            self.manifest.output_surface,
+            Vec::new(),
+            self.markdown_fragments()?,
+        )
+        .render()?;
+        RoleToml::new(&self.manifest.frontmatter, body).render()
+    }
+
+    fn markdown_fragments(&self) -> Result<Vec<MarkdownFragment>> {
+        let mut fragments = Vec::new();
+        for module_path in self.manifest.modules.payload() {
+            fragments.push(MarkdownFragment::read(
+                self.module_workspace_path(module_path)?,
+            )?);
+        }
+        Ok(fragments)
+    }
+
     fn module_workspace_path(&self, module_path: &ModulePath) -> Result<WorkspacePath> {
         WorkspacePath::new(
             self.source_root.clone(),
@@ -427,13 +840,80 @@ impl ManifestAssembler {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleToml {
+    name: String,
+    description: String,
+    developer_instructions: String,
+}
+
+impl RoleToml {
+    fn new(frontmatter: &Frontmatter, developer_instructions: String) -> Self {
+        let mut name = String::new();
+        let mut description = String::new();
+        for entry in frontmatter.payload() {
+            match entry.frontmatter_key.as_ref() {
+                "name" => name = entry.frontmatter_value.as_ref().to_owned(),
+                "description" => description = entry.frontmatter_value.as_ref().to_owned(),
+                _ => {}
+            }
+        }
+        Self {
+            name,
+            description,
+            developer_instructions,
+        }
+    }
+
+    fn render(&self) -> Result<String> {
+        let mut output = String::new();
+        output.push_str("name = ");
+        output.push_str(&TomlString::new(&self.name).render());
+        output.push('\n');
+        output.push_str("description = ");
+        output.push_str(&TomlString::new(&self.description).render());
+        output.push('\n');
+        output.push_str("developer_instructions = ");
+        output.push_str(&TomlString::new(&self.developer_instructions).render());
+        output.push('\n');
+        Ok(output)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct TomlString<'a> {
+    text: &'a str,
+}
+
+impl<'a> TomlString<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn render(&self) -> String {
+        let mut output = String::from("\"");
+        for character in self.text.chars() {
+            match character {
+                '\\' => output.push_str("\\\\"),
+                '"' => output.push_str("\\\""),
+                '\n' => output.push_str("\\n"),
+                '\r' => output.push_str("\\r"),
+                '\t' => output.push_str("\\t"),
+                character => output.push(character),
+            }
+        }
+        output.push('"');
+        output
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct SkillIndex {
-    roster: SkillRoster,
+    active_skills: Vec<ActiveSkill>,
 }
 
 impl SkillIndex {
-    fn new(roster: SkillRoster) -> Self {
-        Self { roster }
+    fn new(active_skills: Vec<ActiveSkill>) -> Self {
+        Self { active_skills }
     }
 
     fn render(&self) -> String {
@@ -449,19 +929,16 @@ impl SkillIndex {
              ;;   mechanism — procedural; consulted when the named mechanism is in play\n\n[\n",
         );
         let mut previous_category = None;
-        for module in self.roster.skill_modules.payload() {
-            let ModuleLifecycle::Active(metadata) = &module.module_lifecycle else {
-                continue;
-            };
+        for skill in &self.active_skills {
             if previous_category
                 .as_ref()
-                .is_some_and(|category| category != &metadata.skill_category)
+                .is_some_and(|category| category != &skill.skill_category)
             {
                 output.push('\n');
             }
-            previous_category = Some(metadata.skill_category);
+            previous_category = Some(skill.skill_category);
             output.push_str("  ");
-            output.push_str(&metadata.index_record(module.module_name.payload()));
+            output.push_str(&skill.index_record());
             output.push('\n');
         }
         output.push_str("]\n");
@@ -469,11 +946,13 @@ impl SkillIndex {
     }
 }
 
-impl SkillMetadata {
-    fn index_record(&self, module_name: &str) -> String {
+impl ActiveSkill {
+    fn index_record(&self) -> String {
         format!(
-            "({} {module_name} .agents/skills/{module_name}/SKILL.md {} {})",
+            "({} {} .agents/skills/{}/SKILL.md {} {})",
             self.skill_category.as_str(),
+            self.output_identifier.as_ref(),
+            self.output_identifier.as_ref(),
             self.skill_tier.as_str(),
             self.skill_description.to_nota()
         )
@@ -559,27 +1038,104 @@ impl RenderedOutput {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleOutputInventory {
+    output_paths: Vec<OutputPath>,
+}
+
+impl RoleOutputInventory {
+    fn new(output_paths: Vec<OutputPath>) -> Self {
+        Self { output_paths }
+    }
+
+    fn relative_path() -> OutputPath {
+        OutputPath::new("skills/generated-role-outputs.nota")
+    }
+
+    fn render(&self) -> String {
+        GeneratedRoleOutputs::new(self.output_paths.clone()).to_nota()
+    }
+
+    fn contains(&self, output_path: &OutputPath) -> bool {
+        self.output_paths.contains(output_path)
+    }
+
+    fn remove_stale(&self, active: &Self, pruner: &WorkspacePruner) -> Result<()> {
+        for output_path in &self.output_paths {
+            if !active.contains(output_path) {
+                pruner.remove_relative_path(output_path.as_ref())?;
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_no_stale_paths(&self, active: &Self, scan: &StaleOutputScan) -> Result<()> {
+        for output_path in &self.output_paths {
+            if !active.contains(output_path) {
+                scan.require_absent(output_path.as_ref())?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleOutputInventoryFile {
+    workspace_root: PathBuf,
+}
+
+impl RoleOutputInventoryFile {
+    fn new(workspace_root: PathBuf) -> Self {
+        Self { workspace_root }
+    }
+
+    fn read(&self) -> Result<RoleOutputInventory> {
+        let workspace_path = WorkspacePath::new(
+            self.workspace_root.clone(),
+            PathBuf::from(RoleOutputInventory::relative_path().as_ref()),
+        )?;
+        let path = workspace_path.full_path();
+        match fs::read_to_string(&path) {
+            Ok(text) => {
+                let generated_outputs = NotaSource::new(&text)
+                    .parse::<GeneratedRoleOutputs>()
+                    .map_err(|source| Error::DecodeNota { path, source })?;
+                Ok(RoleOutputInventory::new(generated_outputs.into_payload()))
+            }
+            Err(source) if source.kind() == io::ErrorKind::NotFound => {
+                Ok(RoleOutputInventory::new(Vec::new()))
+            }
+            Err(source) => Err(Error::ReadFile { path, source }),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct WorkspacePruner {
     workspace_root: PathBuf,
-    roster: SkillRoster,
+    configuration: GenerationConfiguration,
 }
 
 impl WorkspacePruner {
-    fn new(workspace_root: PathBuf, roster: SkillRoster) -> Self {
+    fn new(workspace_root: PathBuf, configuration: GenerationConfiguration) -> Self {
         Self {
             workspace_root,
-            roster,
+            configuration,
         }
     }
 
     fn prune(&self) -> Result<()> {
         self.remove_relative_path(".agents/skills")?;
         self.remove_relative_path(".claude/skills")?;
-        for entry_point in self.roster.entry_points.payload() {
-            for output_path in entry_point.extra_paths() {
-                self.remove_relative_path(output_path.as_ref())?;
+        if let Some(roster) = self.configuration.compatibility_roster() {
+            for entry_point in roster.entry_points.payload() {
+                for output_path in entry_point.extra_paths() {
+                    self.remove_relative_path(output_path.as_ref())?;
+                }
             }
         }
+        RoleOutputInventoryFile::new(self.workspace_root.clone())
+            .read()?
+            .remove_stale(&self.configuration.role_output_inventory(), self)?;
         Ok(())
     }
 
@@ -615,43 +1171,33 @@ impl WorkspacePruner {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct StaleOutputScan {
     workspace_root: PathBuf,
-    roster: SkillRoster,
+    configuration: GenerationConfiguration,
 }
 
 impl StaleOutputScan {
-    fn new(workspace_root: PathBuf, roster: SkillRoster) -> Self {
+    fn new(workspace_root: PathBuf, configuration: GenerationConfiguration) -> Self {
         Self {
             workspace_root,
-            roster,
+            configuration,
         }
     }
 
     fn validate(&self) -> Result<()> {
-        let expected = self.expected_outputs();
-        for module in self.roster.skill_modules.payload() {
-            for output_path in module.first_class_paths() {
-                if !expected.contains(output_path.as_ref()) {
-                    self.require_absent(output_path.as_ref())?;
+        let expected = self.configuration.expected_outputs()?;
+        self.require_no_unexpected_skill_files(".agents/skills", &expected)?;
+        self.require_no_unexpected_skill_files(".claude/skills", &expected)?;
+        if let Some(roster) = self.configuration.compatibility_roster() {
+            for module in roster.skill_modules.payload() {
+                for output_path in module.first_class_paths() {
+                    if !expected.contains(output_path.as_ref()) {
+                        self.require_absent(output_path.as_ref())?;
+                    }
                 }
             }
         }
-        Ok(())
-    }
-
-    fn expected_outputs(&self) -> BTreeSet<String> {
-        let mut expected = BTreeSet::new();
-        expected.insert("skills/skills.nota".to_owned());
-        for module in self.roster.skill_modules.payload() {
-            for manifest in module.first_class_manifests() {
-                expected.insert(manifest.output_path.as_ref().to_owned());
-            }
-        }
-        for entry_point in self.roster.entry_points.payload() {
-            for output_path in entry_point.extra_paths() {
-                expected.insert(output_path.as_ref().to_owned());
-            }
-        }
-        expected
+        RoleOutputInventoryFile::new(self.workspace_root.clone())
+            .read()?
+            .validate_no_stale_paths(&self.configuration.role_output_inventory(), self)
     }
 
     fn require_absent(&self, relative_path: &str) -> Result<()> {
@@ -660,6 +1206,45 @@ impl StaleOutputScan {
         let full_path = workspace_path.full_path();
         match fs::symlink_metadata(&full_path) {
             Ok(_) => Err(Error::StaleGeneratedOutput { path: full_path }),
+            Err(source) if source.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(source) => Err(Error::ReadFile {
+                path: full_path,
+                source,
+            }),
+        }
+    }
+
+    fn require_no_unexpected_skill_files(
+        &self,
+        relative_directory: &str,
+        expected: &BTreeSet<String>,
+    ) -> Result<()> {
+        let workspace_path = WorkspacePath::new(
+            self.workspace_root.clone(),
+            PathBuf::from(relative_directory),
+        )?;
+        let full_path = workspace_path.full_path();
+        match fs::read_dir(&full_path) {
+            Ok(entries) => {
+                for entry in entries {
+                    let entry = entry.map_err(|source| Error::ReadFile {
+                        path: full_path.clone(),
+                        source,
+                    })?;
+                    let skill_path = entry.path().join("SKILL.md");
+                    if skill_path.exists() {
+                        let relative_path = skill_path
+                            .strip_prefix(&self.workspace_root)
+                            .expect("skill path comes from workspace root")
+                            .to_string_lossy()
+                            .into_owned();
+                        if !expected.contains(&relative_path) {
+                            self.require_absent(&relative_path)?;
+                        }
+                    }
+                }
+                Ok(())
+            }
             Err(source) if source.kind() == io::ErrorKind::NotFound => Ok(()),
             Err(source) => Err(Error::ReadFile {
                 path: full_path,

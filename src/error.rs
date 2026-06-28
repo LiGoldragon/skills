@@ -31,6 +31,12 @@ pub enum Error {
     #[error("environment variable {variable} must name a generation root")]
     MissingEnvironmentRoot { variable: String },
 
+    #[error("module `{module_identifier}` is listed more than once in module dependencies")]
+    DuplicateModule { module_identifier: String },
+
+    #[error("module `{module_identifier}` is missing from module dependencies")]
+    MissingModule { module_identifier: String },
+
     #[error("duplicate markdown heading `{heading}` in {path}")]
     DuplicateHeading { path: PathBuf, heading: String },
 

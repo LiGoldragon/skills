@@ -1,1 +1,1 @@
-(Generate ($SKILLS_SOURCE_ROOT $SKILLS_WORKSPACE_ROOT manifests/skills-roster.nota Check))
+(Generate ($SKILLS_SOURCE_ROOT $SKILLS_WORKSPACE_ROOT manifests/active-outputs.nota Check))

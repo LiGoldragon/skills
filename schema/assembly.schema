@@ -3,10 +3,10 @@
 {
   Operation [(Generate GenerationRequest)]
   GenerationOutcome [(Generated GenerationReport)]
-  GenerationRequest { SourceRoot WorkspaceRoot RosterPath GenerationMode }
+  GenerationRequest { SourceRoot WorkspaceRoot ManifestPath GenerationMode }
   SourceRoot Path {| Display AsRef PartialEq |}
   WorkspaceRoot Path {| Display AsRef PartialEq |}
-  RosterPath Path {| Display AsRef PartialEq |}
+  ManifestPath Path {| Display AsRef PartialEq |}
   GenerationMode [Write Check]
   GenerationReport { GeneratedFiles }
   GeneratedFiles (Vector GeneratedFile)
@@ -14,14 +14,28 @@
   OutputPath Path {| Display AsRef PartialEq |}
   ByteCount Integer {| Display PartialEq PartialOrd |}
   Manifest { OutputPath OutputKind OutputSurface Frontmatter Modules }
-  OutputKind [Markdown Nota]
-  OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeCommand CodexPrompt CodexCommand]
+  OutputKind [Markdown Nota Toml]
+  OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeCommand CodexPrompt CodexCommand ClaudeAgent CodexAgent PiAgent]
   Frontmatter (Vector FrontmatterEntry)
   FrontmatterEntry { FrontmatterKey FrontmatterValue }
   FrontmatterKey String {| Display AsRef PartialEq |}
   FrontmatterValue String {| Display AsRef PartialEq |}
   ModulePath Path {| Display AsRef PartialEq |}
   Modules (Vector ModulePath)
+  ActiveOutputs (Vector ActiveOutput)
+  ActiveOutput [(Skill ActiveSkill) (Role ActiveRole)]
+  ActiveSkill { OutputIdentifier ModuleIdentifier SkillCategory SkillTier SkillDescription TargetSurfaces }
+  ActiveRole { OutputIdentifier ModuleIdentifier IncludedModules RoleDescription RoleTargetSurfaces }
+  OutputIdentifier String {| Display AsRef PartialEq |}
+  ModuleIdentifier String {| Display AsRef PartialEq Ord |}
+  IncludedModules (Vector ModuleIdentifier)
+  RoleDescription String {| Display AsRef PartialEq |}
+  RoleTargetSurfaces (Vector RoleTargetSurface)
+  RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
+  ModuleDependencies (Vector ModuleDependency)
+  ModuleDependency { ModuleIdentifier ModulePath DependencyModules }
+  DependencyModules (Vector ModuleIdentifier)
+  GeneratedRoleOutputs (Vector OutputPath)
   SkillRoster { ArchiveRoot SkillModules EntryPoints }
   ArchiveRoot Path {| Display AsRef PartialEq |}
   SkillModules (Vector SkillModule)

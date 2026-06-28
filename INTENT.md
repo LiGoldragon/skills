@@ -8,16 +8,17 @@ Synthesised from psyche statements; not embellished.
 - The repository named `skills` is the source repository for generated skill files.
 - A skill file is a source module.
 - Generated final skill files are assembled from an explicit ordered NOTA roster.
+- Generated V1 skill and role outputs are governed by one active NOTA manifest with distinct `Skill` and `Role` records; presence means active output.
 - The v1 pilot starts only with `intent-led-orchestration` and proves module assembly while preserving current behavior.
 - All current workspace skills should migrate into the generator/module system if the full weave proves workable.
 - Pi, Claude, and Codex are first-class generation targets; the `.agents/skills/<name>/SKILL.md` surface is shared by Pi and Codex.
 
 ## Constraints
 
-- V1 has no module-declared dependencies or imports.
-- V1 uses one NOTA roster/config as the source of truth for active, archived, and deleted status and target emission, with no conditionals.
+- V1 uses a sidecar NOTA module dependency index for dependencies only: module id, source path, and dependency module ids.
+- V1 uses one active NOTA manifest as the source of truth for active generated Skill and Role outputs, with inactive outputs omitted rather than listed.
 - A skill file is a source module; modules assemble through explicit roster entries.
-- Module source files may carry reusable metadata, but harness-specific frontmatter belongs in the roster.
+- Module source files may carry reusable metadata, but harness-specific frontmatter belongs in manifest records or the compatibility roster.
 - Every active migrated module emits first-class `AgentsSkill` and `ClaudeSkill` surfaces unless it is explicitly internal/building-block only; `AgentsSkill` is shared by Pi and Codex.
 - Command/prompt extra surfaces are not current generated invocation surfaces; `intent-led-orchestration` remains available through first-class skill surfaces only.
 - Module status distinguishes active, archived, and deleted modules; archived modules live under `skills/archive/` with no emission manifests.

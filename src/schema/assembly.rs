@@ -42,7 +42,7 @@ pub enum GenerationOutcome {
 pub struct GenerationRequest {
     pub source_root: SourceRoot,
     pub workspace_root: WorkspaceRoot,
-    pub roster_path: RosterPath,
+    pub manifest_path: ManifestPath,
     pub generation_mode: GenerationMode,
 }
 
@@ -68,7 +68,7 @@ pub struct WorkspaceRoot(Path);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct RosterPath(Path);
+pub struct ManifestPath(Path);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -165,6 +165,7 @@ pub struct Manifest {
 pub enum OutputKind {
     Markdown,
     Nota,
+    Toml,
 }
 
 #[rustfmt::skip]
@@ -189,6 +190,9 @@ pub enum OutputSurface {
     ClaudeCommand,
     CodexPrompt,
     CodexCommand,
+    ClaudeAgent,
+    CodexAgent,
+    PiAgent,
 }
 
 #[rustfmt::skip]
@@ -241,6 +245,162 @@ pub struct ModulePath(Path);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Modules(Vec<ModulePath>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ActiveOutputs(Vec<ActiveOutput>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ActiveOutput {
+    Skill(ActiveSkill),
+    Role(ActiveRole),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ActiveSkill {
+    pub output_identifier: OutputIdentifier,
+    pub module_identifier: ModuleIdentifier,
+    pub skill_category: SkillCategory,
+    pub skill_tier: SkillTier,
+    pub skill_description: SkillDescription,
+    pub target_surfaces: TargetSurfaces,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ActiveRole {
+    pub output_identifier: OutputIdentifier,
+    pub module_identifier: ModuleIdentifier,
+    pub included_modules: IncludedModules,
+    pub role_description: RoleDescription,
+    pub role_target_surfaces: RoleTargetSurfaces,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OutputIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
+#[rkyv(derive(PartialEq, Eq, PartialOrd, Ord))]
+pub struct ModuleIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct IncludedModules(Vec<ModuleIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleDescription(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleTargetSurfaces(Vec<RoleTargetSurface>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum RoleTargetSurface {
+    ClaudeAgent,
+    CodexAgent,
+    PiAgent,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModuleDependencies(Vec<ModuleDependency>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModuleDependency {
+    pub module_identifier: ModuleIdentifier,
+    pub module_path: ModulePath,
+    pub dependency_modules: DependencyModules,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct DependencyModules(Vec<ModuleIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct GeneratedRoleOutputs(Vec<OutputPath>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -532,7 +692,7 @@ impl From<Path> for WorkspaceRoot {
 }
 
 #[rustfmt::skip]
-impl RosterPath {
+impl ManifestPath {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
     }
@@ -544,7 +704,7 @@ impl RosterPath {
     }
 }
 #[rustfmt::skip]
-impl From<Path> for RosterPath {
+impl From<Path> for ManifestPath {
     fn from(payload: Path) -> Self {
         Self::new(payload)
     }
@@ -717,6 +877,177 @@ impl Modules {
 #[rustfmt::skip]
 impl From<Vec<ModulePath>> for Modules {
     fn from(payload: Vec<ModulePath>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ActiveOutputs {
+    pub fn new(payload: Vec<ActiveOutput>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ActiveOutput> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ActiveOutput> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ActiveOutput>> for ActiveOutputs {
+    fn from(payload: Vec<ActiveOutput>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OutputIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for OutputIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModuleIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ModuleIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl IncludedModules {
+    pub fn new(payload: Vec<ModuleIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ModuleIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ModuleIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ModuleIdentifier>> for IncludedModules {
+    fn from(payload: Vec<ModuleIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleDescription {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RoleDescription {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleTargetSurfaces {
+    pub fn new(payload: Vec<RoleTargetSurface>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<RoleTargetSurface> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<RoleTargetSurface> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<RoleTargetSurface>> for RoleTargetSurfaces {
+    fn from(payload: Vec<RoleTargetSurface>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModuleDependencies {
+    pub fn new(payload: Vec<ModuleDependency>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ModuleDependency> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ModuleDependency> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ModuleDependency>> for ModuleDependencies {
+    fn from(payload: Vec<ModuleDependency>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl DependencyModules {
+    pub fn new(payload: Vec<ModuleIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ModuleIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ModuleIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ModuleIdentifier>> for DependencyModules {
+    fn from(payload: Vec<ModuleIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl GeneratedRoleOutputs {
+    pub fn new(payload: Vec<OutputPath>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OutputPath> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OutputPath> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OutputPath>> for GeneratedRoleOutputs {
+    fn from(payload: Vec<OutputPath>) -> Self {
         Self::new(payload)
     }
 }
@@ -935,21 +1266,21 @@ impl PartialEq<&str> for WorkspaceRoot {
 }
 
 #[rustfmt::skip]
-impl std::fmt::Display for RosterPath {
+impl std::fmt::Display for ManifestPath {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
     }
 }
 
 #[rustfmt::skip]
-impl AsRef<str> for RosterPath {
+impl AsRef<str> for ManifestPath {
     fn as_ref(&self) -> &str {
         self.payload().as_str()
     }
 }
 
 #[rustfmt::skip]
-impl PartialEq<&str> for RosterPath {
+impl PartialEq<&str> for ManifestPath {
     fn eq(&self, other: &&str) -> bool {
         self.payload() == other
     }
@@ -1055,6 +1386,69 @@ impl AsRef<str> for ModulePath {
 
 #[rustfmt::skip]
 impl PartialEq<&str> for ModulePath {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for OutputIdentifier {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for OutputIdentifier {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for OutputIdentifier {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for ModuleIdentifier {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for ModuleIdentifier {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for ModuleIdentifier {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for RoleDescription {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl AsRef<str> for RoleDescription {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<&str> for RoleDescription {
     fn eq(&self, other: &&str) -> bool {
         self.payload() == other
     }
@@ -1180,6 +1574,16 @@ impl GenerationOutcome {
 }
 
 #[rustfmt::skip]
+impl ActiveOutput {
+    pub fn skill(payload: ActiveSkill) -> Self {
+        Self::Skill(payload)
+    }
+    pub fn role(payload: ActiveRole) -> Self {
+        Self::Role(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ModuleLifecycle {
     pub fn active(payload: SkillMetadata) -> Self {
         Self::Active(payload)
@@ -1200,6 +1604,20 @@ impl From<GenerationRequest> for Operation {
 impl From<GenerationReport> for GenerationOutcome {
     fn from(payload: GenerationReport) -> Self {
         Self::Generated(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ActiveSkill> for ActiveOutput {
+    fn from(payload: ActiveSkill) -> Self {
+        Self::Skill(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ActiveRole> for ActiveOutput {
+    fn from(payload: ActiveRole) -> Self {
+        Self::Role(payload)
     }
 }
 

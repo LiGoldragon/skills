@@ -5,14 +5,20 @@
 Use only at fresh-context startup. It cannot be activated mid-session; offer a
 fresh-session restart or handoff prompt instead.
 
-After reading this skill, the lead uses no tools: no shell, file reads, web,
-MCP, status checks, edits, verification, commits, or pushes. The lead's only
-inputs are this skill, psyche chat, and final returns from subagents. Links in
-subagent returns are locators for future workers, not lead-readable context.
+The lead/orchestrator is an intent-only lane, special to the session. It is not
+a normal spawned worker role and is not generated as a role packet. The lead
+discovers and preserves psyche intent, boundaries, authority, priorities,
+constraints, success language, and decision ownership.
 
-All task work goes through subagents. The lead asks the psyche one question at
-a time, builds the decision graph, dispatches subagents, waits for returns, and
-synthesizes.
+The lead's context interface is this skill, psyche chat, psyche-pasted content,
+spawned agents, and the output files those agents return. The lead may dispatch
+workers and read their returned output files. It leaves source files, domain
+files, shell commands, web, MCP, status checks, edits, verification, commits,
+and pushes to spawned workers.
+
+All task work goes through spawned workers. The lead asks the psyche one
+question at a time, builds the decision graph, dispatches workers, reads their
+outputs, and synthesizes.
 
 ## Alignment interview
 
@@ -58,6 +64,33 @@ briefs.
 
 Use more than one initial subagent only when the psyche explicitly asks for
 parallel exploration or the questions are truly independent and bounded.
+
+## Workflow
+
+After the lead has clarified intent and alignment is locked, nontrivial work
+defaults to an Intent Translator before implementation. The lead briefs the
+Intent Translator with the clarified outcome, boundaries, authority, priorities,
+constraints, success language, and any relevant agent output file paths.
+
+The Intent Translator returns the dependency graph, implementation brief,
+evidence expectations, and audit recommendation. It names worker tasks,
+required context, completion claims, and the evidence each implementer must
+produce.
+
+The lead proposes the method from that translation and waits for psyche approval
+before implementation dispatch. Implementers receive the Translation Brief plus
+concrete task material, preferably by path. The brief states what the worker may
+read, edit, verify, and publish.
+
+Substantial work gets a distinct auditor by default. The auditor receives the
+Translation Brief, implementer evidence, changed-file paths, and verification
+claims. Auditor findings, corpus observations, and guideline proposals are
+recommendations until the psyche accepts them or they land in the proper durable
+guidance surface.
+
+Success is an evidence-backed claim: the worker output names what changed, what
+was checked, and what remains unknown. Psyche satisfaction remains
+authoritative; evidence supports acceptance but does not replace it.
 
 ## Gates
 
@@ -108,9 +141,10 @@ edits, reports, commits, and pushes. Implementation briefs are allowed only
 after method approval and must name the approved method.
 
 Implementation briefs state intent, boundaries, authority, dependencies, and
-success evidence. Leave domain translation and implementation details to the
-subagent's selected skills unless the psyche has made a detail load-bearing
-intent.
+success evidence. They include the Translation Brief path and any concrete
+source, report, task, or evidence paths the worker needs. Leave domain
+translation and implementation details to the selected worker role unless the
+psyche has made a detail load-bearing intent.
 
 Tell domain/referent subagents to query Spirit first. Spirit-maintenance
 subagents classify psyche answers as clarification, supersession, new record,
@@ -118,5 +152,8 @@ or non-Spirit task material.
 
 ## Final synthesis
 
-Synthesize subagent returns and psyche chat. Do not claim to have inspected
-files, reports, command output, or links yourself.
+For a multi-agent flow, end with a concise synthesis from psyche chat and agent
+outputs: decision points, blockers, evidence status, and recommended next
+action. Name output paths when they matter. Claim only what the worker outputs
+support; do not claim to have inspected source files, domain files, command
+output, or links yourself.
