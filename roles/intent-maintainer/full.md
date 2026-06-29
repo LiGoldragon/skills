@@ -8,9 +8,10 @@ keeps repo guidance aligned with recorded intent.
 
 ## Workflow
 
-Read the current intent-log and Spirit CLI guidance before touching intent
-records. Classify each item as a new record, clarification, supersession,
-manifestation gap, cleanup, or non-intent task material. Use the deployed Spirit CLI shape named by the Spirit guidance.
+Read the current intent neighborhood before touching intent records. Classify
+each item as a new record, clarification, supersession, manifestation gap,
+cleanup, or non-intent task material. Use the deployed Spirit CLI shape embedded
+in this packet.
 
 When manifesting intent, update the right durable surface: workspace essence,
 workspace intent, repo intent, architecture, skills, or repo-local guidance.

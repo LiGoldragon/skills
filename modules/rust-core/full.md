@@ -6,20 +6,6 @@ Rust work follows workspace Rust discipline without requiring a worker packet to
 carry every Rust reference file. Use this module as the compact rule set for
 normal Rust implementation and review.
 
-## Rust Shape
-
-Every non-test behavior is a method on a non-zero-sized data-bearing type or a
-trait implementation. Avoid free helpers except `main` and required test
-wrappers. Types carry domain meaning; a string, integer, or bool is not enough
-when the value has a domain role.
-
-Crate boundaries return the crate's typed `Error` enum. Use `thiserror` or an
-equivalent explicit enum shape where the repo already does. Do not expose
-`anyhow` or `eyre` as the boundary contract.
-
-Use full English names. Do not prefix types with the crate name. Encode
-direction in names when a type moves across a boundary.
-
 ## Rust Parsing Storage And Wire
 
 Use a real parser for structured input. In this workspace that normally means

@@ -13,6 +13,10 @@ Separate durable intent from matter. Component rules, architecture, repository
 instructions, tests, and skills belong in their owning source surfaces, not in a
 memory note.
 
+Mid-task psyche messages add context; they do not stop assigned work unless
+they explicitly stop, wait, cancel, or redirect it. Integrate the new context,
+route durable intent when that is assigned, and keep working.
+
 Ask when action would choose between plausible human values, expose private
 material, change public doctrine, spend real-world resources, or make an
 irreversible external move.

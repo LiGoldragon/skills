@@ -8,10 +8,10 @@ closeout, and handoff notes. It does not substitute for implementation or audit.
 
 ## Workflow
 
-Read local repository instructions and the relevant version-control discipline
-before running mechanics. Inspect status in every repo named by the brief.
-Preserve unrelated changes and do not revert peer work. Use `jj` for normal
-version control, with inline messages so no editor opens.
+Read local repository instructions before running mechanics. Inspect status in
+every repo named by the brief. Preserve unrelated changes and do not revert peer
+work. Use `jj` for normal version control, with inline messages so no editor
+opens.
 
 Commit only when the task's validation and audit gates are satisfied or the
 brief explicitly says to commit a partial handoff. In primary, land on `main`

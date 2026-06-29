@@ -130,20 +130,41 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
     assert_eq!(roster.skill_modules.payload().len(), 65);
 
-    let active_modules: Vec<_> = roster
+    let active_first_class_modules: Vec<_> = roster
         .skill_modules
         .payload()
         .iter()
-        .filter(|module| matches!(module.module_lifecycle, ModuleLifecycle::Active(_)))
+        .filter(|module| {
+            matches!(module.module_lifecycle, ModuleLifecycle::Active(_))
+                && module.emission_policy == EmissionPolicy::FirstClassSkill
+        })
         .collect();
-    assert_eq!(active_modules.len(), 55);
-    for module in active_modules {
-        assert_eq!(module.emission_policy, EmissionPolicy::FirstClassSkill);
+    assert_eq!(active_first_class_modules.len(), 51);
+    for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
             &[TargetSurface::AgentsSkill, TargetSurface::ClaudeSkill]
         );
     }
+
+    let active_internal_modules: Vec<_> = roster
+        .skill_modules
+        .payload()
+        .iter()
+        .filter(|module| {
+            matches!(module.module_lifecycle, ModuleLifecycle::Active(_))
+                && module.emission_policy == EmissionPolicy::InternalOnly
+        })
+        .map(|module| module.module_name.payload())
+        .collect();
+    assert_eq!(
+        active_internal_modules,
+        [
+            "architectural-truth-tests",
+            "rust-discipline",
+            "bead-weaver",
+        ]
+    );
 
     let archived_role_names = [
         "operator",
@@ -171,15 +192,17 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         assert!(module.target_surfaces.payload().is_empty());
     }
 
-    let deleted = roster
-        .skill_modules
-        .payload()
-        .iter()
-        .find(|module| module.module_name.payload() == "subagent-session-workflow")
-        .expect("deleted subagent workflow modeled");
-    assert_eq!(deleted.module_lifecycle, ModuleLifecycle::Deleted);
-    assert_eq!(deleted.emission_policy, EmissionPolicy::NoEmission);
-    assert!(deleted.target_surfaces.payload().is_empty());
+    for deleted_name in ["subagent-session-workflow", "keep-working"] {
+        let deleted = roster
+            .skill_modules
+            .payload()
+            .iter()
+            .find(|module| module.module_name.payload() == deleted_name)
+            .unwrap_or_else(|| panic!("{deleted_name} deleted module modeled"));
+        assert_eq!(deleted.module_lifecycle, ModuleLifecycle::Deleted);
+        assert_eq!(deleted.emission_policy, EmissionPolicy::NoEmission);
+        assert!(deleted.target_surfaces.payload().is_empty());
+    }
 
     assert!(
         roster.entry_points.payload().is_empty(),
@@ -208,7 +231,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 55);
+    assert_eq!(skill_count, 51);
     assert_eq!(role_count, 10);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
@@ -236,6 +259,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "repo-scaffold-core",
         "repo-operation-core",
         "skill-source-core",
+        "architectural-truth-tests",
+        "rust-discipline",
+        "bead-weaver",
     ];
     for module_identifier in role_composition_modules {
         assert_eq!(

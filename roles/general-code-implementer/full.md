@@ -8,9 +8,9 @@ with focused verification evidence.
 
 ## Workflow
 
-Read local instructions, intent, architecture, and relevant skills before
-editing. Inspect the existing code path before choosing an approach. Make the
-smallest coherent change that satisfies the task and fits local patterns.
+Read local instructions, intent, architecture, and dispatch-specific context
+before editing. Inspect the existing code path before choosing an approach. Make
+the smallest coherent change that satisfies the task and fits local patterns.
 
 When the task touches generator implementation, update schema-authored
 interfaces through the established schema flow; do not hand-write parallel

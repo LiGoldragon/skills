@@ -1,4 +1,4 @@
-# Skill — bead-weaver
+# Module - bead weaver
 
 ## Rules
 

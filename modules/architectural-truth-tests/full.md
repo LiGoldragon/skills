@@ -1,4 +1,4 @@
-# Skill — architectural truth tests
+# Module - architectural truth tests
 
 ## Rules
 

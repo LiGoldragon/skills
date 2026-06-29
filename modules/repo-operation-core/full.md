@@ -14,22 +14,59 @@ evidence is missing, record the gap instead of manufacturing a green closeout.
 
 Use `jj` for normal version control. Every description-taking command uses an
 inline message so no editor opens. Commit the working copy only when the brief
-authorizes a partial handoff or the validation/audit gates are satisfied.
+authorizes a partial handoff or the validation and audit gates are satisfied.
+
+Raw `git` is reserved for remote inspection or configuration, and for recovery
+only when the repo guidance or push rejection requires it.
 
 ## Operation Branch And Bookmark Shape
 
-Primary lands on `main` directly. Code repositories follow their repo's branch
-or bookmark policy: operator-owned `main`, designer or feature work on the named
-long-lived or task branch, and integration only after producer refs are
+Primary lands on `main` directly:
+
+```sh
+jj status --no-pager
+jj commit -m 'short imperative message'
+jj bookmark set main -r @-
+jj git push --bookmark main
+```
+
+Code repositories keep one logical change per commit. Follow the repo's branch
+or bookmark policy: operator-owned `main`, designer or feature work on the
+named long-lived or task branch, and integration only after producer refs are
 available for consumers.
 
-Use `gh` for GitHub repository metadata and issue or pull-request operations.
-Use `ghq` for locating or updating local clones. Raw `git` is reserved for the
-documented recovery and remote-configuration cases.
+For main feature integration, start from current `main`, work on a named
+operator bookmark while the feature is not green, test the affected branch
+family together, rebase on moved `main` before landing, then land producers
+before consumers. Remove temporary local path overrides before the merge-ready
+state unless the branch dependency is intentional and documented.
+
+If a local repository or worktree is already claimed, do not share it. Create an
+isolated main-based feature worktree or workspace, claim that path, and file a
+tracker item naming the repository, branch, worktree, and needed final
+disposition: discard, partial merge, or full merge.
+
+## Operation Beads
+
+Use beads for short tracked work that must survive the session or coordinate
+with other work. Before working a bead, inspect its state and dependencies, then
+claim only the bead actively being worked.
+
+Create executable bead text: desired outcome, owning repository or component,
+likely files or surfaces, acceptance criteria, dependencies, blockers, and
+expected verification. Wire producer-before-consumer dependencies explicitly.
+
+Close a bead only after the acceptance criteria pass or the bead is explicitly
+invalidated. Closing notes name durable evidence: commit, output file,
+validation artifact, or superseding task. If blocked, leave it open and name
+the blocker.
 
 ## Operation Push And Closeout
 
 Before pushing, confirm bookmark reachability, repository status, and that no
 descriptionless authored commit is being published. Push the intended bookmark
-and return the result. Close tracked tasks only after durable evidence exists,
-naming the commit, output file, validation artifact, or superseding task.
+and return the result.
+
+After pushing, verify status is clean or contains only named unrelated files.
+Report basis commit, branch bookmark, temporary overrides used for testing,
+commands run, push result, and any remaining disposition or follow-up.
