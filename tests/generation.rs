@@ -230,14 +230,15 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "intent-translator",
             "role-intent-translator",
-            &["agent-output-protocol", "bead-weaver"],
+            &["agent-output-protocol", "edit-coordination-core", "bead-weaver"],
         ),
-        ("scout", "role-scout", &["agent-output-protocol"]),
+        ("scout", "role-scout", &["agent-output-protocol", "edit-coordination-core"]),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
             &[
                 "agent-output-protocol",
+                "edit-coordination-core",
                 "repo-scaffold-core",
                 "code-implementation-core",
                 "rust-core",
@@ -249,6 +250,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-general-code-implementer",
             &[
                 "agent-output-protocol",
+                "edit-coordination-core",
                 "code-implementation-core",
                 "rust-core",
                 "nix-core",
@@ -259,6 +261,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-criomos-implementer",
             &[
                 "agent-output-protocol",
+                "edit-coordination-core",
                 "code-implementation-core",
                 "nix-core",
             ],
@@ -268,6 +271,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-rust-auditor",
             &[
                 "agent-output-protocol",
+                "edit-coordination-core",
                 "rust-core",
                 "architectural-truth-tests",
             ],
@@ -275,22 +279,22 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "nix-auditor",
             "role-nix-auditor",
-            &["agent-output-protocol", "nix-core"],
+            &["agent-output-protocol", "edit-coordination-core", "nix-core"],
         ),
         (
             "skill-editor",
             "role-skill-editor",
-            &["agent-output-protocol", "skill-source-core"],
+            &["agent-output-protocol", "edit-coordination-core", "skill-source-core"],
         ),
         (
             "intent-maintainer",
             "role-intent-maintainer",
-            &["agent-output-protocol", "intent-core"],
+            &["agent-output-protocol", "edit-coordination-core", "intent-core"],
         ),
         (
             "repo-operator",
             "role-repo-operator",
-            &["agent-output-protocol", "repo-operation-core"],
+            &["agent-output-protocol", "edit-coordination-core", "repo-operation-core"],
         ),
     ];
 

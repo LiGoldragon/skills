@@ -3,6 +3,7 @@
 ;; The active output manifest decides what emits; this file only records source module edges.
 [
   (agent-output-protocol modules/agent-output-protocol/full.md [])
+  (edit-coordination-core modules/edit-coordination-core/full.md [])
   (code-implementation-core modules/code-implementation-core/full.md [])
   (rust-core modules/rust-core/full.md [])
   (nix-core modules/nix-core/full.md [])
