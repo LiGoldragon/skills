@@ -17,7 +17,7 @@ The owned pieces and how they fit:
   groups, udev, kernel modules, the `nixosConfigurations.target` surface.
 - **CriomOS-home** — Home Manager profile: Niri bindings, Noctalia, user
   packages, user services, desktop tools such as Whisrs.
-- **lojix-cli** — deploy/build/activate entry point that projects cluster
+- **lojix daemon stack** — deploy/build/activate entry points that project cluster
   proposals into the inputs CriomOS and CriomOS-home consume.
 - **horizon-rs** — typed projection/schema source for horizon fields.
 - **goldragon** — the cluster-proposal data lojix uses for the machines.
@@ -32,7 +32,7 @@ lives in CriomOS.
 Read these before substantive work, beyond the workspace baseline every
 role reads (`ESSENCE.md`, `AGENTS.md`, the orchestrate contract, the
 common skills). The emphasis is Nix and deployment discipline plus the
-Rust crates that ship as host tools (lojix-cli, horizon-rs, clavifaber,
+Rust crates that ship as host tools (lojix, horizon-rs, clavifaber,
 chroma).
 
 - `skills/operator.md` — the sister role; knows what binaries deploy.
@@ -79,7 +79,7 @@ These follow inevitably from earlier work in the same session; stopping
 to ask produces friction without a decision. Do them without confirming.
 
 - **Downstream `flake.lock` bumps after upstream commits.** When you
-  push a change to `lojix-cli`, `horizon-rs`, `nota-codec`,
+  push a change to `lojix`, `horizon-rs`, `nota-codec`,
   `nota-derive`, or any repo consumed via flake-input by `CriomOS-home`,
   update `CriomOS-home/flake.lock` to the new commit and redeploy. The
   chain is `nix flake update <input> → commit → push → HomeOnly
@@ -108,18 +108,17 @@ state without leaking private content.
 
 ## Operator interface — Nota only
 
-Cluster deploy requests flow through `lojix-cli`, and the operator
-surface is exactly one Nota record. The CLI takes no flags and no
-subcommands. New deploy behavior lands as a typed positional field on
-`FullOs` / `OsOnly` / `HomeOnly` in `lojix-cli/src/request.rs`, never as
-a flag, env-var dispatch, or custom argv parser. The Nota record IS the
-operator's surface and the audit trail.
+Cluster deploy requests flow through the daemon-based `lojix` clients, and
+the operator surface is exactly one Nota record. The clients take no flags
+and no subcommands. New deploy behavior lands as typed contract fields,
+never as a flag, env-var dispatch, or custom argv parser. The Nota record
+is the operator's surface and the audit trail.
 
 The same shape applies cluster-wide: cluster proposals
 (`goldragon/datom.nota`), horizon projections, and any future
 operator-facing data live as typed Nota records read by `nota-codec`.
 New fields are positional in source-declaration order; reordering or
-renaming is a breaking change. See lojix-cli's `skills.md` for per-repo
+renaming is a breaking change. Use current Lojix source for per-repo
 specifics.
 
 ## Cluster Nix signing
@@ -140,8 +139,8 @@ request time. Direct nix-daemon-to-nix-daemon transfer over `ssh-ng`
 carries whatever signatures the source path already has — locally built
 paths on non-cache nodes have none.
 
-To bridge that gap, `lojix-cli/src/copy.rs` always passes
-`--substitute-on-destination` to `nix copy`. The target prefers
+To bridge that gap, the deploy copy path passes `--substitute-on-destination`
+to `nix copy`. The target prefers
 substituting each path from its own substituters (the cluster HTTP
 cache) over receiving the raw path from the source. When the cache has
 the closure, the target gets it signed and verified; when the cache

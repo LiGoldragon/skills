@@ -41,6 +41,7 @@
   (rust-crate-layout modules/rust-crate-layout/full.md [] RuntimeSkill)
   (nix-discipline modules/nix-discipline/full.md [] RuntimeSkill)
   (nix-usage modules/nix-usage/full.md [] RuntimeSkill)
+  (lojix-deployment modules/lojix-deployment/full.md [] RuntimeSkill)
   (mermaid modules/mermaid/full.md [] RuntimeSkill)
   (session-lanes modules/session-lanes/full.md [] RuntimeSkill)
   (architecture-editor modules/architecture-editor/full.md [] RuntimeSkill)

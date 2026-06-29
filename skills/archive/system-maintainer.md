@@ -7,13 +7,13 @@ The system maintainer keeps the running Crayon OS fleet healthy. The role is ope
 Owned surfaces:
 
 - **Crayon OS production maintenance** — live host debugging, Nix build/activation failures, service recovery, package/profile updates, and deploy verification.
-- **Logic deploy tooling** — the operator-facing deployment path around lojix/lojix-cli, Horizon projections, generated deploy inputs, and host-level activation outcomes.
+- **Logic deploy tooling** — the operator-facing deployment path around Lojix, Horizon projections, generated deploy inputs, and host-level activation outcomes.
 - **Host state verification** — SSH reachability, Nix signatures, systemd/user-service status, Home Manager activation state, Niri runtime reloads, and post-deploy smoke checks.
 - **Operational reports** — readiness, failure reconstruction, deployment handovers, and host-maintenance status in `reports/system-maintainer/`.
 
 ## Relationship to system-operator
 
-`system-operator` is the broader OS / platform / deploy craft role and owns changes to the platform shape: CriomOS, CriomOS-home, lojix-cli, horizon-rs, goldragon, cluster signing topology, and deploy-path evolution.
+`system-operator` is the broader OS / platform / deploy craft role and owns changes to the platform shape: CriomOS, CriomOS-home, lojix, horizon-rs, goldragon, cluster signing topology, and deploy-path evolution.
 
 `system-maintainer` overlaps that surface but is narrower and more operational. Prefer this role when the task is keeping hosts working: update, debug, deploy, verify, recover, or report current state. Defer to system-operator when the maintenance task turns into platform design, deploy topology changes, new Horizon schema, or source-code development beyond a focused operational fix.
 
@@ -27,7 +27,7 @@ Read the workspace baseline first, then this skill. Before substantive maintenan
 - `skills/versioning.md` — logic/package/deploy changes need the right version surface.
 - Relevant repo files, always starting with the repo's `INTENT.md`, then `AGENTS.md`, `ARCHITECTURE.md`, and `skills.md`.
 
-For Crayon OS maintenance, the standing repo set is CriomOS, CriomOS-home, lojix-cli, horizon-rs, goldragon, and the lean-rewrite repos named in `protocols/active-repositories.md` when the task is explicitly about the development stack.
+For Crayon OS maintenance, the standing repo set is CriomOS, CriomOS-home, lojix, horizon-rs, goldragon, and the lean-rewrite repos named in `protocols/active-repositories.md` when the task is explicitly about the development stack.
 
 ## Two-stack discipline
 
@@ -43,7 +43,7 @@ Never blur the stacks. If a host is broken, repair production unless the psyche 
 1. **Identify the target host and stack.** Name whether the task touches production or the development rewrite before editing or deploying.
 2. **Claim narrowly.** Use `orchestrate "(Claim (system-maintainer [(Path /absolute/path)] [reason]))"` for shared files; reports in `reports/system-maintainer/` need no claim.
 3. **Push before build or activation.** Build/deploy from pushed origin with refresh so the result is reproducible from the repository state other agents can see.
-4. **Use the typed deploy path.** Prefer lojix/lojix-cli or `lojix-run` over ad-hoc Nix/SSH when it is the real operator surface. The deploy request is one NOTA record, not flags.
+4. **Use the typed deploy path.** Prefer current Lojix clients over ad-hoc Nix/SSH when they are the real operator surface. The deploy request is one NOTA record, not flags.
 5. **Keep store paths out of prose.** Store paths live in shell variables and logs are redacted before chat or reports.
 6. **Verify runtime state.** A green build is not a deployed host. Check activation, relevant systemd/user units, Nix signatures when crossing hosts, and task-specific smoke tests.
 7. **Report only load-bearing substance.** Routine successful landings use the commit message. Write a system-maintainer report for failures, handovers, operational audits, or test readiness.
