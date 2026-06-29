@@ -36,8 +36,3 @@ Never `anyhow::Result`, `eyre::Result`, or `Result<T, Box<dyn Error>>`:
 they erase the error type at the boundary, so callers can no longer
 pattern-match on what went wrong, losing the typed-failure discipline
 the rest of the Rust rules build up.
-
-## See also
-
-- `skills/rust/methods.md` — typed boundaries, where errors return.
-- `skills/abstractions.md` — perfect specificity at boundaries.

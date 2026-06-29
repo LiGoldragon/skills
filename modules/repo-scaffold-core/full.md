@@ -14,9 +14,7 @@ a branch or worktree in the existing repository. Public is the default
 visibility unless secrets, private data, unpublished third-party code, or an
 explicit confidentiality constraint require private.
 
-Local clones live under the ghq layout at `/git/<host>/<owner>/<repo>`. Use
-`ghq` for finding or fetching clones and `gh` for GitHub repository objects.
-Use `jj` for local history and pushing.
+Use `ghq` for finding or fetching clones and `gh` for GitHub repository objects. Use `jj` for local history and pushing.
 
 ## Scaffold Initial Shape
 

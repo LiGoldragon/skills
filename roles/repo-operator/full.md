@@ -19,8 +19,8 @@ directly. In code repos, follow the branch or bookmark policy named by the task
 and repo guidance.
 
 Close or update BEADS tasks only after the durable evidence exists. Closing
-notes name where the substance lives: commit, output file, validation report, or
-superseding task.
+notes name where the substance lives: commit, output file, validation artifact,
+or superseding task.
 
 ## Boundaries
 

@@ -1,45 +1,23 @@
 # Skill — NOTA design
 
-## Use structs when there is one shape
+## Rules
 
-A record with one payload shape is an untagged struct. Add an enum only when the position can hold multiple named variants.
+NOTA is structural data. The raw grammar has atoms, parenthesized records, vectors, maps, pipe text, pipe parenthesis, pipe brace, and `;;` comments. Schema and codec layers assign meaning.
 
-## Put data in records
+Records are positional. Field order is part of the interface; reordering fields is a compatibility change. Prefer a trailing field or a new variant over changing existing positions.
 
-Comments explain unusual choices; they do not carry machine data. If a value must be read, queried, validated, or migrated, give it a field in a record.
+Use an untagged struct when there is one payload shape. Use an enum only when a position can hold multiple named variants. Enum variants use names, not numeric codes.
 
-## Name enum variants
+Use bare atoms for stable identifiers, enum-like values, and canonical names. Use pipe text or quoted/bracket string forms when whitespace, punctuation, comments, or arbitrary prose are the point.
 
-Enum variants are PascalCase names, not numeric codes. A variant payload is the data for that choice. A struct is a product of fields that always belong together.
+Put machine data in records, not comments. Comments explain unusual choices; they do not carry values that must be read, queried, validated, or migrated.
 
-## Preserve positional meaning
+Model alternatives as variants or named option variants, not loose flags. A variant carries only the fields that choice needs.
 
-NOTA records are positional. Field order is part of the interface. Reordering fields is a compatibility change. Prefer adding a new variant or a new trailing field over changing existing positions.
+Use maps only for genuinely keyed collections. Do not use a map to avoid naming a record shape.
 
-## Use bare atoms for canonical strings
+Avoid multi-field unnamed tuples. If there is more than one value, name the record or fields in the schema so the positional call site stays readable.
 
-Use bare atoms for stable identifiers, enum-like values, and canonical names. Use quoted or block strings only when whitespace, punctuation, or arbitrary prose is the point.
+Use optional values only when absence has meaning distinct from empty. Prefer a variant when absence changes behavior.
 
-## Model options as option variants
-
-Do not grow loose flags. If a record accepts alternative options, make the options a vector of named option variants. Each variant carries only the fields it needs.
-
-## Keep maps explicit
-
-Use maps for genuinely keyed collections. Do not use a map to avoid naming a record shape. Schema namespaces use brace-map form when the grammar requires a keyed namespace.
-
-## Avoid tuples
-
-Multi-field unnamed structs are forbidden. If there is more than one value, name the record or fields so the position is readable at the call site.
-
-## Optional means absent is meaningful
-
-Use optional values only when absence has semantics distinct from an empty value. Prefer a variant when absence changes behavior.
-
-## Derive when the grammar is regular
-
-Use generated codecs for ordinary positional records and enums. Hand-write a codec only for compatibility boundaries, legacy syntax, or a grammar the schema cannot express cleanly.
-
-## Sketch before encoding
-
-Before writing a record, name the stable noun, list its positions in order, identify which positions are enums, and decide which strings are canonical atoms.
+Use generated codecs for regular records and enums. Hand-write a codec only for compatibility boundaries, legacy syntax, or grammar the schema cannot express cleanly.

@@ -51,9 +51,3 @@ Patterns that smell fine but are polling — each replaced by the push event you
 ## Recognising the symptom
 
 Polling shows up as **wake-when-nothing-changed**. A process that shows steady idle syscall traffic on `strace -c`, holds a near-constant context-switch rate in `/proc/<pid>/status`, or emits log lines on a clock independent of input is polling. Push-correct systems go quiet when they have nothing to do.
-
-## See also
-
-- `ESSENCE.md` §"Polling is forbidden" — the canonical rule.
-- `skills/actor-systems.md` — actor handlers must not block their mailboxes.
-- `skills/micro-components.md` — components communicate via subscription, not by polling each other.

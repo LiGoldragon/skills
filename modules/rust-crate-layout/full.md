@@ -140,9 +140,3 @@ of a single-purpose module file. Skip docs on obvious boilerplate:
 getters, `From` impls, internal helpers. No examples unless the API is
 non-obvious. Present indicative only — no personal voice, no future
 tense.
-
-## See also
-
-- `skills/rust-discipline.md` — Rust discipline index.
-- `skills/rust/methods.md` — what goes inside the source files.
-- `skills/micro-components.md` — one capability per crate per repo.

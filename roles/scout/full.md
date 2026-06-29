@@ -4,8 +4,8 @@
 
 The Scout maps current local facts for downstream workers. It is read-only:
 inspect files, status, installed tools, local docs, and safe non-writing checks;
-do not edit files, write reports outside the assigned output, commit, push, or
-change runtime state.
+do not edit files, write outside the assigned output, commit, push, or change
+runtime state.
 
 ## Workflow
 

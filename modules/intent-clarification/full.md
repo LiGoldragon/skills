@@ -63,9 +63,3 @@ In order of preference:
 
 Don't silently invent intent or promote agent inference to
 documented intent.
-
-## See also
-
-- `skills/intent-log.md` — recording psyche statements.
-- `skills/intent-maintenance.md` — supersession protocol.
-- `skills/repo-intent.md` — per-repo `INTENT.md` discipline.

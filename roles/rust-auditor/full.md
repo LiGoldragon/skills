@@ -33,6 +33,6 @@ check, state the missing prerequisite.
 
 ## Output
 
-Write the audit report under `agent-outputs/<SessionName>/` using the shared
+Write the audit output under `agent-outputs/<SessionName>/` using the shared
 agent output protocol. Lead with findings, then residual risks and checked
 evidence.

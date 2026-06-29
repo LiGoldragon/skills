@@ -128,7 +128,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 74);
+    assert_eq!(roster.skill_modules.payload().len(), 65);
 
     let active_modules: Vec<_> = roster
         .skill_modules
@@ -136,7 +136,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .iter()
         .filter(|module| matches!(module.module_lifecycle, ModuleLifecycle::Active(_)))
         .collect();
-    assert_eq!(active_modules.len(), 64);
+    assert_eq!(active_modules.len(), 55);
     for module in active_modules {
         assert_eq!(module.emission_policy, EmissionPolicy::FirstClassSkill);
         assert_eq!(
@@ -208,7 +208,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 64);
+    assert_eq!(skill_count, 55);
     assert_eq!(role_count, 10);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
@@ -230,29 +230,14 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "intent-translator",
             "role-intent-translator",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "bead-weaver",
-                "workspace-context-core",
-            ],
+            &["agent-output-protocol", "bead-weaver"],
         ),
-        (
-            "scout",
-            "role-scout",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "safety-core",
-                "workspace-context-core",
-            ],
-        ),
+        ("scout", "role-scout", &["agent-output-protocol"]),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
             &[
                 "agent-output-protocol",
-                "worker-output-core",
                 "repo-scaffold-core",
                 "code-implementation-core",
                 "rust-core",
@@ -264,7 +249,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-general-code-implementer",
             &[
                 "agent-output-protocol",
-                "worker-output-core",
                 "code-implementation-core",
                 "rust-core",
                 "nix-core",
@@ -275,10 +259,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-criomos-implementer",
             &[
                 "agent-output-protocol",
-                "worker-output-core",
                 "code-implementation-core",
                 "nix-core",
-                "safety-core",
             ],
         ),
         (
@@ -286,7 +268,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-rust-auditor",
             &[
                 "agent-output-protocol",
-                "worker-output-core",
                 "rust-core",
                 "architectural-truth-tests",
             ],
@@ -294,40 +275,22 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "nix-auditor",
             "role-nix-auditor",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "nix-core",
-                "safety-core",
-            ],
+            &["agent-output-protocol", "nix-core"],
         ),
         (
             "skill-editor",
             "role-skill-editor",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "skill-source-core",
-            ],
+            &["agent-output-protocol", "skill-source-core"],
         ),
         (
             "intent-maintainer",
             "role-intent-maintainer",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "intent-core",
-                "safety-core",
-            ],
+            &["agent-output-protocol", "intent-core"],
         ),
         (
             "repo-operator",
             "role-repo-operator",
-            &[
-                "agent-output-protocol",
-                "worker-output-core",
-                "repo-operation-core",
-            ],
+            &["agent-output-protocol", "repo-operation-core"],
         ),
     ];
 

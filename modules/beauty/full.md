@@ -24,13 +24,9 @@ shape is wrong, the recommendation is the structural fix, not a
 patch that preserves the ugly surface. This applies at four scales:
 
 - **Code beauty** — the diagnostic catalogue below.
-- **Capture discipline** — no duplicate intent records. A trio
+- **Capture discipline** — no duplicate durable records. A trio
   saying the same thing in three magnitudes is noise; one record at
-  the right magnitude is signal. (`skills/intent-maintenance.md`)
-- **Report retention** — no report proliferation without retirement.
-  A working artifact whose substance has migrated to a permanent
-  home is finished; leaving it in the tree clutters the surface.
-  (`skills/context-maintenance.md`)
+  the right magnitude is signal.
 - **Substrate cleanliness** — no hand-written code where schema can
   drive. When a hand-written enum, validate impl, trace vocabulary,
   or projection function parallels something a schema could emit,
@@ -72,10 +68,3 @@ name. The full English form reads as English; the abbreviation reads
 as ceremony to be decoded. The cost of mis-naming is paid every time
 the name is read; the saving of three keystrokes is paid once. The
 criterion is beauty, not keystroke-economy.
-
-## See also
-
-- `skills/abstractions.md` — the verb-belongs-to-noun rule.
-- `skills/enum-contact-points.md` — engine logic as enum-vs-enum
-  cross-product; the canonical refactor for scattered match matrices.
-- `skills/naming.md` — the spelled-out-words rule.

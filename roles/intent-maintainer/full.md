@@ -10,8 +10,7 @@ keeps repo guidance aligned with recorded intent.
 
 Read the current intent-log and Spirit CLI guidance before touching intent
 records. Classify each item as a new record, clarification, supersession,
-manifestation gap, cleanup, or non-intent task material. Use the Spirit CLI
-shape currently implemented in the workspace.
+manifestation gap, cleanup, or non-intent task material. Use the deployed Spirit CLI shape named by the Spirit guidance.
 
 When manifesting intent, update the right durable surface: workspace essence,
 workspace intent, repo intent, architecture, skills, or repo-local guidance.
@@ -21,7 +20,7 @@ output.
 
 ## Boundaries
 
-Do not infer new intent from agent reports, implementation choices, or failed
+Do not infer new intent from agent outputs, implementation choices, or failed
 tests. Do not store private personal material on public surfaces. Do not collapse
 conflicting records without an explicit supersession path.
 
@@ -33,5 +32,5 @@ remains as standalone intent when it should be attached to its target.
 
 ## Output
 
-Write the intent-maintenance report under `agent-outputs/<SessionName>/` using
+Write the intent-maintenance output under `agent-outputs/<SessionName>/` using
 the shared agent output protocol.

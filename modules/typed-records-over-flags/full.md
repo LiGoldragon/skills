@@ -106,12 +106,3 @@ record.
    `record.is_some()` once readers have migrated.
 4. **Delete the boolean** once nothing reads it; the original flag-bundle
    struct shrinks and eventually disappears.
-
-## See also
-
-- `skills/abstractions.md` — verb belongs to noun; same diagnostic for
-  actor surfaces.
-- `skills/enum-contact-points.md` — the engine-logic cousin: scattered
-  conditional logic across state combinations wants a typed `match` or
-  trait.
-- `skills/contract-repo.md` — the same discipline for wire-bearing types.

@@ -1,85 +1,31 @@
 # Skill — engine analysis
 
-## What this is for
+## Rules
 
-Use when asked to explain how an engine currently works: what talks to what, which paths are wired in code, which are only architectural, and what state each component owns.
+Use when asked to explain how an engine works: what talks to what, what state each component owns, which paths are wired, and which claims are only architectural.
 
-The output is an analysis, not a rewrite plan. Code beats architecture: every claim states whether it is **hooked**, **stubbed**, **contract-only**, **conceptual**, or **stale**.
+Code beats diagrams. Mark every claim as hooked, stubbed, contract-only, conceptual, or stale.
 
-Apply the triad-engine readability test as a primary lens. The schema names the interface; generated Rust names the objects and traits; handwritten code is mostly real algorithm, typed forwarding, and typed return construction. Plumbing that repeats across components is a candidate for schema emission or shared runtime.
+## Map
 
-## Reading order
+List components, processes, binaries, sockets, state roots, and sandbox or deployment entrypoints. For each channel, record producer, consumer, trigger, payload type, transport, state touched, reply or event, and witness.
 
-1. Workspace intent and coordination: `ESSENCE.md`, `repos/lore/AGENTS.md`, `orchestrate/AGENTS.md`, `protocols/active-repositories.md`.
-2. The apex engine repo's `ARCHITECTURE.md`, then each component repo's `AGENTS.md`, `skills.md`, `ARCHITECTURE.md`, `TESTS.md`, and code map.
-3. Every contract crate on the engine fabric, before judging channels.
-4. Runtime code, daemon/client entrypoints, Nix apps/checks, scripts, and the tests that witness the runtime path.
+Follow concrete flows end to end: inbound payload, transport and contract, actor or direct-call path, durable writes, in-memory mutations, emitted reply or event, downstream effects, and breakpoint where the path stops.
 
-When outside research is asked for, borrow vocabulary without importing process: C4 zoom levels (system/container/component), arc42 (building-block, runtime, deployment, crosscutting), SEI views (module / component-and-connector / allocation), DFD trust boundaries for security, and trace/span language for worked request paths.
+Map trust boundaries separately from payloads: caller identity, file or socket permissions, runtime directory, cryptographic checks, replay or revocation handling, and which checks are implemented.
 
-## Analysis passes
+## Evidence
 
-### 1. Engine boundary map
+Prefer source files, tests, generated schemas, runtime commands, and small diagrams that answer one question. Name missing witnesses instead of filling gaps with architecture wishes.
 
-List the engine, components, processes, binaries, sockets, state roots, and deployment/sandbox entrypoints. Mark which processes actually launch today.
+Use status words consistently:
 
-### 2. Channel ledger
+- hooked: code path is wired and has a witness;
+- stubbed: callable but not substantively implemented;
+- contract-only: types exist but no runtime path reaches them;
+- conceptual: docs or design only;
+- stale: docs, skills, or code names contradict present truth.
 
-For each channel, record:
+## Output
 
-| Field | Question |
-|---|---|
-| Producer | Who writes or initiates? |
-| Consumer | Who reads or handles? |
-| Contract | Which `signal-*` crate or byte protocol defines the payload? |
-| Transport | Unix socket, raw PTY stream, CLI stdout, file, database, etc. |
-| Payloads | Closed request/reply/event variants crossing the boundary. |
-| Authority | Which side mints sender, origin, time, slots, IDs, revisions? |
-| State effect | Which component state can change after receipt? |
-| Status | Hooked, stubbed, contract-only, conceptual, or stale. |
-
-Call out contract-version skew and duplicated wire types.
-
-### 3. Component state machine
-
-For each component, name: entrypoints and public surface; long-lived actors or blocking workers; state fields and durable tables; messages/events handled; transition rules; logs/traces/events written; and what the component refuses to own.
-
-Actors should carry state. If a type is only a forwarding shell, say so.
-
-### 4. Flow traces
-
-Work concrete examples end to end. Each includes: inbound payload; transport and contract; actor/mailbox or direct-call path; durable writes and in-memory mutations; reply/event emitted; downstream possible effects; and the current breakpoint where the path stops.
-
-Use trace/span language: one request path, named steps, propagation across process boundaries.
-
-### 5. Trust, permissions, and auth
-
-Map trust boundaries separately from message payloads: Unix socket owner/mode, runtime directory, system user, filesystem ACLs; provenance tags carried as audit context; cryptographic verification services, keys, signatures, revocation, replay; inter-engine or inter-persona channels; and which checks are implemented versus planned.
-
-Do not treat provenance tags as runtime auth gates unless the code does.
-
-### 6. Observability
-
-Inventory logs, structured events, traces, transcript storage, worker lifecycle events, daemon stderr, database event tables, and CLI output. Say what is durable, what is memory-only, and what is merely a test witness.
-
-### 7. Witness inventory
-
-List tests by constraint, not by filename. A good witness proves the intended component path was used, not just that visible behavior succeeded.
-
-### 8. Drift and next questions
-
-Separate findings into:
-
-- **wired**: code does this now;
-- **stubbed**: a valid request returns typed unimplemented or placeholder;
-- **contract-only**: shared types exist, no daemon path yet;
-- **conceptual**: architecture says it, code does not;
-- **stale**: docs, skills, reports, or code names contradict current truth.
-
-Questions for the human are self-contained: restate the concrete code fact, why it matters, and the options.
-
-## Report shape
-
-An engine compendium includes: a one-screen current-state summary; a diagram of hooked versus planned component paths; the channel ledger table; one page per component; worked flow examples; a trust/auth and state-storage summary; the witness inventory; and gaps with decision questions.
-
-Prefer tables and small Mermaid diagrams. Use local file links for code, plain URLs for external method references. Current code and current architecture are primary; history is secondary.
+Return a compact analysis with a current-state summary, channel ledger, component notes, worked flows, trust/state summary, witness inventory, and gaps with decision questions. Use tables or diagrams only when they make the engine easier to inspect.

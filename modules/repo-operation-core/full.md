@@ -18,10 +18,10 @@ authorizes a partial handoff or the validation/audit gates are satisfied.
 
 ## Operation Branch And Bookmark Shape
 
-Primary lands on `main` directly. Code repositories under `/git` follow their
-repo's branch or bookmark policy: operator-owned `main`, designer or feature
-work on the named long-lived or task branch, and integration only after
-producer refs are available for consumers.
+Primary lands on `main` directly. Code repositories follow their repo's branch
+or bookmark policy: operator-owned `main`, designer or feature work on the named
+long-lived or task branch, and integration only after producer refs are
+available for consumers.
 
 Use `gh` for GitHub repository metadata and issue or pull-request operations.
 Use `ghq` for locating or updating local clones. Raw `git` is reserved for the
@@ -31,5 +31,5 @@ documented recovery and remote-configuration cases.
 
 Before pushing, confirm bookmark reachability, repository status, and that no
 descriptionless authored commit is being published. Push the intended bookmark
-and report the result. Close tracked tasks only after the durable evidence
-exists, naming the commit, output file, validation report, or superseding task.
+and return the result. Close tracked tasks only after durable evidence exists,
+naming the commit, output file, validation artifact, or superseding task.
