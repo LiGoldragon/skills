@@ -31,6 +31,11 @@ patch that preserves the ugly surface. This applies at four scales:
   drive. When a hand-written enum, validate impl, trace vocabulary,
   or projection function parallels something a schema could emit,
   that parallel is the ugliness; push the substance into the schema.
+- **Replaceable over additive** — design replaceably, not additively.
+  When the current shape cannot do what is wanted, replace it and
+  update every consumer rather than preserve the old shape behind a
+  parallel compatibility path; a compatibility shape kept for its own
+  sake manufactures legacy (`10pz`).
 
 ## What ugliness signals
 
