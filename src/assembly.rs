@@ -21,6 +21,8 @@ use crate::{
     workspace_path::WorkspacePath,
 };
 
+const CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION: &str = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandLine {
     arguments: Vec<String>,
@@ -896,7 +898,13 @@ impl ManifestAssembler {
             self.markdown_fragments()?,
         )
         .render()?;
-        RoleToml::new(&self.manifest.frontmatter, body).render()
+        let developer_instructions = match self.manifest.output_surface {
+            OutputSurface::CodexAgent => {
+                format!("{body}\n\n{CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION}")
+            }
+            _ => body,
+        };
+        RoleToml::new(&self.manifest.frontmatter, developer_instructions).render()
     }
 
     fn markdown_fragments(&self) -> Result<Vec<MarkdownFragment>> {

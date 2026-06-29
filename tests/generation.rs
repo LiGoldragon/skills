@@ -361,9 +361,16 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(codex.contains("developer_instructions = \"# Role - worker"));
     assert!(codex.contains("Module - shared"));
     assert!(codex.contains("Module - feature"));
+    assert!(
+        codex.contains(
+            "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete"
+        )
+    );
+    assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
     assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\n---\n\n"));
+    assert!(!pi.contains("Skill-read de-duplication"));
 
     let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
     assert!(inventory.contains(".claude/agents/worker.md"));
