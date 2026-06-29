@@ -548,6 +548,45 @@ fn check_mode_reports_stale_output_with_guidance() {
 }
 
 #[test]
+fn generation_rejects_skill_with_oversized_serialized_block() {
+    let fixture = Fixture::new();
+    fixture.write_default_roster();
+    fixture.write_source_file(
+        "modules/example/full.md",
+        &format!("# Skill — example\n\n## Rule\n\n{}\n", "x".repeat(33_000)),
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("oversized serialized skill block fails generation");
+
+    assert!(
+        matches!(
+            error,
+            Error::GeneratedSkillBlockTooLarge {
+                ref skill_name,
+                ref location,
+                byte_count,
+                limit,
+            } if skill_name == "example"
+                && location == ".agents/skills/example/SKILL.md"
+                && byte_count > limit
+                && limit == 32 * 1024
+        ),
+        "{error:?}"
+    );
+    assert!(error.to_string().contains("generated skill `example`"));
+    assert!(error.to_string().contains("exceeding the 32768 byte limit"));
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".agents/skills/example/SKILL.md")
+            .exists()
+    );
+}
+
+#[test]
 fn check_mode_reports_archived_or_deleted_stale_skill_outputs() {
     let fixture = Fixture::new();
     fixture.write_legacy_roster(

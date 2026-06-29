@@ -22,6 +22,7 @@ use crate::{
 };
 
 const CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION: &str = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
+const GENERATED_SKILL_BLOCK_BYTE_LIMIT: usize = 32 * 1024;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandLine {
@@ -832,6 +833,71 @@ impl OutputSurface {
             | Self::CodexCommand => unreachable!("not a role target surface"),
         }
     }
+
+    fn is_skill(&self) -> bool {
+        matches!(self, Self::AgentsSkill | Self::ClaudeSkill)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct SkillName {
+    value: String,
+}
+
+impl SkillName {
+    fn from_frontmatter(frontmatter: &Frontmatter) -> Self {
+        let value = frontmatter
+            .payload()
+            .iter()
+            .find(|entry| entry.frontmatter_key.as_ref() == "name")
+            .map(|entry| entry.frontmatter_value.as_ref().to_owned())
+            .unwrap_or_else(|| "<missing>".to_owned());
+        Self { value }
+    }
+
+    fn as_str(&self) -> &str {
+        &self.value
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct SerializedSkillBlock<'a> {
+    skill_name: SkillName,
+    location: String,
+    body: &'a str,
+}
+
+impl<'a> SerializedSkillBlock<'a> {
+    fn new(skill_name: SkillName, location: String, body: &'a str) -> Self {
+        Self {
+            skill_name,
+            location,
+            body,
+        }
+    }
+
+    fn validate_size(&self) -> Result<()> {
+        let byte_count = self.byte_count();
+        if byte_count > GENERATED_SKILL_BLOCK_BYTE_LIMIT {
+            return Err(Error::GeneratedSkillBlockTooLarge {
+                skill_name: self.skill_name.as_str().to_owned(),
+                location: self.location.clone(),
+                byte_count,
+                limit: GENERATED_SKILL_BLOCK_BYTE_LIMIT,
+            });
+        }
+        Ok(())
+    }
+
+    fn byte_count(&self) -> usize {
+        format!(
+            "<skill name=\"{}\" location=\"{}\">\n{}\n</skill>",
+            self.skill_name.as_str(),
+            self.location,
+            self.body
+        )
+        .len()
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -881,13 +947,22 @@ impl ManifestAssembler {
                 self.module_workspace_path(module_path)?,
             )?);
         }
-        MarkdownAssembly::new(
+        let rendered = MarkdownAssembly::new(
             output_path.clone(),
             self.manifest.output_surface,
             self.manifest.frontmatter.payload().to_vec(),
             fragments,
         )
-        .render()
+        .render()?;
+        if self.manifest.output_surface.is_skill() {
+            SerializedSkillBlock::new(
+                SkillName::from_frontmatter(&self.manifest.frontmatter),
+                output_path.relative_path().to_string_lossy().into_owned(),
+                &rendered,
+            )
+            .validate_size()?;
+        }
+        Ok(rendered)
     }
 
     fn render_toml(&self, output_path: &WorkspacePath) -> Result<String> {

@@ -77,6 +77,16 @@ pub enum Error {
     #[error("frontmatter value for `{key}` in {path} must be a single line")]
     InvalidFrontmatterValue { path: PathBuf, key: String },
 
+    #[error(
+        "generated skill `{skill_name}` serialized block at `{location}` is {byte_count} bytes, exceeding the {limit} byte limit"
+    )]
+    GeneratedSkillBlockTooLarge {
+        skill_name: String,
+        location: String,
+        byte_count: usize,
+        limit: usize,
+    },
+
     #[error("relative path {path} escapes the workspace root {root}")]
     PathEscapesRoot { root: PathBuf, path: PathBuf },
 
