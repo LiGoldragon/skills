@@ -128,7 +128,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 76);
+    assert_eq!(roster.skill_modules.payload().len(), 74);
 
     let active_modules: Vec<_> = roster
         .skill_modules
@@ -136,7 +136,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .iter()
         .filter(|module| matches!(module.module_lifecycle, ModuleLifecycle::Active(_)))
         .collect();
-    assert_eq!(active_modules.len(), 66);
+    assert_eq!(active_modules.len(), 64);
     for module in active_modules {
         assert_eq!(module.emission_policy, EmissionPolicy::FirstClassSkill);
         assert_eq!(
@@ -208,7 +208,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 66);
+    assert_eq!(skill_count, 64);
     assert_eq!(role_count, 10);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies

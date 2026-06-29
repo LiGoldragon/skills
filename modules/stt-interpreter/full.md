@@ -56,7 +56,7 @@ sense as English, try the canonical.
 | "Hexis" / "Hex-is" | the host-config-reconciler repo |
 | "Lore" | the docs repo (overlaps the English word — context decides) |
 | "Workspace" | the workspace meta-repo |
-| "ASCII" / "asci" / "askii" | the retired language-design repo (`aski`); pronounced like the encoding |
+| "ASCII" / "asci" / "askii" | the retired `aski` repo; pronounced like the encoding |
 
 ### Repositories (system / tooling layer)
 
