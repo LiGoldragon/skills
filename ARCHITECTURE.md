@@ -23,7 +23,7 @@ workers do not discover doctrine through a runtime index.
 - `roles/<name>/full.md`: source modules for generated worker role packets.
 - `skills/archive/`: archived source material with no active emission.
 - `manifests/active-outputs.nota`: active `Skill` and `Role` outputs; presence means active.
-- `manifests/module-dependencies.nota`: module identifier, source path, and dependency module identifiers.
+- `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
 - `manifests/skills-roster.nota`: compatibility input for legacy checks and archived/deleted module modeling.
 - `schema/assembly.schema`: schema-authored generator interface source.
 - `src/schema/assembly.rs`: generated Rust interface from `schema/assembly.schema`.
@@ -56,9 +56,13 @@ dispatch envelope, or local context rather than discovered through a generated
 index.
 
 Module dependencies are typed by module identifier rather than inferred from
-markdown links or filesystem layout. The dependency index is dependency-only:
-generation metadata such as descriptions, tiers, frontmatter, target surfaces,
-and role output identity live in the active manifest or compatibility roster.
+markdown links or filesystem layout. The dependency index also carries source
+module kind. `RuntimeSkill` modules may emit as first-class skills,
+`RoleSource` modules are role roots, and `RoleComposition` modules are
+generator-only role packet components that may be dependency-expanded into
+roles but cannot be emitted as runtime skills. Generation metadata such as
+descriptions, tiers, frontmatter, target surfaces, and role output identity
+live in the active manifest or compatibility roster.
 
 ## Ownership Boundaries
 

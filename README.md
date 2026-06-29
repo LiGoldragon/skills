@@ -25,14 +25,15 @@ SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- skil
 ```
 
 The source-side active output manifest lives at
-`manifests/active-outputs.nota`; module paths and dependencies live at
-`manifests/module-dependencies.nota`. The CLI consumes that active manifest for
-normal generation. The compatibility roster at `manifests/skills-roster.nota`
-remains parseable for legacy checks and archived/deleted skill modeling.
+`manifests/active-outputs.nota`; module paths, dependencies, and source module
+kind live at `manifests/module-dependencies.nota`. The CLI consumes that active
+manifest for normal generation. The compatibility roster at
+`manifests/skills-roster.nota` remains parseable for legacy checks and
+archived/deleted skill modeling.
 
 Source skill modules live under `modules/<name>/`. Role modules live under `roles/<name>/`. Archived modules live under `skills/archive/` and are not emitted.
 
-The active manifest records first-class `Skill` and `Role` outputs. Skill output paths are derived from module name plus target surface: `AgentsSkill` emits `.agents/skills/<name>/SKILL.md` for both Pi and Codex, and `ClaudeSkill` emits `.claude/skills/<name>/SKILL.md`.
+The active manifest records first-class `Skill` and `Role` outputs. Skill output paths are derived from module name plus target surface: `AgentsSkill` emits `.agents/skills/<name>/SKILL.md` for both Pi and Codex, and `ClaudeSkill` emits `.claude/skills/<name>/SKILL.md`. Source module kinds are explicit: `RuntimeSkill` modules may emit as skills, `RoleSource` modules are role roots, and `RoleComposition` modules are generator-only role packet components that can be included in roles but cannot emit as skills.
 
 Role outputs emit harness-native worker packets:
 
@@ -42,9 +43,7 @@ Role outputs emit harness-native worker packets:
 
 Generated role packets are the normal runtime doctrine bundle. Each packet
 carries its role source plus curated included modules and dependency-expanded
-modules from the manifest/index model. Additional doctrine comes from the
-prompt, generated role packet, explicit dispatch envelope, or local context; it
-does not come from runtime index discovery. Primary `skills/*.md` skill bodies
-are not emitted when no consuming harness needs them.
+modules from the manifest/index model. Primary `skills/*.md` skill bodies are
+not emitted when no consuming harness needs them.
 
 `generate-skills` prunes generated skill directories (`.agents/skills`, `.claude/skills`) before writing. Role packet directories are not whole-directory pruned; stale role cleanup uses `skills/generated-role-outputs.nota` so only previously generated role paths are removed. `check-skills` is non-writing and reports stale generated outputs with regeneration guidance.

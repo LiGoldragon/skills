@@ -384,6 +384,28 @@ pub struct ModuleDependency {
     pub module_identifier: ModuleIdentifier,
     pub module_path: ModulePath,
     pub dependency_modules: DependencyModules,
+    pub module_kind: ModuleKind,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum ModuleKind {
+    RuntimeSkill,
+    RoleSource,
+    RoleComposition,
 }
 
 #[rustfmt::skip]

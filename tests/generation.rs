@@ -9,8 +9,8 @@ use skills::{
     Error,
     schema::assembly::{
         ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
-        ModuleDependencies, ModuleLifecycle, RoleTargetSurface, SkillRoster, SourceRoot,
-        TargetSurface, WorkspaceRoot,
+        ModuleDependencies, ModuleKind, ModuleLifecycle, RoleTargetSurface, SkillRoster,
+        SourceRoot, TargetSurface, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -216,6 +216,34 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .iter()
         .map(|dependency| dependency.module_identifier.as_ref())
         .collect();
+    let module_kinds: BTreeMap<&str, ModuleKind> = module_dependencies
+        .payload()
+        .iter()
+        .map(|dependency| {
+            (
+                dependency.module_identifier.as_ref(),
+                dependency.module_kind,
+            )
+        })
+        .collect();
+    let role_composition_modules = [
+        "agent-output-protocol",
+        "edit-coordination-core",
+        "code-implementation-core",
+        "rust-core",
+        "nix-core",
+        "intent-core",
+        "repo-scaffold-core",
+        "repo-operation-core",
+        "skill-source-core",
+    ];
+    for module_identifier in role_composition_modules {
+        assert_eq!(
+            module_kinds.get(module_identifier),
+            Some(&ModuleKind::RoleComposition),
+            "{module_identifier} is generator-only role composition"
+        );
+    }
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
         .iter()
@@ -230,9 +258,17 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "intent-translator",
             "role-intent-translator",
-            &["agent-output-protocol", "edit-coordination-core", "bead-weaver"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "bead-weaver",
+            ],
         ),
-        ("scout", "role-scout", &["agent-output-protocol", "edit-coordination-core"]),
+        (
+            "scout",
+            "role-scout",
+            &["agent-output-protocol", "edit-coordination-core"],
+        ),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
@@ -279,22 +315,38 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "nix-auditor",
             "role-nix-auditor",
-            &["agent-output-protocol", "edit-coordination-core", "nix-core"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "nix-core",
+            ],
         ),
         (
             "skill-editor",
             "role-skill-editor",
-            &["agent-output-protocol", "edit-coordination-core", "skill-source-core"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "skill-source-core",
+            ],
         ),
         (
             "intent-maintainer",
             "role-intent-maintainer",
-            &["agent-output-protocol", "edit-coordination-core", "intent-core"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "intent-core",
+            ],
         ),
         (
             "repo-operator",
             "role-repo-operator",
-            &["agent-output-protocol", "edit-coordination-core", "repo-operation-core"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "repo-operation-core",
+            ],
         ),
     ];
 
@@ -321,6 +373,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ]
         );
         assert!(dependency_modules.contains(module_identifier));
+        assert_eq!(
+            module_kinds.get(module_identifier),
+            Some(&ModuleKind::RoleSource),
+            "{module_identifier} is a role source module"
+        );
         for included_module in *included_modules {
             assert!(dependency_modules.contains(included_module));
         }
@@ -391,7 +448,7 @@ fn generation_rejects_direct_module_dependency_cycle() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(example modules/example/full.md [example])]\n",
+        "[(example modules/example/full.md [example] RuntimeSkill)]\n",
     );
 
     let error = fixture
@@ -422,7 +479,7 @@ fn generation_rejects_transitive_module_dependency_cycle() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(first modules/first/full.md [second]) (second modules/second/full.md [third]) (third modules/third/full.md [second])]\n",
+        "[(first modules/first/full.md [second] RuntimeSkill) (second modules/second/full.md [third] RuntimeSkill) (third modules/third/full.md [second] RuntimeSkill)]\n",
     );
 
     let error = fixture
@@ -453,7 +510,7 @@ fn generation_rejects_duplicate_role_output_paths_before_write() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [])]\n",
+        "[(worker roles/worker/full.md [] RoleSource)]\n",
     );
 
     let error = fixture
@@ -476,6 +533,75 @@ fn generation_rejects_duplicate_role_output_paths_before_write() {
             .path()
             .join(".claude/agents/worker.md")
             .exists()
+    );
+}
+
+#[test]
+fn generation_rejects_role_composition_module_as_skill_output() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (edit-coordination-core edit-coordination-core Workflow Mechanism [Internal role component.] [AgentsSkill]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(edit-coordination-core modules/edit-coordination-core/full.md [] RoleComposition)]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("role composition modules do not emit as skills");
+
+    assert!(
+        matches!(
+            error,
+            Error::InvalidModuleKind {
+                ref module_identifier,
+                ref expected,
+                ref actual,
+            } if module_identifier == "edit-coordination-core"
+                && expected == "RuntimeSkill"
+                && actual == "RoleComposition"
+        ),
+        "{error:?}"
+    );
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".agents/skills/edit-coordination-core/SKILL.md")
+            .exists()
+    );
+}
+
+#[test]
+fn generation_rejects_runtime_module_as_role_source() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (worker worker [] [Worker role.] [ClaudeAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RuntimeSkill)]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("role source modules are typed separately");
+
+    assert!(
+        matches!(
+            error,
+            Error::InvalidModuleKind {
+                ref module_identifier,
+                ref expected,
+                ref actual,
+            } if module_identifier == "worker"
+                && expected == "RoleSource"
+                && actual == "RuntimeSkill"
+        ),
+        "{error:?}"
     );
 }
 
@@ -688,7 +814,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(example modules/example/full.md [])]\n",
+            "[(example modules/example/full.md [] RuntimeSkill)]\n",
         );
     }
 
@@ -703,7 +829,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(worker roles/worker/full.md []) (shared modules/shared/full.md []) (feature modules/feature/full.md [shared])]\n",
+            "[(worker roles/worker/full.md [] RoleSource) (shared modules/shared/full.md [] RoleComposition) (feature modules/feature/full.md [shared] RoleComposition)]\n",
         );
     }
 

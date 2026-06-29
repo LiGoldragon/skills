@@ -14,8 +14,8 @@ use crate::{
         EntryPointExtra, ExtraSurface, Frontmatter, FrontmatterEntry, FrontmatterKey,
         FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode,
         GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
-        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleLifecycle, ModulePath,
-        Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
+        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModuleLifecycle,
+        ModulePath, Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
         SkillMetadata, SkillModule, SkillRoster, TargetSurface,
     },
     workspace_path::WorkspacePath,
@@ -463,6 +463,10 @@ impl OutputPathIndex {
 impl ActiveSkill {
     fn first_class_manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
+        let modules = Modules::new(module_index.expanded_paths(
+            std::slice::from_ref(&self.module_identifier),
+            ModuleUse::SkillContent,
+        )?);
         for surface in self.target_surfaces.payload() {
             let output_surface = OutputSurface::from(surface);
             manifests.push(Manifest {
@@ -472,9 +476,7 @@ impl ActiveSkill {
                 output_kind: OutputKind::Markdown,
                 output_surface,
                 frontmatter: self.frontmatter(),
-                modules: Modules::new(
-                    module_index.expanded_paths(std::slice::from_ref(&self.module_identifier))?,
-                ),
+                modules: modules.clone(),
             });
         }
         Ok(manifests)
@@ -509,8 +511,8 @@ impl ActiveRole {
     }
 
     fn assembled_modules(&self, module_index: &ModuleIndex) -> Result<Vec<ModulePath>> {
-        let mut expansion = ModuleExpansion::new(module_index);
-        expansion.append_without_dependencies(&self.module_identifier)?;
+        let mut expansion = ModuleExpansion::new(module_index, ModuleUse::RoleContent);
+        expansion.append_role_source(&self.module_identifier)?;
         for module_identifier in self.included_modules.payload() {
             expansion.append(module_identifier)?;
         }
@@ -564,8 +566,12 @@ impl ModuleIndex {
         Ok(Self { entries })
     }
 
-    fn expanded_paths(&self, module_identifiers: &[ModuleIdentifier]) -> Result<Vec<ModulePath>> {
-        let mut expansion = ModuleExpansion::new(self);
+    fn expanded_paths(
+        &self,
+        module_identifiers: &[ModuleIdentifier],
+        module_use: ModuleUse,
+    ) -> Result<Vec<ModulePath>> {
+        let mut expansion = ModuleExpansion::new(self, module_use);
         for module_identifier in module_identifiers {
             expansion.append(module_identifier)?;
         }
@@ -581,29 +587,57 @@ impl ModuleIndex {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ModuleUse {
+    SkillContent,
+    RoleContent,
+}
+
+impl ModuleUse {
+    fn expected_description(&self) -> &'static str {
+        match self {
+            Self::SkillContent => "RuntimeSkill",
+            Self::RoleContent => "RuntimeSkill or RoleComposition",
+        }
+    }
+
+    fn accepts(&self, module_kind: ModuleKind) -> bool {
+        match self {
+            Self::SkillContent => module_kind == ModuleKind::RuntimeSkill,
+            Self::RoleContent => matches!(
+                module_kind,
+                ModuleKind::RuntimeSkill | ModuleKind::RoleComposition
+            ),
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 struct ModuleExpansion<'a> {
     module_index: &'a ModuleIndex,
+    module_use: ModuleUse,
     resolved: BTreeSet<ModuleIdentifier>,
     visiting: Vec<ModuleIdentifier>,
     paths: Vec<ModulePath>,
 }
 
 impl<'a> ModuleExpansion<'a> {
-    fn new(module_index: &'a ModuleIndex) -> Self {
+    fn new(module_index: &'a ModuleIndex, module_use: ModuleUse) -> Self {
         Self {
             module_index,
+            module_use,
             resolved: BTreeSet::new(),
             visiting: Vec::new(),
             paths: Vec::new(),
         }
     }
 
-    fn append_without_dependencies(&mut self, module_identifier: &ModuleIdentifier) -> Result<()> {
+    fn append_role_source(&mut self, module_identifier: &ModuleIdentifier) -> Result<()> {
         if self.resolved.contains(module_identifier) {
             return Ok(());
         }
         let dependency = self.module_index.dependency(module_identifier)?;
+        dependency.require_kind(ModuleKind::RoleSource, "RoleSource")?;
         self.resolved.insert(module_identifier.clone());
         self.paths.push(dependency.module_path.clone());
         Ok(())
@@ -626,6 +660,7 @@ impl<'a> ModuleExpansion<'a> {
             return Err(Error::ModuleDependencyCycle { module_identifiers });
         }
         let dependency = self.module_index.dependency(module_identifier)?;
+        dependency.require_accepted(self.module_use)?;
         self.visiting.push(module_identifier.clone());
         for dependency_identifier in dependency.dependency_modules.payload() {
             self.append(dependency_identifier)?;
@@ -638,6 +673,42 @@ impl<'a> ModuleExpansion<'a> {
 
     fn into_paths(self) -> Vec<ModulePath> {
         self.paths
+    }
+}
+
+impl ModuleDependency {
+    fn require_accepted(&self, module_use: ModuleUse) -> Result<()> {
+        if module_use.accepts(self.module_kind) {
+            Ok(())
+        } else {
+            Err(Error::InvalidModuleKind {
+                module_identifier: self.module_identifier.as_ref().to_owned(),
+                expected: module_use.expected_description().to_owned(),
+                actual: self.module_kind.name().to_owned(),
+            })
+        }
+    }
+
+    fn require_kind(&self, expected_kind: ModuleKind, expected: &str) -> Result<()> {
+        if self.module_kind == expected_kind {
+            Ok(())
+        } else {
+            Err(Error::InvalidModuleKind {
+                module_identifier: self.module_identifier.as_ref().to_owned(),
+                expected: expected.to_owned(),
+                actual: self.module_kind.name().to_owned(),
+            })
+        }
+    }
+}
+
+impl ModuleKind {
+    fn name(&self) -> &'static str {
+        match self {
+            Self::RuntimeSkill => "RuntimeSkill",
+            Self::RoleSource => "RoleSource",
+            Self::RoleComposition => "RoleComposition",
+        }
     }
 }
 
@@ -688,6 +759,7 @@ impl SkillModule {
             module_identifier: ModuleIdentifier::new(self.module_name.as_ref()),
             module_path: self.module_path.clone(),
             dependency_modules: crate::schema::assembly::DependencyModules::new(Vec::new()),
+            module_kind: ModuleKind::RuntimeSkill,
         }
     }
 

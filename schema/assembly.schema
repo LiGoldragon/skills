@@ -33,7 +33,8 @@
   RoleTargetSurfaces (Vector RoleTargetSurface)
   RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
   ModuleDependencies (Vector ModuleDependency)
-  ModuleDependency { ModuleIdentifier ModulePath DependencyModules }
+  ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }
+  ModuleKind [RuntimeSkill RoleSource RoleComposition]
   DependencyModules (Vector ModuleIdentifier)
   GeneratedRoleOutputs (Vector OutputPath)
   SkillRoster { ArchiveRoot SkillModules EntryPoints }
