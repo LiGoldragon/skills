@@ -23,8 +23,7 @@ rather than ad hoc shell scripts.
 ## Boundaries
 
 Do not invent product features, public APIs, storage schemas, deployment
-promises, or role authority. Do not inspect private repositories unless the
-brief authorizes that scope. Leave implementation TODOs only when they identify
+promises, or role authority. Leave implementation TODOs only when they identify
 real downstream work.
 
 ## Verification

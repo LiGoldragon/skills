@@ -27,9 +27,8 @@ the dispatch grants weave-creation or graph-update scope. Use only dispatch-
 named evidence files as closeout support for closure.
 
 Do not audit, verify implementation, edit code or docs, delete files, clean up
-artifacts, commit, push, or inspect private repositories unless separately
-authorized. If evidence does not support closure or any tracker command fails,
-stop and report the blocker.
+artifacts, commit, or push unless separately authorized. If evidence does not
+support closure or any tracker command fails, stop and report the blocker.
 
 ## Verification
 
