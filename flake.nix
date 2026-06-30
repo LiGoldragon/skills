@@ -196,13 +196,16 @@
             fi
             touch "$out"
           '';
-          obsolete-intent-led-wrappers-removed = pkgs.runCommand "skills-obsolete-intent-led-wrappers-removed" { } ''
-            generate_wrapper='generate-intent-led-orchestration'
-            check_wrapper='check-intent-led-orchestration'
-            generate_request='intent-led-orchestration-generate'
-            check_request='intent-led-orchestration-check'
-            if grep -R -F -e "$generate_wrapper" -e "$check_wrapper" -e "$generate_request" -e "$check_request" ${cleanSource}/apps ${cleanSource}/manifests ${cleanSource}/skills-check.nota ${cleanSource}/skills-generate.nota 2>/dev/null; then
-              echo "obsolete narrow intent-led wrappers or requests remain" >&2
+          stale-orchestration-aliases-removed = pkgs.runCommand "skills-stale-orchestration-aliases-removed" { } ''
+            dash='-'
+            old_prefix='intent-led'
+            old_skill="$old_prefix$dash"'orchestration'
+            generate_wrapper="generate-$old_skill"
+            check_wrapper="check-$old_skill"
+            generate_request="$old_skill-generate"
+            check_request="$old_skill-check"
+            if grep -R -F -e "$old_skill" -e "$generate_wrapper" -e "$check_wrapper" -e "$generate_request" -e "$check_request" ${cleanSource}/apps ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/skills-check.nota ${cleanSource}/skills-generate.nota 2>/dev/null; then
+              echo "obsolete narrow orchestration aliases or requests remain" >&2
               exit 1
             fi
             touch "$out"

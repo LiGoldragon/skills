@@ -60,7 +60,7 @@
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
   (human-interaction modules/human-interaction/full.md [] RuntimeSkill)
   (helper-context-transfer modules/helper-context-transfer/full.md [] RuntimeSkill)
-  (intent-led-orchestration modules/intent-led-orchestration/full.md [] RuntimeSkill)
+  (orchestration modules/orchestration/full.md [] RuntimeSkill)
   (context-maintenance modules/context-maintenance/full.md [] RuntimeSkill)
   (context-handover modules/context-handover/full.md [] RuntimeSkill)
   (context-maintenance-deep modules/context-maintenance-deep/full.md [] RuntimeSkill)

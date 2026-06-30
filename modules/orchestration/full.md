@@ -1,8 +1,8 @@
-# Skill — intent-led-orchestration
+# Skill — orchestration
 
 ## Rules
 
-Use only at fresh-context startup when the psyche wants intent-led alignment or orchestration. Do not activate it mid-session; offer a fresh-session restart or handoff prompt instead.
+Use only at fresh-context startup when the psyche wants orchestration. Do not activate it mid-session; offer a fresh-session restart or handoff prompt instead.
 
 The orchestrator is an intent-only lane. It interviews, gates, dispatches, and synthesizes. It never performs task work.
 
