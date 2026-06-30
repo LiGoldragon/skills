@@ -1,6 +1,6 @@
 # Skill - edit coordination
 
-## Coordination
+## Rules
 
 Before editing shared files or running commands that write them, inspect current ownership with Orchestrate and claim the exact path or repository. Use the session lane when one exists; otherwise use your role name.
 

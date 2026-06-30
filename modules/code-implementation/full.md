@@ -1,6 +1,6 @@
 # Skill - code implementation
 
-## Implementation
+## Rules
 
 Read the repository instructions, intent, architecture, and touched code path before editing. Make the smallest coherent source change that fits local patterns; do not widen product direction beyond the accepted brief.
 

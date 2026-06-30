@@ -1,6 +1,6 @@
 # Skill - repository closeout
 
-## Closeout
+## Rules
 
 Use repository closeout after implementation and validation evidence exist. Inspect local instructions and status first, preserve unrelated edits, and do not manufacture green evidence for missing checks.
 
