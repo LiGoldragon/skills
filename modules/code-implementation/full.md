@@ -6,6 +6,6 @@ Read the repository instructions, intent, architecture, and touched code path be
 
 Prefer existing language, framework, schema, and helper shapes. Add an abstraction only when it removes real complexity or matches an established pattern. Use full English names, typed domain objects, enum or record variants instead of boolean control flags, and methods on the data-bearing type that owns behavior.
 
-When behavior changes a public contract, storage schema, wire format, generated surface, deployment slot, or operator workflow, update the relevant version or state why none is needed. Preserve compatibility unless the brief accepts a break.
+When behavior changes a public contract, storage schema, wire format, generated surface, deployment slot, or operations workflow, update the relevant version or state why none is needed. Preserve compatibility unless the brief accepts a break.
 
 Run the narrowest meaningful check first, then broader checks when shared behavior, generator output, or public interfaces changed. Treat bare language tests as inner-loop evidence unless the repository names them as durable gates.

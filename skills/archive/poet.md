@@ -1,5 +1,7 @@
 # Skill — poet
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 ## When this applies
 
 The work is **writing**: drafting essays, refining prose, applying citation conventions, shaping the language layer of a document where literary quality is the load-bearing concern.

@@ -31,12 +31,12 @@ jj git push --bookmark main
 ```
 
 Code repositories keep one logical change per commit. Follow the repo's branch
-or bookmark policy: operator-owned `main`, designer or feature work on the
+or bookmark policy: integration-owned `main`, design or feature work on the
 named long-lived or task branch, and integration only after producer refs are
 available for consumers.
 
 For main feature integration, start from current `main`, work on a named
-operator bookmark while the feature is not green, test the affected branch
+integration bookmark while the feature is not green, test the affected branch
 family together, rebase on moved `main` before landing, then land producers
 before consumers. Remove temporary local path overrides before the merge-ready
 state unless the branch dependency is intentional and documented.
@@ -46,17 +46,17 @@ isolated main-based feature worktree or workspace, claim that path, and file a
 tracker item naming the repository, branch, worktree, and needed final
 disposition: discard, partial merge, or full merge.
 
-## Operation Beads
+## Operation Work Tracking
 
-Use beads for short tracked work that must survive the session or coordinate
-with other work. Before working a bead, inspect its state and dependencies, then
-claim only the bead actively being worked.
+Use tracked work items when work must survive the session or coordinate
+with other work. Before working an item, inspect its state and dependencies, then
+claim only the item actively being worked.
 
-Create executable bead text: desired outcome, owning repository or component,
+Create executable item text: desired outcome, owning repository or component,
 likely files or surfaces, acceptance criteria, dependencies, blockers, and
 expected verification. Wire producer-before-consumer dependencies explicitly.
 
-Close a bead only after the acceptance criteria pass or the bead is explicitly
+Close an item only after the acceptance criteria pass or the item is explicitly
 invalidated. Closing notes name durable evidence: commit, output file,
 validation artifact, or superseding task. If blocked, leave it open and name
 the blocker.

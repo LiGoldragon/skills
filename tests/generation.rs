@@ -190,6 +190,12 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         ));
         assert_eq!(module.emission_policy, EmissionPolicy::NoEmission);
         assert!(module.target_surfaces.payload().is_empty());
+        let archived_source = fs::read_to_string(format!("skills/archive/{role_name}.md"))
+            .unwrap_or_else(|error| panic!("{role_name} archive source is readable: {error}"));
+        assert!(
+            archived_source.contains("Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination."),
+            "{role_name} archive source marks the appellation deprecated"
+        );
     }
 
     for deleted_name in ["subagent-session-workflow", "keep-working"] {
@@ -233,6 +239,34 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
     assert_eq!(skill_count, 56);
     assert_eq!(role_count, 11);
+
+    let active_skill_identifiers: BTreeSet<&str> = active_outputs
+        .payload()
+        .iter()
+        .filter_map(|output| match output {
+            skills::schema::assembly::ActiveOutput::Skill(skill) => {
+                Some(skill.output_identifier.as_ref())
+            }
+            skills::schema::assembly::ActiveOutput::Role(_) => None,
+        })
+        .collect();
+    for required_skill in [
+        "component-architecture",
+        "design-quality",
+        "version-control",
+        "work-tracking",
+    ] {
+        assert!(
+            active_skill_identifiers.contains(required_skill),
+            "{required_skill} active skill uses approved appellation"
+        );
+    }
+    for deprecated_skill in ["component-triad", "beauty", "jj", "beads"] {
+        assert!(
+            !active_skill_identifiers.contains(deprecated_skill),
+            "{deprecated_skill} active skill appellation stays retired"
+        );
+    }
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
         .payload()
@@ -375,8 +409,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
-            "intent-maintainer",
-            "role-intent-maintainer",
+            "intent-curator",
+            "role-intent-curator",
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
@@ -386,8 +420,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
-            "repo-operator",
-            "role-repo-operator",
+            "repository-closeout",
+            "role-repository-closeout",
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
@@ -395,8 +429,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
-            "weave-operator",
-            "role-weave-operator",
+            "tracker-weaver",
+            "role-tracker-weaver",
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
@@ -407,6 +441,12 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     ];
 
     assert_eq!(active_roles.len(), expected_roles.len());
+    for deprecated_role in ["intent-maintainer", "repo-operator", "weave-operator"] {
+        assert!(
+            !active_roles.contains_key(deprecated_role),
+            "{deprecated_role} active role appellation stays retired"
+        );
+    }
     for (output_identifier, module_identifier, included_modules) in expected_roles {
         let role = active_roles
             .get(output_identifier)

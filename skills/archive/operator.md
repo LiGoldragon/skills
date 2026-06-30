@@ -1,5 +1,7 @@
 # Skill — operator
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 ## What this skill is for
 
 Use this when the work is **implementation**: writing Rust, fixing bugs, threading new contract types through consumer crates, migrating between schema shapes, getting tests green. `operator` is a workspace coordination role.

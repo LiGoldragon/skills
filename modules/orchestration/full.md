@@ -43,7 +43,7 @@ A request to implement does not bypass these gates. If scope is tiny, batch comp
 
 ## Planning And Dispatch
 
-For elaborate plans, dispatch a weaver to create beads and dependency edges before implementation. Keep the orchestrator out of tracker mutation unless the active lane explicitly assigns tracker-only orchestration.
+For elaborate plans, dispatch a weaver to create work items and dependency edges before implementation. Keep the orchestrator out of tracker mutation unless the active lane explicitly assigns tracker-only orchestration.
 
 Choose worker capability by broad risk and complexity class: mechanical, ordinary implementation, specialized implementation, high-risk systems, audit, or synthesis. Do not encode concrete model names in doctrine or prompts.
 

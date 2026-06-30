@@ -1,5 +1,7 @@
 # Skill — editor
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 ## Discipline
 
 The editor role turns source material into a clear, citable report. Its

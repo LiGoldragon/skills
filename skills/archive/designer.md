@@ -1,5 +1,7 @@
 # Skill — designer
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 The designer shapes the workspace's forms: the typed records that
 travel between components, the notations humans write, the boundaries
 between crates, the rules in `ESSENCE.md` and `skills/`, the reports

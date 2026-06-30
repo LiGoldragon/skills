@@ -216,7 +216,7 @@
             grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
             grep -F 'Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.' "$orchestration" >/dev/null
             grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
-            grep -F 'dispatch a weaver to create beads' "$orchestration" >/dev/null
+            grep -F 'dispatch a weaver to create work items' "$orchestration" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
             grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
             touch "$out"
@@ -226,16 +226,34 @@
             index=${cleanSource}/manifests/module-dependencies.nota
             grep -F '(spirit-query modules/spirit-query/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(Skill (spirit-query spirit-query Meta Topic' "$manifest" >/dev/null
-            for role in intent-translator scout repo-scaffolder general-code-implementer operating-system-implementer rust-auditor nix-auditor skill-editor intent-maintainer weave-operator; do
+            for role in intent-translator scout repo-scaffolder general-code-implementer operating-system-implementer rust-auditor nix-auditor skill-editor intent-curator tracker-weaver; do
               grep -E "\\(Role \\($role [^]]*spirit-query" "$manifest" >/dev/null || {
                 echo "$role role must embed read-only Spirit query doctrine" >&2
                 exit 1
               }
             done
-            if grep -E '\\(Role \\(repo-operator [^]]*spirit-query' "$manifest"; then
-              echo "repo-operator is the mechanical closeout exemption and must not embed spirit-query" >&2
+            if grep -E '\\(Role \\(repository-closeout [^]]*spirit-query' "$manifest"; then
+              echo "repository-closeout is the mechanical closeout exemption and must not embed spirit-query" >&2
               exit 1
             fi
+            touch "$out"
+          '';
+          active-appellations = pkgs.runCommand "skills-active-appellations" { } ''
+            manifest=${cleanSource}/manifests/active-outputs.nota
+            index=${cleanSource}/manifests/module-dependencies.nota
+            for required in component-architecture design-quality version-control work-tracking intent-curator repository-closeout tracker-weaver; do
+              grep -F "$required" "$manifest" >/dev/null || {
+                echo "$required must be present in active output manifest" >&2
+                exit 1
+              }
+              grep -F "$required" "$index" >/dev/null || true
+            done
+            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' intent-maintainer repo-operator weave-operator; do
+              if grep -F "$retired" "$manifest"; then
+                echo "$retired must not be an active output appellation" >&2
+                exit 1
+              fi
+            done
             touch "$out"
           '';
           default = test;

@@ -26,7 +26,7 @@ remember, keep looking for the shape that makes the rule explicit.
 ## Implementation Version Compatibility
 
 When behavior changes a public contract, storage schema, wire format, generated
-surface, deployment slot, or operator workflow, update the relevant version or
+surface, deployment slot, or operations workflow, update the relevant version or
 state why none is needed. Preserve compatibility unless the brief explicitly
 accepts a break.
 

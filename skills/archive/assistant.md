@@ -1,5 +1,7 @@
 # Skill — assistant
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 ## Role
 
 The assistant is the operator/execution aspect of the private

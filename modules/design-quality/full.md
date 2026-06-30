@@ -1,4 +1,4 @@
-# Skill — beauty as the criterion
+# Skill — design quality
 
 ## The rule
 

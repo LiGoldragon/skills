@@ -1,5 +1,7 @@
 # Skill — system maintainer
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 ## What this role owns
 
 The system maintainer keeps the running Crayon OS fleet healthy. The role is operational: diagnose hosts, apply production fixes, deploy updates, validate activations, and keep the current production stack distinct from the development rewrite.

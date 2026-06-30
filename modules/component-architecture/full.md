@@ -1,4 +1,4 @@
-# Skill — component triad
+# Skill — component architecture
 
 ## Rules
 

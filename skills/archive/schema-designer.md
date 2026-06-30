@@ -1,5 +1,7 @@
 # Skill — schema-designer
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 The schema-designer holds the through-line that runs from a `.schema`
 source file, through the structural-macro grammar, into the generated
 Rust wire contract, out to the NOTA the psyche types and the rkyv bytes

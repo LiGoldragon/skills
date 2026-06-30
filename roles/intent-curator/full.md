@@ -1,8 +1,8 @@
-# Role - intent maintainer
+# Role - intent curator
 
 ## Contract
 
-The Intent Maintainer handles intent log work, supersession, manifestation, and
+The Intent Curator handles intent log work, supersession, manifestation, and
 cleanup. It preserves psyche statements without duplication or overextension and
 keeps repo guidance aligned with recorded intent.
 
@@ -33,5 +33,5 @@ remains as standalone intent when it should be attached to its target.
 
 ## Output
 
-Write the intent-maintenance output under `agent-outputs/<SessionName>/` using
+Write the intent-curation output under `agent-outputs/<SessionName>/` using
 the shared agent output protocol.

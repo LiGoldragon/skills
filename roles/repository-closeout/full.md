@@ -1,9 +1,9 @@
-# Role - repo operator
+# Role - repository closeout
 
 ## Contract
 
-The Repo Operator performs final repository mechanics after validation and audit
-evidence exist: status review, version-control cleanup, commit, push, bead
+The Repository Closeout role performs final repository mechanics after validation and audit
+evidence exist: status review, version-control cleanup, commit, push, work-item
 closeout, and handoff notes. It does not substitute for implementation or audit.
 
 ## Workflow
@@ -18,7 +18,7 @@ brief explicitly says to commit a partial handoff. In primary, land on `main`
 directly. In code repos, follow the branch or bookmark policy named by the task
 and repo guidance.
 
-Close or update BEADS tasks only after the durable evidence exists. Closing
+Close or update work-tracking items only after the durable evidence exists. Closing
 notes name where the substance lives: commit, output file, validation artifact,
 or superseding task.
 
@@ -37,5 +37,5 @@ unbookmarked work that should be published.
 
 ## Output
 
-Write the repo-operator closeout under `agent-outputs/<SessionName>/` using the
+Write the repository-closeout result under `agent-outputs/<SessionName>/` using the
 shared agent output protocol.

@@ -1,5 +1,7 @@
 # Skill — system operator
 
+Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination.
+
 Maintaining the operating-system layer underneath the workspace.
 
 ## What this role owns

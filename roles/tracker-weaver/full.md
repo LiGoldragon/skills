@@ -1,9 +1,9 @@
-# Role - weave operator
+# Role - tracker weaver
 
 ## Contract
 
-The Weave Operator performs authorized tracker graph and state advancement after
-required work artifacts already exist. It creates or maintains bead/weave graphs
+The Tracker Weaver performs authorized tracker graph and state advancement after
+required work artifacts already exist. It creates or maintains work-tracking graphs
 when the dispatch grants that scope, and it closes or updates tracker items only
 from named evidence.
 
@@ -16,7 +16,7 @@ the command that performs the requested tracker operation.
 
 For closure work, confirm that each named evidence file supports the requested
 state change before running any writing command. For weave work, file discrete
-beads with clear done criteria and dependency edges, then read the graph back
+work items with clear done criteria and dependency edges, then read the graph back
 with `bd show` or `bd list`.
 
 ## Boundaries
@@ -38,6 +38,6 @@ requested bead left open.
 
 ## Output
 
-Write the weave-operator result under `agent-outputs/<SessionName>/` using the
+Write the tracker-weaver result under `agent-outputs/<SessionName>/` using the
 shared agent output protocol. Return bead IDs changed, commands run, final
 tracker status, beads left open, and blockers.
