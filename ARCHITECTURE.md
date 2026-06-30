@@ -47,6 +47,12 @@ Derived inventory:
 
 ## Assembly Model
 
+The V1 active source surface is two NOTA manifests: one active-outputs manifest
+for generated `Skill` and `Role` outputs, where presence means active, and a
+separate dependency-only module index mapping module identifiers to source paths
+and dependency module identifiers. The active manifest decides what emits; the
+module index decides expansion order and module kind.
+
 Assembly is ordered concatenation of source modules after manifest expansion.
 For skills, the active skill's module expands through the dependency index. For
 roles, the role body is emitted first, followed by any included modules and
