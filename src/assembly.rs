@@ -23,6 +23,8 @@ use crate::{
 
 const CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION: &str = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 const GENERATED_SKILL_BLOCK_BYTE_LIMIT: usize = 32 * 1024;
+const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] =
+    &["Repo Operator", "Weave Operator", "Intent Maintainer"];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandLine {
@@ -909,6 +911,10 @@ impl OutputSurface {
     fn is_skill(&self) -> bool {
         matches!(self, Self::AgentsSkill | Self::ClaudeSkill)
     }
+
+    fn is_role(&self) -> bool {
+        matches!(self, Self::ClaudeAgent | Self::CodexAgent | Self::PiAgent)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -969,6 +975,30 @@ impl<'a> SerializedSkillBlock<'a> {
             self.body
         )
         .len()
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RetiredCurrentDestinationProse<'a> {
+    output_path: WorkspacePath,
+    body: &'a str,
+}
+
+impl<'a> RetiredCurrentDestinationProse<'a> {
+    fn new(output_path: WorkspacePath, body: &'a str) -> Self {
+        Self { output_path, body }
+    }
+
+    fn validate(&self) -> Result<()> {
+        for phrase in RETIRED_CURRENT_DESTINATION_PHRASES {
+            if self.body.contains(phrase) {
+                return Err(Error::RetiredCurrentDestinationProse {
+                    path: self.output_path.full_path(),
+                    phrase: (*phrase).to_owned(),
+                });
+            }
+        }
+        Ok(())
     }
 }
 
@@ -1034,6 +1064,9 @@ impl ManifestAssembler {
             )
             .validate_size()?;
         }
+        if self.manifest.output_surface.is_role() {
+            RetiredCurrentDestinationProse::new(output_path.clone(), &rendered).validate()?;
+        }
         Ok(rendered)
     }
 
@@ -1051,6 +1084,10 @@ impl ManifestAssembler {
             }
             _ => body,
         };
+        if self.manifest.output_surface.is_role() {
+            RetiredCurrentDestinationProse::new(output_path.clone(), &developer_instructions)
+                .validate()?;
+        }
         RoleToml::new(&self.manifest.frontmatter, developer_instructions).render()
     }
 

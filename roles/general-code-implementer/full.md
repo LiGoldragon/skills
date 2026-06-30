@@ -24,8 +24,9 @@ your task and avoid reverting peer edits.
 
 Do not edit skill-system prose unless the assignment explicitly asks for source
 content changes; that belongs to the Skill Editor role. Do not perform final
-commit/push mechanics when the weave assigns that to Repo Operator. Do not
-expand scope into design choices that were not accepted.
+commit/push mechanics when the weave assigns that closeout to
+repository-closeout. Do not expand scope into design choices that were not
+accepted.
 
 ## Verification
 

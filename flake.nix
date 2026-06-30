@@ -254,6 +254,12 @@
                 exit 1
               fi
             done
+            for retired_title in 'Repo Operator' 'Weave Operator' 'Intent Maintainer'; do
+              if grep -R -F "$retired_title" ${cleanSource}/roles ${cleanSource}/modules; then
+                echo "$retired_title must not appear as active current-destination prose" >&2
+                exit 1
+              fi
+            done
             touch "$out"
           '';
           default = test;

@@ -94,6 +94,9 @@ pub enum Error {
         limit: usize,
     },
 
+    #[error("retired current-destination prose `{phrase}` appears in generated role output {path}")]
+    RetiredCurrentDestinationProse { path: PathBuf, phrase: String },
+
     #[error("relative path {path} escapes the workspace root {root}")]
     PathEscapesRoot { root: PathBuf, path: PathBuf },
 

@@ -536,6 +536,40 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
+fn role_generation_rejects_retired_current_destination_prose() {
+    for phrase in ["Repo Operator", "Weave Operator", "Intent Maintainer"] {
+        let fixture = Fixture::new();
+        fixture.write_role_generation_sources();
+        fixture.write_source_file(
+            "roles/worker/full.md",
+            &format!(
+                "# Role - worker\n\n## Contract\n\nDo not assign current closeout to {phrase}.\n"
+            ),
+        );
+        fixture.write_source_file(
+            "modules/shared/full.md",
+            "# Module - shared\n\n## Shared Rule\n\nDependency first.\n",
+        );
+        fixture.write_source_file(
+            "modules/feature/full.md",
+            "# Module - feature\n\n## Feature Rule\n\nDependent second.\n",
+        );
+
+        let error = fixture
+            .generate(GenerationMode::Write)
+            .expect_err("retired title-case current-destination prose fails role generation");
+
+        assert!(
+            matches!(
+                error,
+                Error::RetiredCurrentDestinationProse { phrase: ref found, .. } if found == phrase
+            ),
+            "{error:?}"
+        );
+    }
+}
+
+#[test]
 fn generation_rejects_direct_module_dependency_cycle() {
     let fixture = Fixture::new();
     fixture.write_source_file(
