@@ -128,7 +128,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 70);
+    assert_eq!(roster.skill_modules.payload().len(), 69);
 
     let active_first_class_modules: Vec<_> = roster
         .skill_modules
@@ -139,7 +139,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 56);
+    assert_eq!(active_first_class_modules.len(), 55);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -237,7 +237,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 56);
+    assert_eq!(skill_count, 55);
     assert_eq!(role_count, 11);
 
     let active_skill_identifiers: BTreeSet<&str> = active_outputs
@@ -261,10 +261,16 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "{required_skill} active skill uses approved appellation"
         );
     }
-    for deprecated_skill in ["component-triad", "beauty", "jj", "beads"] {
+    for deprecated_skill in [
+        "component-triad",
+        "beauty",
+        "jj",
+        "beads",
+        "human-interaction",
+    ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
-            "{deprecated_skill} active skill appellation stays retired"
+            "{deprecated_skill} active skill appellation stays retired or removed"
         );
     }
 
@@ -308,6 +314,32 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         module_kinds.get("spirit-query"),
         Some(&ModuleKind::RuntimeSkill),
         "spirit-query remains a first-class read-only skill and role-embedded runtime module"
+    );
+    assert!(
+        !dependency_modules.contains("human-interaction"),
+        "human-interaction is deleted from the dependency index"
+    );
+    let orchestration_dependency = module_dependencies
+        .payload()
+        .iter()
+        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
+        .expect("orchestration dependency indexed");
+    assert_eq!(
+        orchestration_dependency
+            .dependency_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["spirit-query"]
+    );
+    assert!(
+        !orchestration_dependency
+            .dependency_modules
+            .payload()
+            .iter()
+            .any(|module| module.as_ref() == "context-handover"),
+        "context-handover remains separate/manual-load only"
     );
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
@@ -478,6 +510,74 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             assert!(dependency_modules.contains(included_module));
         }
     }
+}
+
+#[test]
+fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
+    let manifest_text = include_str!("../manifests/active-outputs.nota");
+    let index_text = include_str!("../manifests/module-dependencies.nota");
+
+    assert!(!manifest_text.contains("human-interaction"));
+    assert!(!index_text.contains("human-interaction"));
+    assert!(
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/human-interaction/full.md")
+            .exists(),
+        "human-interaction source module is deleted, not archived"
+    );
+
+    let module_dependencies = NotaSource::new(index_text)
+        .parse::<ModuleDependencies>()
+        .expect("module dependency index parses");
+    let orchestration = module_dependencies
+        .payload()
+        .iter()
+        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
+        .expect("orchestration dependency indexed");
+    assert_eq!(
+        orchestration
+            .dependency_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["spirit-query"]
+    );
+    assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
+    assert!(
+        !orchestration
+            .dependency_modules
+            .payload()
+            .iter()
+            .any(|module| module.as_ref() == "context-handover")
+    );
+}
+
+#[test]
+fn orchestration_doctrine_contains_required_rules() {
+    let orchestration = include_str!("../modules/orchestration/full.md");
+    for required in [
+        "Treat the psyche as authority, bottleneck, and limited attention.",
+        "Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.",
+        "Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.",
+        "Confirm suspected interpretation with the psyche instead of silently assuming.",
+        "Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.",
+        "Do not use a weaver for a single small bounded fix with one worker and no tracking value.",
+        "Match worker model and thinking level to work intensity",
+        "small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames",
+        "normal implementation workers for ordinary implementation with local tests",
+        "strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions",
+        "Use a separate auditor for substantial completed work, with strength matched to risk",
+        "It refuses direct task work",
+        "Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.",
+        "It does not inspect files, command output, links, status, or systems directly.",
+    ] {
+        assert!(
+            orchestration.contains(required),
+            "missing orchestration rule: {required}"
+        );
+    }
+    assert!(!orchestration.contains("context-handover"));
 }
 
 #[test]
@@ -953,6 +1053,70 @@ fn write_mode_prunes_generated_skill_directories_before_writing() {
             .join(".agents/skills/example/SKILL.md")
             .exists()
     );
+}
+
+#[test]
+fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (new-skill new-skill Craft Topic [New skill.] [AgentsSkill ClaudeSkill])) (Role (new-worker new-worker [] [New worker.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(new-skill modules/new-skill/full.md [] RuntimeSkill) (new-worker roles/new-worker/full.md [] RoleSource)]\n",
+    );
+    fixture.write_source_file(
+        "modules/new-skill/full.md",
+        "# Skill — new-skill\n\n## Rule\n\nGenerated.\n",
+    );
+    fixture.write_source_file(
+        "roles/new-worker/full.md",
+        "# Role - new-worker\n\n## Contract\n\nGenerated.\n",
+    );
+    fixture.write_workspace_file(".agents/skills/old-skill/SKILL.md", "stale skill\n");
+    fixture.write_workspace_file(".claude/skills/old-skill/SKILL.md", "stale skill\n");
+    fixture.write_workspace_file(
+        "skills/generated-role-outputs.nota",
+        "[.claude/agents/old-worker.md .codex/agents/old-worker.toml .pi/agents/old-worker.md]\n",
+    );
+    fixture.write_workspace_file(".claude/agents/old-worker.md", "stale role\n");
+    fixture.write_workspace_file(".codex/agents/old-worker.toml", "stale role\n");
+    fixture.write_workspace_file(".pi/agents/old-worker.md", "stale role\n");
+    fixture.write_workspace_file(".claude/agents/human-owned.md", "human-owned role\n");
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("write mode prunes removed or renamed generated outputs");
+
+    for stale_path in [
+        ".agents/skills/old-skill/SKILL.md",
+        ".claude/skills/old-skill/SKILL.md",
+        ".claude/agents/old-worker.md",
+        ".codex/agents/old-worker.toml",
+        ".pi/agents/old-worker.md",
+    ] {
+        assert!(
+            !fixture.workspace.path().join(stale_path).exists(),
+            "{stale_path} is pruned"
+        );
+    }
+    for active_path in [
+        ".agents/skills/new-skill/SKILL.md",
+        ".claude/skills/new-skill/SKILL.md",
+        ".claude/agents/new-worker.md",
+        ".codex/agents/new-worker.toml",
+        ".pi/agents/new-worker.md",
+        ".claude/agents/human-owned.md",
+    ] {
+        assert!(
+            fixture.workspace.path().join(active_path).exists(),
+            "{active_path} remains or is generated"
+        );
+    }
+    let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
+    assert!(!inventory.contains("old-worker"));
+    assert!(inventory.contains("new-worker"));
 }
 
 struct Fixture {

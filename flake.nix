@@ -210,15 +210,50 @@
             fi
             touch "$out"
           '';
+          human-interaction-removed-from-active-and-generated = pkgs.runCommand "skills-human-interaction-removed-from-active-and-generated" { } ''
+            manifest=${cleanSource}/manifests/active-outputs.nota
+            index=${cleanSource}/manifests/module-dependencies.nota
+            if grep -R -F 'human-interaction' "$manifest" "$index" ${cleanSource}/manifests/skills-roster.nota ${cleanSource}/modules; then
+              echo "human-interaction must be deleted from source manifests and modules" >&2
+              exit 1
+            fi
+            workspace=$TMPDIR/workspace
+            mkdir -p "$workspace/.agents/skills/human-interaction" "$workspace/.claude/skills/human-interaction"
+            printf 'stale\n' > "$workspace/.agents/skills/human-interaction/SKILL.md"
+            printf 'stale\n' > "$workspace/.claude/skills/human-interaction/SKILL.md"
+            export SKILLS_SOURCE_ROOT=${cleanSource}
+            export SKILLS_WORKSPACE_ROOT="$workspace"
+            ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
+            test ! -e "$workspace/.agents/skills/human-interaction/SKILL.md"
+            test ! -e "$workspace/.claude/skills/human-interaction/SKILL.md"
+            touch "$out"
+          '';
           orchestration-doctrine-guardrails = pkgs.runCommand "skills-orchestration-doctrine-guardrails" { } ''
             orchestration=${cleanSource}/modules/orchestration/full.md
+            index=${cleanSource}/manifests/module-dependencies.nota
             grep -F 'refuses direct task work' "$orchestration" >/dev/null
+            grep -F 'It does not inspect files, command output, links, status, or systems directly.' "$orchestration" >/dev/null
             grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
             grep -F 'Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.' "$orchestration" >/dev/null
+            grep -F 'Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.' "$orchestration" >/dev/null
+            grep -F 'Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.' "$orchestration" >/dev/null
+            grep -F 'Confirm suspected interpretation with the psyche instead of silently assuming.' "$orchestration" >/dev/null
+            grep -F 'Treat the psyche as authority, bottleneck, and limited attention.' "$orchestration" >/dev/null
+            grep -F 'Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.' "$orchestration" >/dev/null
+            grep -F 'Do not use a weaver for a single small bounded fix with one worker and no tracking value.' "$orchestration" >/dev/null
+            grep -F 'Match worker model and thinking level to work intensity' "$orchestration" >/dev/null
+            grep -F 'small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames' "$orchestration" >/dev/null
+            grep -F 'normal implementation workers for ordinary implementation with local tests' "$orchestration" >/dev/null
+            grep -F 'strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions' "$orchestration" >/dev/null
+            grep -F 'Use a separate auditor for substantial completed work, with strength matched to risk' "$orchestration" >/dev/null
             grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
-            grep -F 'dispatch a weaver to create work items' "$orchestration" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
             grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
+            if grep -F 'context-handover' "$orchestration"; then
+              echo "context-handover must stay separate/manual-load only" >&2
+              exit 1
+            fi
+            grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
             touch "$out"
           '';
           role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''
@@ -232,7 +267,7 @@
                 exit 1
               }
             done
-            if grep -E '\\(Role \\(repository-closeout [^]]*spirit-query' "$manifest"; then
+            if grep -F '(Role (repository-closeout ' "$manifest" | grep -F 'spirit-query'; then
               echo "repository-closeout is the mechanical closeout exemption and must not embed spirit-query" >&2
               exit 1
             fi
@@ -248,7 +283,7 @@
               }
               grep -F "$required" "$index" >/dev/null || true
             done
-            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' intent-maintainer repo-operator weave-operator; do
+            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' human-interaction intent-maintainer repo-operator weave-operator; do
               if grep -F "$retired" "$manifest"; then
                 echo "$retired must not be an active output appellation" >&2
                 exit 1
