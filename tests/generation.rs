@@ -232,7 +232,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .count();
 
     assert_eq!(skill_count, 55);
-    assert_eq!(role_count, 10);
+    assert_eq!(role_count, 11);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
         .payload()
@@ -374,6 +374,15 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "agent-output-protocol",
                 "edit-coordination-core",
                 "repo-operation-core",
+            ],
+        ),
+        (
+            "weave-operator",
+            "role-weave-operator",
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "bead-weaver",
             ],
         ),
     ];

@@ -82,4 +82,5 @@
   (role-skill-editor roles/skill-editor/full.md [] RoleSource)
   (role-intent-maintainer roles/intent-maintainer/full.md [] RoleSource)
   (role-repo-operator roles/repo-operator/full.md [] RoleSource)
+  (role-weave-operator roles/weave-operator/full.md [] RoleSource)
 ]
