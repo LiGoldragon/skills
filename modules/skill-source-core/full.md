@@ -35,3 +35,8 @@ that every manifest or dependency path exists, new headings are unique within
 their source file, generated runtime outputs would not receive provenance
 notices, and role packets include the doctrine the manifest names without
 pulling the whole corpus.
+
+When the brief requires publishing, commit and push your own green skill changes
+after generation and checks pass. Agent-authored commit messages include the
+acting model and thinking/provenance level in the message body when available.
+Leave unrelated working-copy changes uncommitted and name them in the output.

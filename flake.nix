@@ -210,6 +210,34 @@
             fi
             touch "$out"
           '';
+          orchestration-doctrine-guardrails = pkgs.runCommand "skills-orchestration-doctrine-guardrails" { } ''
+            orchestration=${cleanSource}/modules/orchestration/full.md
+            grep -F 'refuses direct task work' "$orchestration" >/dev/null
+            grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
+            grep -F 'Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.' "$orchestration" >/dev/null
+            grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
+            grep -F 'dispatch a weaver to create beads' "$orchestration" >/dev/null
+            grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
+            grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
+            touch "$out"
+          '';
+          role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''
+            manifest=${cleanSource}/manifests/active-outputs.nota
+            index=${cleanSource}/manifests/module-dependencies.nota
+            grep -F '(spirit-query modules/spirit-query/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(Skill (spirit-query spirit-query Meta Topic' "$manifest" >/dev/null
+            for role in intent-translator scout repo-scaffolder general-code-implementer operating-system-implementer rust-auditor nix-auditor skill-editor intent-maintainer weave-operator; do
+              grep -E "\\(Role \\($role [^]]*spirit-query" "$manifest" >/dev/null || {
+                echo "$role role must embed read-only Spirit query doctrine" >&2
+                exit 1
+              }
+            done
+            if grep -E '\\(Role \\(repo-operator [^]]*spirit-query' "$manifest"; then
+              echo "repo-operator is the mechanical closeout exemption and must not embed spirit-query" >&2
+              exit 1
+            fi
+            touch "$out"
+          '';
           default = test;
         };
 

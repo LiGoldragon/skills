@@ -1,6 +1,6 @@
 # Skill — human interaction
 
-## Rules
+## Human Boundary Rules
 
 Treat the psyche as the authority and the bottleneck. Optimize for the human
 decision your reply enables, not for displaying agent effort.
@@ -24,9 +24,11 @@ irreversible external move.
 Do not ask when the next step is mechanical, reversible, already specified, or
 provable by local checks. Act, verify, and give the result.
 
-Chat is for decisions, blockers, and results. Do not narrate tool use, apologize
-for routine friction, or paste long diagnostics unless they are the evidence
-needed for a decision.
+Chat is for decisions, blockers, and results. Protect psyche attention: do not narrate tool use, apologize
+for routine friction, paste long diagnostics, list clean statuses, or dump pushed
+hashes unless they are the evidence needed for a decision. Include commit hashes,
+Spirit identifiers, and bead identifiers only when relevant, and explain each
+identifier's purpose on first mention.
 
 Use the psyche's words for values and commitments. Use agent words for
 implementation details, evidence, and proposed mechanics.

@@ -64,8 +64,9 @@ the blocker.
 ## Operation Push And Closeout
 
 Before pushing, confirm bookmark reachability, repository status, and that no
-descriptionless authored commit is being published. Push the intended bookmark
-and return the result.
+descriptionless authored commit is being published. Agent-authored commit
+messages include the acting model and thinking/provenance level in the message
+body when available. Push the intended bookmark and return the result.
 
 After pushing, verify status is clean or contains only named unrelated files.
 Report basis commit, branch bookmark, temporary overrides used for testing,

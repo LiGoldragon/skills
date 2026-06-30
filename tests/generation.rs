@@ -128,7 +128,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 69);
+    assert_eq!(roster.skill_modules.payload().len(), 70);
 
     let active_first_class_modules: Vec<_> = roster
         .skill_modules
@@ -139,7 +139,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 55);
+    assert_eq!(active_first_class_modules.len(), 56);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -231,7 +231,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 55);
+    assert_eq!(skill_count, 56);
     assert_eq!(role_count, 11);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
@@ -270,6 +270,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "{module_identifier} is generator-only role composition"
         );
     }
+    assert_eq!(
+        module_kinds.get("spirit-query"),
+        Some(&ModuleKind::RuntimeSkill),
+        "spirit-query remains a first-class read-only skill and role-embedded runtime module"
+    );
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
         .iter()
@@ -287,13 +292,18 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "bead-weaver",
             ],
         ),
         (
             "scout",
             "role-scout",
-            &["agent-output-protocol", "edit-coordination-core"],
+            &[
+                "agent-output-protocol",
+                "edit-coordination-core",
+                "spirit-query",
+            ],
         ),
         (
             "repo-scaffolder",
@@ -301,6 +311,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "repo-scaffold-core",
                 "code-implementation-core",
                 "rust-core",
@@ -313,6 +324,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "code-implementation-core",
                 "rust-core",
                 "nix-core",
@@ -325,6 +337,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "code-implementation-core",
                 "nix-core",
                 "operating-system-operations",
@@ -336,6 +349,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "rust-core",
                 "architectural-truth-tests",
             ],
@@ -346,6 +360,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "nix-core",
             ],
         ),
@@ -355,6 +370,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "skill-source-core",
             ],
         ),
@@ -364,7 +380,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "intent-core",
+                "spirit-cli",
             ],
         ),
         (
@@ -382,6 +400,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "spirit-query",
                 "bead-weaver",
             ],
         ),
@@ -637,6 +656,37 @@ fn generation_rejects_runtime_module_as_role_source() {
             } if module_identifier == "worker"
                 && expected == "RoleSource"
                 && actual == "RuntimeSkill"
+        ),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn generation_rejects_role_required_module_missing_from_dependency_index() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (worker worker [spirit-query] [Worker role.] [ClaudeAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RoleSource)]\n",
+    );
+    fixture.write_source_file(
+        "roles/worker/full.md",
+        "# Role - worker\n\n## Contract\n\nBody.\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("role-required modules must resolve before packet generation");
+
+    assert!(
+        matches!(
+            error,
+            Error::MissingModule {
+                ref module_identifier,
+            } if module_identifier == "spirit-query"
         ),
         "{error:?}"
     );

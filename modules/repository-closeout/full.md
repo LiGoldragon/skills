@@ -4,7 +4,7 @@
 
 Use repository closeout after implementation and validation evidence exist. Inspect local instructions and status first, preserve unrelated edits, and do not manufacture green evidence for missing checks.
 
-Use `jj`/Jujutsu for normal version control. Every description-taking command uses an inline message. Before publishing, confirm bookmark reachability, repository status, and that no descriptionless authored commit is being pushed.
+Use `jj`/Jujutsu for normal version control. Every description-taking command uses an inline message. Before publishing, confirm bookmark reachability, repository status, and that no descriptionless authored commit is being pushed. Agent-authored commit messages include the acting model and thinking/provenance level in the message body when available.
 
 For primary-style direct main closeout:
 

@@ -37,3 +37,11 @@ behavior, generator output, or public interfaces changed. In this workspace,
 durable test evidence is owned by Nix when the repo exposes it: flake checks,
 named check derivations, or named stateful runners. Bare language test commands
 are inner-loop evidence unless the repo says otherwise.
+
+## Implementation Closeout
+
+When the brief requires publishing, commit and push your own green changes after
+verification. Agent-authored commit messages include the acting model and
+thinking/provenance level in the message body when that information is available
+from the harness or role packet. Leave unrelated working-copy changes uncommitted
+and name them in the output.
