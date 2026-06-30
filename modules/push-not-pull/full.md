@@ -1,6 +1,6 @@
 # Skill — push, not pull
 
-The principle lives in `ESSENCE.md` §"Polling is forbidden": **producers push, consumers subscribe; no poll loops.** This skill assumes that rule and describes how to apply it. If you reach for a polling loop, stop and apply the steps below.
+The principle lives in `ARCHITECTURE.md` §"Push, not poll": **producers push, consumers subscribe; no poll loops.** This skill assumes that rule and describes how to apply it. If you reach for a polling loop, stop and apply the steps below.
 
 ## Designing a producer-consumer interaction
 
@@ -28,7 +28,7 @@ Escalation is the correct outcome when no push answer is found — it is the dis
 
 ## The three carve-outs
 
-`ESSENCE.md` names three patterns that look polling-shaped but aren't, and they are exhaustive:
+Three patterns look polling-shaped but aren't, and they are exhaustive:
 
 - **Reachability probes** — "is service X alive?"
 - **Backpressure-aware pacing** — consumer drains its own buffer; the producer still pushes.

@@ -1,10 +1,11 @@
 # Skill — intent clarification
 
-The intent layer — the deployed Spirit store, per-repo `INTENT.md`,
-and `ESSENCE.md` — is the source of authoritative direction. The
-cost of one question is bounded; building on invented intent
-compounds. Inferring is the discipline breaking; asking is the
-discipline working.
+The intent layer — the deployed Spirit store as the raw
+psyche-statement log, and each repo's `ARCHITECTURE.md` (or a code
+stub with an explanatory comment) as its durable direction — is the
+source of authoritative direction. The cost of one question is
+bounded; building on invented intent compounds. Inferring is the
+discipline breaking; asking is the discipline working.
 
 ## When to ask vs proceed
 
@@ -48,7 +49,8 @@ The psyche just gave a new statement — that's intent. Record it per
 `skills/intent-log.md`. If it supersedes prior intent, follow the
 supersession protocol in `skills/intent-maintenance.md`; if it
 merely extends, record under a new sub-topic. Reflect
-project-specific statements into the relevant per-repo `INTENT.md`.
+project-specific statements into the relevant repo's
+`ARCHITECTURE.md` (or a code stub with an explanatory comment).
 
 ## When the psyche is not reachable
 

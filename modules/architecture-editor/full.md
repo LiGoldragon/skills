@@ -1,15 +1,15 @@
 # Skill — architecture editor
 
-## Architecture files state system shape
+## Architecture files state system shape and direction
 
-`ARCHITECTURE.md` records durable structure: components, boundaries, data ownership, wire vocabulary, constraints, invariants, and operational shape. It is not an artifact index, changelog, transcript, or decision log.
+`ARCHITECTURE.md` is a repository's primary guidance surface, read on entry before code. It records durable structure: components, boundaries, data ownership, wire vocabulary, constraints, invariants, and operational shape. It also carries the repository's durable direction — what the psyche wants the project to be and why — when that direction is not better expressed as a code stub with an explanatory comment. It is not an artifact index, changelog, transcript, or decision log.
 
-Edit the nearest architecture file that owns the component or subsystem. If no owner exists and the architecture is durable, create one next to the code or repo it governs.
+Edit the nearest architecture file that owns the component or subsystem. If no owner exists and the architecture or direction is durable, create one next to the code or repo it governs.
 
 ## Put each statement in its owning surface
 
 - Agent operating rules go in `AGENTS.md`.
-- Architecture and invariants go in `ARCHITECTURE.md`.
+- Architecture, invariants, and durable project direction go in `ARCHITECTURE.md` (or a code stub with an explanatory comment).
 - User-facing overview and setup go in `README.md`.
 - Work items go in the tracker.
 - Historical evidence stays in artifacts only while it is an active pickup surface.

@@ -53,8 +53,8 @@ shape matters. Do not infer from old notes.
 ## Intent Manifestation
 
 Capture is incomplete until affected guidance surfaces reflect the settled
-intent: workspace guidance, repo `INTENT.md`, architecture, skills, or
-repo-local guidance as appropriate. Manifest only what the psyche stated. Keep
+intent: workspace guidance, a repo's `ARCHITECTURE.md` (or a code stub with an
+explanatory comment), skills, or repo-local guidance as appropriate. Manifest only what the psyche stated. Keep
 private or personal material off public surfaces unless explicitly authorized
 for that privacy level.
 
