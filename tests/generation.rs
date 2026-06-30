@@ -316,7 +316,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "code-implementation-core",
                 "rust-core",
                 "nix-core",
-                "lojix-deployment",
+                "operating-system-operations",
             ],
         ),
         (
@@ -327,7 +327,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "code-implementation-core",
                 "nix-core",
-                "lojix-deployment",
+                "operating-system-operations",
             ],
         ),
         (

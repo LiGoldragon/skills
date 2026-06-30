@@ -1,14 +1,16 @@
-# Skill — lojix deployment
+# Skill — operating system operations
 
 ## Rules
 
-Use the daemon-based Lojix stack for CriomOS deploy work. Do not use `lojix-cli`; it is archived and not the current operator surface.
+Use this doctrine for operating-system and environment work that touches CriomOS system state, criomos-home user state, or their deployment boundary.
 
-Deploy only pushed, reproducible inputs. Use a pinned CriomOS flake revision for effect-bearing deploys when branch resolution or cache freshness is uncertain. Name the target cluster, node, deployment kind, action or mode, builder choice, and rollback expectation before activating a host.
+Operate from pushed, reproducible inputs. Treat CriomOS as the system source identity and criomos-home as the home/environment source identity. Use pinned flake revisions for effect-bearing deploys when branch resolution or cache freshness is uncertain.
 
-`meta-lojix` accepts privileged deploy requests on the owner socket. A `(Deployed ...)` reply means the daemon accepted the job; it does not prove build, copy, or activation success. Poll the ordinary read surface and daemon evidence before claiming a deploy is current.
+Name the target cluster, node, system or home kind, action or mode, builder choice, rollback expectation, and post-activation evidence before changing a host.
 
-## Commands
+Do not use deprecated `lojix-cli`; use the current `lojix` read interface and privileged `meta-lojix` deploy interface.
+
+## Lojix interface
 
 Read current generations:
 
@@ -16,13 +18,13 @@ Read current generations:
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
 
-Submit a system deploy:
+Submit a system deploy from a CriomOS flake revision:
 
 ```sh
 meta-lojix "(Deploy (System (<cluster> <node> FullOs <proposal-source> <criomos-flake-ref> <action> <builder> [] None)))"
 ```
 
-Submit a home deploy:
+Submit a home/environment deploy from a criomos-home input through the selected CriomOS flake revision:
 
 ```sh
 meta-lojix "(Deploy (Home (<cluster> <node> <user> <proposal-source> <criomos-flake-ref> <mode> <builder> [])))"
@@ -30,7 +32,9 @@ meta-lojix "(Deploy (Home (<cluster> <node> <user> <proposal-source> <criomos-fl
 
 Use `FullOs` for normal live CriomOS desktop deploys. `OsOnly` omits home and broad firmware materialization; use it only when that omission is intended and safe. System actions are `Eval`, `Build`, `Boot`, `Switch`, `Test`, and `BootOnce`. Home modes are `Build`, `Profile`, and `Activate`. A builder is `None` or `(Some <builder-node>)`.
 
-## Post-deploy checks
+`meta-lojix` returns when the daemon accepts a request. A `(Deployed ...)` reply does not prove build, copy, activation, or profile success.
+
+## Activation checks
 
 After submit, query the node until the expected kind and closure become current or a rejection/failure is visible:
 
