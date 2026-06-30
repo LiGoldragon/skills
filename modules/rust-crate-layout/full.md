@@ -31,9 +31,9 @@ vocabulary. Their tests are round-trip, schema, and compile-time
 witnesses; they need a CLI only if they deliberately ship a generator
 or inspection tool.
 
-Example: `mind` is a thin client to the long-lived `persona-mind`
-daemon. The daemon owns `MindRoot` and `mind.redb`; the CLI owns
-argv/env decoding and reply rendering.
+Example: `mind` is a thin client to the long-lived `mind-daemon`. The daemon
+owns `MindRoot` and `mind.redb`; the CLI owns argv/env decoding and reply
+rendering.
 
 ## One Rust crate per repo
 

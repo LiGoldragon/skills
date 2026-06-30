@@ -12,7 +12,7 @@ This repo owns source modules, the active output manifest, the module dependency
 - `manifests/skills-roster.nota` remains the Rust CLI compatibility input for legacy checks and archived/deleted skill modeling, but normal generation is driven by `manifests/active-outputs.nota` plus `manifests/module-dependencies.nota`.
 - Put harness-specific frontmatter metadata in manifest records or the compatibility roster, not in reusable module prose.
 - Model inactive source state outside the active manifest: archived modules live under `skills/archive/` with no emission, and deleted modules do not emit. Model active role-only components as `RoleComposition` instead of first-class skills.
-- Treat `AgentsSkill` and `ClaudeSkill` as first-class target surfaces; `AgentsSkill` is the shared `.agents/skills/<name>/SKILL.md` surface used by Pi and Codex. Command/prompt extras are not current generated invocation surfaces.
+- Treat `AgentsSkill` and `ClaudeSkill` as first-class target surfaces; `AgentsSkill` is the shared `.agents/skills/<name>/SKILL.md` surface used by Pi and Codex.
 - Preserve prose. Normalization is limited to frontmatter placement, heading structure, relative links, and duplicate title handling.
 - Treat duplicate headings as generation failures, not warnings.
 - Do not add provenance headers to generated outputs.
