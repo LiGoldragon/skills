@@ -128,7 +128,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 66);
+    assert_eq!(roster.skill_modules.payload().len(), 69);
 
     let active_first_class_modules: Vec<_> = roster
         .skill_modules
@@ -139,7 +139,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 52);
+    assert_eq!(active_first_class_modules.len(), 55);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -231,7 +231,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 52);
+    assert_eq!(skill_count, 55);
     assert_eq!(role_count, 10);
 
     let dependency_modules: BTreeSet<&str> = module_dependencies
@@ -320,8 +320,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
-            "criomos-implementer",
-            "role-criomos-implementer",
+            "operating-system-implementer",
+            "role-operating-system-implementer",
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
