@@ -12,6 +12,10 @@ context only when helpful.
 A handover is a focus-scoped freshness aid, not a plan, transcript, correction
 log, or display of agent reasoning.
 
+Carry the settled current term, shape, or decision. Resolved correction history
+is not handover context unless the psyche explicitly asks to preserve it or a
+worker output says the earlier term remains relevant.
+
 Keep it lean. Include only settled psyche intent, confirmed facts, recent
 completed changes, live uncertainties or suspicions with their uncertainty
 preserved, open questions, and agent-output pointers that help rediscovery.

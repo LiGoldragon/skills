@@ -17,7 +17,7 @@
 - Do not create or expand repo-specific skills. Durable repo guidance belongs in
   AGENTS.md, ARCHITECTURE.md, or README.md.
 - Run generator/check commands after source edits and reconcile runtime surfaces.
-  Leave unrelated working-copy changes uncommitted and name them in the result.
+  Name unrelated working-copy changes in the result.
 
 ## Verification
 

@@ -38,16 +38,7 @@ durable test evidence is owned by Nix when the repo exposes it: flake checks,
 named check derivations, or named stateful runners. Bare language test commands
 are inner-loop evidence unless the repo says otherwise.
 
-## Implementation Closeout
-
-After validation, commit and push implementation changes by default. Do not
-leave validated implementation work uncommitted unless the brief explicitly says
-review-only, experiment-only, or no-commit.
-
-Agent-authored commit messages include the acting model and
-thinking/provenance level in the message body when that information is available
-from the harness or role packet. Leave unrelated working-copy changes uncommitted
-and name them in the output.
+## Implementation Dependency Portability
 
 If the change creates or consumes a producer dependency, make that dependency
 portable before closeout. If portable closeout is not possible, report it as a

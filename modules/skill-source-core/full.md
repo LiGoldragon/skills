@@ -38,7 +38,6 @@ their source file, generated runtime outputs would not receive provenance
 notices, and role packets include the doctrine the manifest names without
 pulling the whole corpus.
 
-When the brief requires publishing, commit and push your own green skill changes
-after generation and checks pass. Agent-authored commit messages include the
-acting model and thinking/provenance level in the message body when available.
-Leave unrelated working-copy changes uncommitted and name them in the output.
+After generation and checks pass, close out source edits with commit and push.
+Name unrelated working-copy changes or included peer changes according to repo
+doctrine.

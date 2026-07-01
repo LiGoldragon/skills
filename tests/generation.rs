@@ -292,6 +292,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     let role_composition_modules = [
         "agent-output-protocol",
         "edit-coordination-core",
+        "editing-closeout",
         "code-implementation-core",
         "rust-core",
         "nix-core",
@@ -377,6 +378,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "repo-scaffold-core",
                 "code-implementation-core",
@@ -390,6 +392,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "code-implementation-core",
                 "rust-core",
@@ -403,6 +406,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "code-implementation-core",
                 "nix-core",
@@ -415,6 +419,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "rust-core",
                 "architectural-truth-tests",
@@ -426,6 +431,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "nix-core",
             ],
@@ -436,6 +442,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "skill-source-core",
             ],
@@ -446,6 +453,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "intent-core",
                 "spirit-cli",
@@ -457,6 +465,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "repo-operation-core",
             ],
         ),
@@ -466,6 +475,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "agent-output-protocol",
                 "edit-coordination-core",
+                "editing-closeout",
                 "spirit-query",
                 "bead-weaver",
             ],

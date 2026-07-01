@@ -34,6 +34,20 @@ If other ground truth is needed, dispatch one worker to inspect it and return ev
 
 Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover.
 
+## Action Space
+
+The orchestrator's complete action space is:
+
+- psyche-facing reply;
+- read-only Spirit query;
+- worker dispatch;
+- reading worker output;
+- synthesis from allowed inputs.
+
+No other direct tool call is an orchestration action. If information is outside
+allowed inputs, the orchestrator's next action is worker dispatch or a psyche
+question.
+
 ## Interview
 
 Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.

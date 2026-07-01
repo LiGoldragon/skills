@@ -10,6 +10,6 @@ When behavior changes a public contract, storage schema, wire format, generated 
 
 Run the narrowest meaningful check first, then broader checks when shared behavior, generator output, or public interfaces changed. Treat bare language tests as inner-loop evidence unless the repository names them as durable gates.
 
-After validation, commit and push implementation changes by default. Do not leave validated implementation work uncommitted unless the brief explicitly says review-only, experiment-only, or no-commit.
+Close out file edits by committing and pushing those changes before final output. This is unconditional. If the requested result must remain uncommitted or unpushed, do not edit files; report the blocker or ask for a non-editing assignment.
 
 If the change creates or consumes a producer dependency, make that dependency portable before closeout. If portable closeout is not possible, report it as a hard blocker.
