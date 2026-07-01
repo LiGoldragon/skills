@@ -3,9 +3,11 @@
 ## Skill Source Core Purpose
 
 Skill-system source edits keep instruction compact, current, and owned by the
-generator inputs. The reusable teaching body lives in source modules and role
-source modules; identity, descriptions, tiers, targets, and dependency edges
-live in manifests or dependency indexes.
+generator inputs. Treat `LiGoldragon/skills` as the canonical skills source. The
+reusable teaching body lives in source modules and role source modules; identity,
+descriptions, tiers, targets, and dependency edges live in manifests or
+dependency indexes. Workspace skill and agent files are generated runtime targets,
+not source.
 
 ## Skill Source Prose
 

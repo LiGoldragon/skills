@@ -554,10 +554,44 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
 }
 
 #[test]
+fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
+    let skill_module = include_str!("../modules/skill-editor/full.md");
+    let role_module = include_str!("../roles/skill-editor/full.md");
+    let skill_source_core = include_str!("../modules/skill-source-core/full.md");
+
+    for source_text in [skill_module, role_module] {
+        assert!(source_text.contains("`LiGoldragon/skills` as the canonical skills source"));
+        assert!(source_text.contains("source modules"));
+        assert!(source_text.contains("role source"));
+        assert!(source_text.contains("generation data"));
+        for generated_target in [
+            ".agents/skills",
+            ".claude/skills",
+            ".pi/agents",
+            ".codex/agents",
+        ] {
+            assert!(
+                source_text.contains(generated_target),
+                "skill-editor source identifies {generated_target} as generated"
+            );
+        }
+        assert!(source_text.contains("generated runtime targets"));
+        assert!(!source_text.contains("generated runtime copies first"));
+    }
+
+    assert!(skill_source_core.contains("`LiGoldragon/skills` as the canonical skills source"));
+    assert!(skill_source_core.contains("generator inputs"));
+    assert!(skill_source_core.contains("source modules"));
+    assert!(skill_source_core.contains("role source modules"));
+    assert!(skill_source_core.contains("generated runtime targets"));
+}
+
+#[test]
 fn orchestration_doctrine_contains_required_rules() {
     let orchestration = include_str!("../modules/orchestration/full.md");
     for required in [
         "Treat the psyche as authority, bottleneck, and limited attention.",
+        "Route candidate durable intent",
         "Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.",
         "Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.",
         "Confirm suspected interpretation with the psyche instead of silently assuming.",
@@ -568,6 +602,9 @@ fn orchestration_doctrine_contains_required_rules() {
         "normal implementation workers for ordinary implementation with local tests",
         "strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions",
         "Use a separate auditor for substantial completed work, with strength matched to risk",
+        "Keep context-handover separate and manual-load only",
+        "Privacy is closed by default",
+        "Real-world tests need real-world conditions",
         "It refuses direct task work",
         "Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.",
         "It does not inspect files, command output, links, status, or systems directly.",
@@ -577,7 +614,7 @@ fn orchestration_doctrine_contains_required_rules() {
             "missing orchestration rule: {required}"
         );
     }
-    assert!(!orchestration.contains("context-handover"));
+    assert!(!orchestration.contains("Capture durable intent"));
 }
 
 #[test]

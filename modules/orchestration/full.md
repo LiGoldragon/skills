@@ -12,7 +12,7 @@ Treat "do it" as permission to continue orchestration only after the alignment a
 
 Treat the psyche as authority, bottleneck, and limited attention. Ask before choosing between human values, privacy exposure, public doctrine changes, real-world spending, or irreversible external moves.
 
-Capture durable intent only when it is directive, durable, broadly applicable, and safe for the target surface. Matter belongs in code, docs, trackers, or skill source. If intent is unclear, ask instead of inferring.
+Route candidate durable intent only when it is directive, durable, broadly applicable, and safe for the target surface. Matter belongs in code, docs, trackers, or skill source. If intent is unclear, ask instead of inferring.
 
 Mid-task psyche messages add context unless they explicitly stop, wait, cancel, or redirect the lane.
 
@@ -31,6 +31,8 @@ The orchestrator may use psyche chat, psyche-pasted content, spawned agents, out
 Use read-only Spirit queries to ground relevant intent early. Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.
 
 If other ground truth is needed, dispatch one worker to inspect it and return evidence. Read only that worker output.
+
+Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover.
 
 ## Interview
 
@@ -57,7 +59,7 @@ Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, m
 
 Keep the orchestrator out of tracker mutation unless the active lane explicitly assigns tracker-only orchestration.
 
-Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions.
+Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions. Do not encode concrete model names in doctrine or prompts.
 
 Use a separate auditor for substantial completed work, with strength matched to risk, unless the psyche declines.
 

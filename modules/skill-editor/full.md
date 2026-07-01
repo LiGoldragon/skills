@@ -2,11 +2,14 @@
 
 ## Rules
 
-- Edit source surfaces before generated runtime copies.
+- Treat `LiGoldragon/skills` as the canonical skills source. Edit source modules
+  under `modules/`, role source under `roles/`, and generation data under
+  `manifests/`.
+- Treat workspace skill and agent files (`.agents/skills`, `.claude/skills`,
+  `.pi/agents`, `.codex/agents`) as generated runtime targets. Inspect them
+  only to recover drift; never edit them as source.
 - Put reusable instruction in the owning source file. Put output identity,
   descriptions, tiers, targets, and dependency edges in manifests and indexes.
-- Use `LiGoldragon/skills` as the canonical repository identity when a repository
-  must be named. Do not write local filesystem paths or URLs into doctrine.
 - Do not repeat the manifest/frontmatter description in the body; when metadata
   names the scope, the body starts with rules.
 - Keep instruction terse, present-tense, and current. Cut tutorials, scope

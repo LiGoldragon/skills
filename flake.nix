@@ -228,6 +228,27 @@
             test ! -e "$workspace/.claude/skills/human-interaction/SKILL.md"
             touch "$out"
           '';
+          skill-editor-source-of-truth-guardrails = pkgs.runCommand "skills-skill-editor-source-of-truth-guardrails" { } ''
+            skill_module=${cleanSource}/modules/skill-editor/full.md
+            role_module=${cleanSource}/roles/skill-editor/full.md
+            source_core=${cleanSource}/modules/skill-source-core/full.md
+            for source in "$skill_module" "$role_module" "$source_core"; do
+              grep -F '`LiGoldragon/skills` as the canonical skills source' "$source" >/dev/null
+              grep -F 'generated runtime targets' "$source" >/dev/null
+              if grep -F 'generated runtime copies first' "$source"; then
+                echo "skill-editor doctrine must not preserve old generated-copy-first wording" >&2
+                exit 1
+              fi
+            done
+            for source in "$skill_module" "$role_module"; do
+              grep -F 'workspace skill and agent files' "$source" >/dev/null
+              grep -F '.agents/skills' "$source" >/dev/null
+              grep -F '.claude/skills' "$source" >/dev/null
+              grep -F '.pi/agents' "$source" >/dev/null
+              grep -F '.codex/agents' "$source" >/dev/null
+            done
+            touch "$out"
+          '';
           orchestration-doctrine-guardrails = pkgs.runCommand "skills-orchestration-doctrine-guardrails" { } ''
             orchestration=${cleanSource}/modules/orchestration/full.md
             index=${cleanSource}/manifests/module-dependencies.nota
@@ -235,10 +256,16 @@
             grep -F 'It does not inspect files, command output, links, status, or systems directly.' "$orchestration" >/dev/null
             grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
             grep -F 'Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.' "$orchestration" >/dev/null
+            grep -F 'Route candidate durable intent' "$orchestration" >/dev/null
+            if grep -F 'Capture durable intent' "$orchestration"; then
+              echo "orchestration must route candidate durable intent, not say the orchestrator captures it directly" >&2
+              exit 1
+            fi
             grep -F 'Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.' "$orchestration" >/dev/null
             grep -F 'Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.' "$orchestration" >/dev/null
             grep -F 'Confirm suspected interpretation with the psyche instead of silently assuming.' "$orchestration" >/dev/null
             grep -F 'Treat the psyche as authority, bottleneck, and limited attention.' "$orchestration" >/dev/null
+            grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
             grep -F 'Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.' "$orchestration" >/dev/null
             grep -F 'Do not use a weaver for a single small bounded fix with one worker and no tracking value.' "$orchestration" >/dev/null
             grep -F 'Match worker model and thinking level to work intensity' "$orchestration" >/dev/null
@@ -246,14 +273,10 @@
             grep -F 'normal implementation workers for ordinary implementation with local tests' "$orchestration" >/dev/null
             grep -F 'strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions' "$orchestration" >/dev/null
             grep -F 'Use a separate auditor for substantial completed work, with strength matched to risk' "$orchestration" >/dev/null
-            grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
+            grep -F 'Keep context-handover separate and manual-load only' "$orchestration" >/dev/null
+            grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
             grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
-            if grep -F 'context-handover' "$orchestration"; then
-              echo "context-handover must stay separate/manual-load only" >&2
-              exit 1
-            fi
-            grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
             touch "$out"
           '';
           role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''
