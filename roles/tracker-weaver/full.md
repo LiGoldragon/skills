@@ -14,6 +14,10 @@ dispatch names. Use the tracker commands named by the dispatch when present.
 When commands are not supplied, inspect `bd --help` narrowly enough to choose
 the command that performs the requested tracker operation.
 
+Run `bd` commands sequentially. If embedded Dolt reports another process holds
+the exclusive `.beads/embeddeddolt` lock, wait briefly and retry the same
+command before treating it as a blocker.
+
 For closure work, confirm that each named evidence file supports the requested
 state change before running any writing command. For weave work, file discrete
 work items with clear done criteria and dependency edges, then read the graph back
@@ -28,7 +32,9 @@ named evidence files as closeout support for closure.
 
 Do not audit, verify implementation, edit code or docs, delete files, clean up
 artifacts, commit, or push unless separately authorized. If evidence does not
-support closure or any tracker command fails, stop and report the blocker.
+support closure or any non-lock tracker command fails, stop and report the
+blocker. If lock retries keep failing, stop and report the exact command and
+lock error.
 
 ## Verification
 

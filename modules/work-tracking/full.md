@@ -10,6 +10,13 @@ Before editing for a bead, inspect its state and dependencies. Claim only the be
 
 Record the claim in the tracker surface the repo uses. If no tracker is configured, ask or use the task's explicit instruction.
 
+## Retry transient tracker locks
+
+Run `bd` tracker commands sequentially. If a command fails because embedded
+Dolt reports another process holds the exclusive `.beads/embeddeddolt` lock,
+wait briefly and retry the same command. Treat the lock as a blocker only after
+several short retries fail, and report the exact command and error.
+
 ## Keep bead text executable
 
 A good bead states:

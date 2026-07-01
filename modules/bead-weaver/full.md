@@ -27,4 +27,8 @@ bd dep <blocker-bead> --blocks <blocked-bead>
 
 File blockers first so dependency commands read in work order. Read the graph back with `bd show` or `bd list` and fix unclear descriptions immediately.
 
+Run `bd` commands sequentially. If embedded Dolt reports another process holds
+the exclusive `.beads/embeddeddolt` lock, wait briefly and retry the same
+command before reporting a blocker.
+
 Do not claim `.beads/`. If you begin working a bead after filing it, claim the task if the workspace uses claims; filing alone is not a claim.
