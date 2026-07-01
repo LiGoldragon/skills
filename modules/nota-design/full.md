@@ -18,6 +18,6 @@ Use maps only for genuinely keyed collections. Do not use a map to avoid naming 
 
 Avoid multi-field unnamed tuples. If there is more than one value, name the record or fields in the schema so the positional call site stays readable.
 
-Use optional values only when absence has meaning distinct from empty. Prefer a variant when absence changes behavior.
+NOTA is strict positional: every positional component and every variant payload always appears in the text form. Never place `(Optional T)`, or any component that can be omitted or collapse to a bare atom, in a positional or variant-payload slot. Model the general case as an explicit variant with a required payload — write `(Data All)`, not a bare-collapsible optional. `(Optional T)` is legal only as a named brace-record field, and only when absence means something distinct from empty.
 
-Use generated codecs for regular records and enums. Hand-write a codec only for compatibility boundaries, legacy syntax, or grammar the schema cannot express cleanly.
+Encode and decode structured data only through the canonical shared codec for its format. Hand-rolled or special-cased per-type encode/decode logic is forbidden.
