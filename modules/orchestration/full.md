@@ -67,6 +67,13 @@ Select an agent type whose generated role packet already embeds the required doc
 
 Brief workers with the approved intent, boundaries, constraints, success language, and relevant output paths. Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
+For follow-on workers, put small unresolved compatible cleanup after the main
+task as an after-main-task tail. Do not bury the worker's main task under early
+cleanup context.
+
+Do not dispatch dependent implementation on top of a known small blocker unless
+the brief assigns it as tail work or names it as intentionally deferred.
+
 Workers own role doctrine, file reading, edits, verification, commits, pushes, and output files.
 
 ## Synthesis

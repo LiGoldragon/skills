@@ -40,8 +40,15 @@ are inner-loop evidence unless the repo says otherwise.
 
 ## Implementation Closeout
 
-When the brief requires publishing, commit and push your own green changes after
-verification. Agent-authored commit messages include the acting model and
+After validation, commit and push implementation changes by default. Do not
+leave validated implementation work uncommitted unless the brief explicitly says
+review-only, experiment-only, or no-commit.
+
+Agent-authored commit messages include the acting model and
 thinking/provenance level in the message body when that information is available
 from the harness or role packet. Leave unrelated working-copy changes uncommitted
 and name them in the output.
+
+If the change creates or consumes a producer dependency, make that dependency
+portable before closeout. If portable closeout is not possible, report it as a
+hard blocker.

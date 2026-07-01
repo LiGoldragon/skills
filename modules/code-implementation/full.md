@@ -9,3 +9,7 @@ Prefer existing language, framework, schema, and helper shapes. Add an abstracti
 When behavior changes a public contract, storage schema, wire format, generated surface, deployment slot, or operations workflow, update the relevant version or state why none is needed. Preserve compatibility unless the brief accepts a break.
 
 Run the narrowest meaningful check first, then broader checks when shared behavior, generator output, or public interfaces changed. Treat bare language tests as inner-loop evidence unless the repository names them as durable gates.
+
+After validation, commit and push implementation changes by default. Do not leave validated implementation work uncommitted unless the brief explicitly says review-only, experiment-only, or no-commit.
+
+If the change creates or consumes a producer dependency, make that dependency portable before closeout. If portable closeout is not possible, report it as a hard blocker.

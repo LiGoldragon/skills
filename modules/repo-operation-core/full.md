@@ -15,6 +15,9 @@ evidence is missing, record the gap instead of manufacturing a green closeout.
 Use `jj` for normal version control. Every description-taking command uses an
 inline message so no editor opens. Commit the working copy only when the brief
 authorizes a partial handoff or the validation and audit gates are satisfied.
+After validation, commit and push implementation changes by default. Do not leave
+validated implementation work uncommitted unless the brief explicitly says
+review-only, experiment-only, or no-commit.
 
 Raw `git` is reserved for remote inspection or configuration, and for recovery
 only when the repo guidance or push rejection requires it.
@@ -40,6 +43,9 @@ integration bookmark while the feature is not green, test the affected branch
 family together, rebase on moved `main` before landing, then land producers
 before consumers. Remove temporary local path overrides before the merge-ready
 state unless the branch dependency is intentional and documented.
+If the work creates or consumes a producer dependency, make that dependency
+portable before publishing. If portable closeout is not possible, report it as a
+hard blocker.
 
 If a local repository or worktree is already claimed, do not share it. Create an
 isolated main-based feature worktree or workspace, claim that path, and file a

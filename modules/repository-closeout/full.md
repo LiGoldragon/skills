@@ -6,6 +6,10 @@ Use repository closeout after implementation and validation evidence exist. Insp
 
 Use `jj`/Jujutsu for normal version control. Every description-taking command uses an inline message. Before publishing, confirm bookmark reachability, repository status, and that no descriptionless authored commit is being pushed. Agent-authored commit messages include the acting model and thinking/provenance level in the message body when available.
 
+After validation, commit and push implementation changes by default. Do not leave validated implementation work uncommitted unless the brief explicitly says review-only, experiment-only, or no-commit.
+
+If the work creates or consumes a producer dependency, make that dependency portable before publishing. If portable closeout is not possible, report it as a hard blocker.
+
 For primary-style direct main closeout:
 
 ```sh
