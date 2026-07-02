@@ -411,6 +411,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "code-implementation-core",
                 "nix-core",
                 "operating-system-operations",
+                "nixos-vm-testing",
             ],
         ),
         (
@@ -434,6 +435,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "editing-closeout",
                 "spirit-query",
                 "nix-core",
+                "nixos-vm-testing",
             ],
         ),
         (
