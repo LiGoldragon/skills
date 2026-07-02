@@ -10,7 +10,7 @@ use skills::{
     schema::assembly::{
         ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
         ModuleDependencies, ModuleKind, ModuleLifecycle, RoleTargetSurface, SkillRoster,
-        SourceRoot, TargetSurface, WorkspaceRoot,
+        SourceRoot, TargetModuleInsertions, TargetSurface, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -225,6 +225,10 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/module-dependencies.nota"))
             .parse::<ModuleDependencies>()
             .expect("module dependency index parses");
+    let target_module_insertions =
+        NotaSource::new(include_str!("../manifests/target-module-insertions.nota"))
+            .parse::<TargetModuleInsertions>()
+            .expect("target module insertion index parses");
 
     let skill_count = active_outputs
         .payload()
@@ -341,6 +345,34 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .any(|module| module.as_ref() == "context-handover"),
         "context-handover remains separate/manual-load only"
+    );
+    assert_eq!(
+        target_module_insertions
+            .payload()
+            .iter()
+            .map(|insertion| (
+                insertion.module_identifier.as_ref(),
+                insertion.output_surface,
+                insertion
+                    .included_modules
+                    .payload()
+                    .iter()
+                    .map(|module| module.as_ref())
+                    .collect::<Vec<_>>()
+            ))
+            .collect::<Vec<_>>(),
+        [
+            (
+                "orchestration",
+                skills::schema::assembly::OutputSurface::ClaudeSkill,
+                vec!["claude-orchestration"]
+            ),
+            (
+                "orchestration",
+                skills::schema::assembly::OutputSurface::ClaudeAgent,
+                vec!["claude-orchestration"]
+            ),
+        ]
     );
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
@@ -682,6 +714,59 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(inventory.contains(".claude/agents/worker.md"));
     assert!(inventory.contains(".codex/agents/worker.toml"));
     assert!(inventory.contains(".pi/agents/worker.md"));
+}
+
+#[test]
+fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (orchestration orchestration Meta Mechanism [Orchestration skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [orchestration] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RoleSource) (orchestration modules/orchestration/full.md [] RuntimeSkill) (claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)]\n",
+    );
+    fixture.write_source_file(
+        "manifests/target-module-insertions.nota",
+        "[(orchestration ClaudeSkill [claude-orchestration]) (orchestration ClaudeAgent [claude-orchestration])]\n",
+    );
+    fixture.write_source_file(
+        "roles/worker/full.md",
+        "# Role - worker\n\n## Contract\n\nRole body.\n",
+    );
+    fixture.write_source_file(
+        "modules/orchestration/full.md",
+        "# Skill - orchestration\n\n## Shared Rule\n\nShared orchestration.\n",
+    );
+    fixture.write_source_file(
+        "modules/claude-orchestration/full.md",
+        "# Module - Claude orchestration\n\n## Claude Reply Shape\n\nClaude overlay.\n",
+    );
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("target insertions generate");
+
+    let agents_skill = fixture.read_workspace_file(".agents/skills/orchestration/SKILL.md");
+    assert!(agents_skill.contains("Shared orchestration."));
+    assert!(!agents_skill.contains("Claude overlay."));
+
+    let claude_skill = fixture.read_workspace_file(".claude/skills/orchestration/SKILL.md");
+    assert!(claude_skill.contains("Shared orchestration."));
+    assert!(claude_skill.contains("Claude overlay."));
+
+    let claude_role = fixture.read_workspace_file(".claude/agents/worker.md");
+    assert!(claude_role.contains("Shared orchestration."));
+    assert!(claude_role.contains("Claude overlay."));
+
+    let codex_role = fixture.read_workspace_file(".codex/agents/worker.toml");
+    assert!(codex_role.contains("Shared orchestration."));
+    assert!(!codex_role.contains("Claude overlay."));
+
+    let pi_role = fixture.read_workspace_file(".pi/agents/worker.md");
+    assert!(pi_role.contains("Shared orchestration."));
+    assert!(!pi_role.contains("Claude overlay."));
 }
 
 #[test]

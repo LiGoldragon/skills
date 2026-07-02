@@ -251,7 +251,9 @@
           '';
           orchestration-doctrine-guardrails = pkgs.runCommand "skills-orchestration-doctrine-guardrails" { } ''
             orchestration=${cleanSource}/modules/orchestration/full.md
+            claude_orchestration=${cleanSource}/modules/claude-orchestration/full.md
             index=${cleanSource}/manifests/module-dependencies.nota
+            target_insertions=${cleanSource}/manifests/target-module-insertions.nota
             grep -F 'refuses direct task work' "$orchestration" >/dev/null
             grep -F 'It does not inspect files, command output, links, status, or systems directly.' "$orchestration" >/dev/null
             grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
@@ -277,6 +279,14 @@
             grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
             grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
+            grep -F '(claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(orchestration ClaudeSkill [claude-orchestration])' "$target_insertions" >/dev/null
+            grep -F '(orchestration ClaudeAgent [claude-orchestration])' "$target_insertions" >/dev/null
+            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_orchestration" >/dev/null
+            if grep -F 'multiple-choice, picker, or' "$orchestration"; then
+              echo "Claude UI preference belongs in the Claude target overlay, not shared orchestration" >&2
+              exit 1
+            fi
             touch "$out"
           '';
           role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''

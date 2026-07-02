@@ -15,6 +15,15 @@
 - Keep instruction terse, present-tense, and current. Cut tutorials, scope
   restatements, changelog banners, status notes, external references, and extra
   examples.
+- Inline material every branch needs. Move branch-only detail into sibling
+  reference files and point only from the branch that uses it.
+- Delete any sentence whose removal would not change observable agent behavior
+  in that skill context.
+- Sharpen completion criteria before splitting a phase. Split into a helper,
+  skill, or lane only when agents still rush the sharpened phase.
+- Prefer deterministic generator or manifest routing when the right target,
+  skill, or module is knowable; do not make the model choose predictable
+  doctrine.
 - Keep one capability per skill; split distinct capabilities instead of mixing
   them.
 - Prefer canonical positive forms. Mention rejected forms only when omission

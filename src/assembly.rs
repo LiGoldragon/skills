@@ -16,7 +16,8 @@ use crate::{
         GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
         ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModuleLifecycle,
         ModulePath, Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
-        SkillMetadata, SkillModule, SkillRoster, TargetSurface,
+        SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion, TargetModuleInsertions,
+        TargetSurface,
     },
     workspace_path::WorkspacePath,
 };
@@ -187,9 +188,18 @@ impl GenerationSource {
             .unwrap_or_else(|| PathBuf::from("module-dependencies.nota"));
         let module_dependencies: ModuleDependencies =
             SourceFile::new(self.source_root.clone(), dependency_path).read()?;
+        let insertion_path = PathBuf::from(self.manifest_path.as_ref())
+            .parent()
+            .map(|parent| parent.join("target-module-insertions.nota"))
+            .unwrap_or_else(|| PathBuf::from("target-module-insertions.nota"));
+        let target_module_insertions: TargetModuleInsertions =
+            SourceFile::new(self.source_root.clone(), insertion_path)
+                .read_optional()?
+                .unwrap_or_else(|| TargetModuleInsertions::new(Vec::new()));
         Ok(GenerationConfiguration::active(
             active_outputs,
             module_dependencies,
+            target_module_insertions,
         ))
     }
 
@@ -231,6 +241,23 @@ impl SourceFile {
         NotaSource::new(&text)
             .parse::<T>()
             .map_err(|source| Error::DecodeNota { path, source })
+    }
+
+    fn read_optional<T>(&self) -> Result<Option<T>>
+    where
+        T: NotaDecode,
+    {
+        let workspace_path =
+            WorkspacePath::new(self.source_root.clone(), self.relative_path.clone())?;
+        let path = workspace_path.full_path();
+        match fs::read_to_string(&path) {
+            Ok(text) => NotaSource::new(&text)
+                .parse::<T>()
+                .map(Some)
+                .map_err(|source| Error::DecodeNota { path, source }),
+            Err(source) if source.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(source) => Err(Error::ReadFile { path, source }),
+        }
     }
 }
 
@@ -297,14 +324,20 @@ impl GenerationJobs {
 struct GenerationConfiguration {
     active_outputs: ActiveOutputs,
     module_dependencies: ModuleDependencies,
+    target_module_insertions: TargetModuleInsertions,
     compatibility_roster: Option<SkillRoster>,
 }
 
 impl GenerationConfiguration {
-    fn active(active_outputs: ActiveOutputs, module_dependencies: ModuleDependencies) -> Self {
+    fn active(
+        active_outputs: ActiveOutputs,
+        module_dependencies: ModuleDependencies,
+        target_module_insertions: TargetModuleInsertions,
+    ) -> Self {
         Self {
             active_outputs,
             module_dependencies,
+            target_module_insertions,
             compatibility_roster: None,
         }
     }
@@ -313,6 +346,7 @@ impl GenerationConfiguration {
         Self {
             active_outputs: roster.active_outputs(),
             module_dependencies: roster.module_dependencies(),
+            target_module_insertions: TargetModuleInsertions::new(Vec::new()),
             compatibility_roster: Some(roster),
         }
     }
@@ -348,7 +382,10 @@ impl GenerationConfiguration {
     }
 
     fn skill_manifests(&self) -> Result<Vec<Manifest>> {
-        let module_index = ModuleIndex::new(self.module_dependencies.clone())?;
+        let module_index = ModuleIndex::new(
+            self.module_dependencies.clone(),
+            self.target_module_insertions.clone(),
+        )?;
         let mut manifests = Vec::new();
         for skill in self.active_skills() {
             for manifest in skill.first_class_manifests(&module_index)? {
@@ -359,7 +396,10 @@ impl GenerationConfiguration {
     }
 
     fn role_manifests(&self) -> Result<Vec<Manifest>> {
-        let module_index = ModuleIndex::new(self.module_dependencies.clone())?;
+        let module_index = ModuleIndex::new(
+            self.module_dependencies.clone(),
+            self.target_module_insertions.clone(),
+        )?;
         let mut manifests = Vec::new();
         for role in self.active_roles() {
             for manifest in role.manifests(&module_index)? {
@@ -465,12 +505,13 @@ impl OutputPathIndex {
 impl ActiveSkill {
     fn first_class_manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
-        let modules = Modules::new(module_index.expanded_paths(
-            std::slice::from_ref(&self.module_identifier),
-            ModuleUse::SkillContent,
-        )?);
         for surface in self.target_surfaces.payload() {
             let output_surface = OutputSurface::from(surface);
+            let modules = Modules::new(module_index.expanded_paths(
+                std::slice::from_ref(&self.module_identifier),
+                ModuleUse::SkillContent,
+                output_surface,
+            )?);
             manifests.push(Manifest {
                 output_path: OutputPath::new(
                     output_surface.skill_path(self.output_identifier.as_ref()),
@@ -506,14 +547,19 @@ impl ActiveRole {
                 output_kind: output_surface.role_output_kind(),
                 output_surface,
                 frontmatter: self.frontmatter(),
-                modules: Modules::new(self.assembled_modules(module_index)?),
+                modules: Modules::new(self.assembled_modules(module_index, output_surface)?),
             });
         }
         Ok(manifests)
     }
 
-    fn assembled_modules(&self, module_index: &ModuleIndex) -> Result<Vec<ModulePath>> {
-        let mut expansion = ModuleExpansion::new(module_index, ModuleUse::RoleContent);
+    fn assembled_modules(
+        &self,
+        module_index: &ModuleIndex,
+        output_surface: OutputSurface,
+    ) -> Result<Vec<ModulePath>> {
+        let mut expansion =
+            ModuleExpansion::new(module_index, ModuleUse::RoleContent, output_surface);
         expansion.append_role_source(&self.module_identifier)?;
         for module_identifier in self.included_modules.payload() {
             expansion.append(module_identifier)?;
@@ -549,10 +595,14 @@ impl ActiveRole {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ModuleIndex {
     entries: BTreeMap<ModuleIdentifier, ModuleDependency>,
+    target_module_insertions: TargetModuleInsertions,
 }
 
 impl ModuleIndex {
-    fn new(module_dependencies: ModuleDependencies) -> Result<Self> {
+    fn new(
+        module_dependencies: ModuleDependencies,
+        target_module_insertions: TargetModuleInsertions,
+    ) -> Result<Self> {
         let mut entries = BTreeMap::new();
         for dependency in module_dependencies.into_payload() {
             let module_identifier = dependency.module_identifier.clone();
@@ -565,15 +615,19 @@ impl ModuleIndex {
                 });
             }
         }
-        Ok(Self { entries })
+        Ok(Self {
+            entries,
+            target_module_insertions,
+        })
     }
 
     fn expanded_paths(
         &self,
         module_identifiers: &[ModuleIdentifier],
         module_use: ModuleUse,
+        output_surface: OutputSurface,
     ) -> Result<Vec<ModulePath>> {
-        let mut expansion = ModuleExpansion::new(self, module_use);
+        let mut expansion = ModuleExpansion::new(self, module_use, output_surface);
         for module_identifier in module_identifiers {
             expansion.append(module_identifier)?;
         }
@@ -586,6 +640,19 @@ impl ModuleIndex {
             .ok_or_else(|| Error::MissingModule {
                 module_identifier: module_identifier.as_ref().to_owned(),
             })
+    }
+
+    fn target_modules(
+        &self,
+        module_identifier: &ModuleIdentifier,
+        output_surface: OutputSurface,
+    ) -> Vec<ModuleIdentifier> {
+        self.target_module_insertions
+            .payload()
+            .iter()
+            .filter(|insertion| insertion.applies_to(module_identifier, output_surface))
+            .flat_map(|insertion| insertion.included_modules.payload().iter().cloned())
+            .collect()
     }
 }
 
@@ -618,16 +685,22 @@ impl ModuleUse {
 struct ModuleExpansion<'a> {
     module_index: &'a ModuleIndex,
     module_use: ModuleUse,
+    output_surface: OutputSurface,
     resolved: BTreeSet<ModuleIdentifier>,
     visiting: Vec<ModuleIdentifier>,
     paths: Vec<ModulePath>,
 }
 
 impl<'a> ModuleExpansion<'a> {
-    fn new(module_index: &'a ModuleIndex, module_use: ModuleUse) -> Self {
+    fn new(
+        module_index: &'a ModuleIndex,
+        module_use: ModuleUse,
+        output_surface: OutputSurface,
+    ) -> Self {
         Self {
             module_index,
             module_use,
+            output_surface,
             resolved: BTreeSet::new(),
             visiting: Vec::new(),
             paths: Vec::new(),
@@ -670,11 +743,27 @@ impl<'a> ModuleExpansion<'a> {
         self.visiting.pop();
         self.resolved.insert(module_identifier.clone());
         self.paths.push(dependency.module_path.clone());
+        for target_module_identifier in self
+            .module_index
+            .target_modules(module_identifier, self.output_surface)
+        {
+            self.append(&target_module_identifier)?;
+        }
         Ok(())
     }
 
     fn into_paths(self) -> Vec<ModulePath> {
         self.paths
+    }
+}
+
+impl TargetModuleInsertion {
+    fn applies_to(
+        &self,
+        module_identifier: &ModuleIdentifier,
+        output_surface: OutputSurface,
+    ) -> bool {
+        &self.module_identifier == module_identifier && self.output_surface == output_surface
     }
 }
 

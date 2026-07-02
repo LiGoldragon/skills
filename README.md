@@ -26,7 +26,8 @@ SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- skil
 
 The source-side active output manifest lives at
 `manifests/active-outputs.nota`; module paths, dependencies, and source module
-kind live at `manifests/module-dependencies.nota`. The CLI consumes that active
+kind live at `manifests/module-dependencies.nota`; target-specific overlays live
+at `manifests/target-module-insertions.nota`. The CLI consumes that active
 manifest for normal generation. The compatibility roster at
 `manifests/skills-roster.nota` remains parseable for legacy checks and
 archived/deleted skill modeling.
@@ -34,6 +35,10 @@ archived/deleted skill modeling.
 Source skill modules live under `modules/<name>/`. Role modules live under `roles/<name>/`. Archived modules live under `skills/archive/` and are not emitted.
 
 The active manifest records first-class `Skill` and `Role` outputs. Skill output paths are derived from module name plus target surface: `AgentsSkill` emits `.agents/skills/<name>/SKILL.md` for both Pi and Codex, and `ClaudeSkill` emits `.claude/skills/<name>/SKILL.md`. Source module kinds are explicit: `RuntimeSkill` modules may emit as skills, `RoleSource` modules are role roots, and `RoleComposition` modules are generator-only role packet components that can be included in roles but cannot emit as skills.
+
+Target module insertions append extra modules for a named base module only when
+the generator is producing the named output surface, such as a Claude-only
+overlay for `ClaudeSkill` or `ClaudeAgent`.
 
 Role outputs emit harness-native worker packets:
 

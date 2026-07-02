@@ -36,6 +36,8 @@
   ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }
   ModuleKind [RuntimeSkill RoleSource RoleComposition]
   DependencyModules (Vector ModuleIdentifier)
+  TargetModuleInsertions (Vector TargetModuleInsertion)
+  TargetModuleInsertion { ModuleIdentifier OutputSurface IncludedModules }
   GeneratedRoleOutputs (Vector OutputPath)
   SkillRoster { ArchiveRoot SkillModules EntryPoints }
   ArchiveRoot Path {| Display AsRef PartialEq |}

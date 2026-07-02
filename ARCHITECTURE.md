@@ -7,8 +7,8 @@
 This repository owns source modules, output manifests, and the Rust generator
 that assembles harness-native skill and role files into consuming workspaces.
 The active surface is manifest-driven: active outputs are listed in one NOTA
-manifest, module source paths and dependencies live in a sidecar NOTA index,
-and generated files are written into the workspace root passed to the CLI.
+manifest, module source paths and dependencies live in sidecar NOTA indexes, and
+generated files are written into the workspace root passed to the CLI.
 
 The generator treats instruction prose as reusable source material. Harness
 metadata and output identity live in manifests, while markdown modules stay
@@ -24,6 +24,7 @@ workers do not discover doctrine through a runtime index.
 - `skills/archive/`: archived source material with no active emission.
 - `manifests/active-outputs.nota`: active `Skill` and `Role` outputs; presence means active.
 - `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
+- `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
 - `manifests/skills-roster.nota`: compatibility input for legacy checks and archived/deleted module modeling.
 - `schema/assembly.schema`: schema-authored generator interface source.
 - `src/schema/assembly.rs`: generated Rust interface from `schema/assembly.schema`.
@@ -54,20 +55,23 @@ and dependency module identifiers. The active manifest decides what emits; the
 module index decides expansion order and module kind.
 
 Assembly is ordered concatenation of source modules after manifest expansion.
-For skills, the active skill's module expands through the dependency index. For
-roles, the role body is emitted first, followed by any included modules and
-their dependencies. A generated role packet is the curated runtime bundle for
-normal role work; additional doctrine is named by the prompt, role packet,
-dispatch envelope, or local context rather than discovered through a generated
-index.
+For skills, the active skill's module expands through the dependency index and
+the generated output surface's target insertions. For roles, the role body is
+emitted first, followed by any included modules, their dependencies, and
+surface-specific insertions. A generated role packet is the curated runtime
+bundle for normal role work; additional doctrine is named by the prompt, role
+packet, dispatch envelope, or local context rather than discovered through a
+generated index.
 
 Module dependencies are typed by module identifier rather than inferred from
 markdown links or filesystem layout. The dependency index also carries source
 module kind. `RuntimeSkill` modules may emit as first-class skills,
 `RoleSource` modules are role roots, and `RoleComposition` modules are
 generator-only role packet components that may be dependency-expanded into
-roles but cannot be emitted as runtime skills. Generation metadata such as
-descriptions, tiers, frontmatter, target surfaces, and role output identity
+roles but cannot be emitted as runtime skills. Target insertions are data, not
+model choice: a base module, output surface, and inserted module list determine
+which overlay appears in a generated harness surface. Generation metadata such
+as descriptions, tiers, frontmatter, target surfaces, and role output identity
 live in the active manifest or compatibility roster.
 
 ## Ownership Boundaries
@@ -85,7 +89,8 @@ Deleted modules are modeled by compatibility checks and emit no surfaces.
 ## Constraints
 
 - The generator is a Rust CLI.
-- Generator inputs are NOTA where practical, including the active manifest and module dependency index.
+- Generator inputs are NOTA where practical, including the active manifest,
+  module dependency index, and target module insertion index.
 - Generator outputs are NOTA where applicable, including generated-role inventory files.
 - Interfaces are schema-authored in `schema/assembly.schema`; Rust schema types are generated, not hand-authored in parallel.
 - Normalization changes only structure required for valid output: one frontmatter block, heading levels, relative links, and duplicate-title handling.

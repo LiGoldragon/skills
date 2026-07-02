@@ -422,6 +422,26 @@ pub struct DependencyModules(Vec<ModuleIdentifier>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TargetModuleInsertions(Vec<TargetModuleInsertion>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TargetModuleInsertion {
+    pub module_identifier: ModuleIdentifier,
+    pub output_surface: OutputSurface,
+    pub included_modules: IncludedModules,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct GeneratedRoleOutputs(Vec<OutputPath>);
 
 #[rustfmt::skip]
@@ -1051,6 +1071,25 @@ impl DependencyModules {
 #[rustfmt::skip]
 impl From<Vec<ModuleIdentifier>> for DependencyModules {
     fn from(payload: Vec<ModuleIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TargetModuleInsertions {
+    pub fn new(payload: Vec<TargetModuleInsertion>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<TargetModuleInsertion> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<TargetModuleInsertion> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<TargetModuleInsertion>> for TargetModuleInsertions {
+    fn from(payload: Vec<TargetModuleInsertion>) -> Self {
         Self::new(payload)
     }
 }
