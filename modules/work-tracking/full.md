@@ -40,6 +40,10 @@ Dependencies are directional: producer before consumer, schema before generated 
 
 When discovery changes scope, update the bead with observed facts and the new blocker or split. Do not rewrite history into certainty. Keep comments concise and evidence-backed.
 
+## Weigh age when judging staleness
+
+Age is an important factor in a bead's staleness, though not the sole test and not an auto-close threshold. The older an open bead, the more its retention must be justified rather than assumed: as a rough gradient, roughly two weeks old is suspicious and about a month old is strongly suspect. Keep an old bead only when it still maps to an actively developed line of work, shown by recent commits; otherwise treat it as a candidate to close as invalidated with a reversible reason. When triaging a backlog, sort by age and scrutinize the oldest first.
+
 ## Close with evidence
 
 Close a bead only after the acceptance criteria pass or the bead is explicitly invalidated. Include commit identifiers, commands run, and any remaining follow-up bead. If blocked, leave it open and name the blocker.
@@ -49,5 +53,6 @@ Close a bead only after the acceptance criteria pass or the bead is explicitly i
 - beads that restate a prompt without acceptance criteria;
 - umbrella beads that hide independent work;
 - closing because code was written but not validated;
+- keeping an old bead open by inertia when nothing active maps to it;
 - using comments as an archive;
 - creating repo-specific process doctrine in the bead body.
