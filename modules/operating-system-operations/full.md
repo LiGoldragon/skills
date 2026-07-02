@@ -4,53 +4,61 @@
 
 Use this doctrine for operating-system and environment work that touches CriomOS system state, criomos-home user state, or their deployment boundary.
 
-Operate from pushed, reproducible inputs. Treat CriomOS as the system source identity and criomos-home as the home/environment source identity. Use pinned flake revisions for effect-bearing deploys when branch resolution or cache freshness is uncertain.
+Operate from pushed, reproducible inputs. Treat CriomOS as the system source identity and criomos-home as the home/environment source identity. Pin the exact revision in the flake reference you deploy; the deployed daemon carries no revision-policy field to resolve a branch for you.
 
-Before changing a host, name the target cluster, node, artifact kind (`CompleteHost`, `BaseHost`, or `UserEnvironment`), requested deploy action, source revision policy, builder choice, rollback expectation, and post-activation evidence.
+Before changing a host, name the target cluster, node, deployment shape (`Home` or `System`), requested action, the exact source revision, builder choice, rollback expectation, and post-activation evidence.
 
-Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names.
+Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. The deployed daemon accepts exactly two `DeployRequest` variants, `Home` and `System`, and rejects `Host`, `CompleteHost`, `BaseHost`, and `UserEnvironment`.
 
 ## Lojix interface
 
-Read current generations:
+Read current generations for a node:
 
 ```sh
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
 
-Submit a complete host deploy from a CriomOS flake revision:
+Deploy a home/environment change. This is the standard path for shipping a component such as spirit:
+
+1. Push the changed component to its remote at the intended revision.
+2. Repoint the criomos-home input for that component to that exact revision and push criomos-home. Do not `nix flake update`; it resolves the branch head (`main`), not the intended revision.
+3. Submit the home deploy against the pushed criomos-home revision:
 
 ```sh
-meta-lojix "(Deploy (Host (<cluster> <node> CompleteHost <proposal-source> <criomos-flake-ref> <host-action> RequireImmutable <builder> [] None)))"
+meta-lojix "(Deploy (Home (<cluster> <node> <user> <proposal-source> github:LiGoldragon/CriomOS-home/<rev> <home-mode> <builder> <substituters>)))"
 ```
 
-Submit a base host deploy from a CriomOS flake revision when the host closure intentionally omits embedded user environment materialization and broad all-firmware materialization:
+Concretely:
 
 ```sh
-meta-lojix "(Deploy (Host (<cluster> <node> BaseHost <proposal-source> <criomos-flake-ref> <host-action> RequireImmutable <builder> [] None)))"
+meta-lojix "(Deploy (Home (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS-home/<rev> Activate None [])))"
 ```
 
-Submit a user-environment deploy from a criomos-home input through the selected CriomOS flake revision:
+`HomeDeployment` holds eight positional fields: cluster, node, user, proposal source, criomos-home flake reference, home mode, builder, and extra substituters. `<home-mode>` is `Activate` to build and activate, or `Build`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
+
+Deploy a full system change:
 
 ```sh
-meta-lojix "(Deploy (UserEnvironment (<cluster> <node> <user> <proposal-source> <criomos-flake-ref> <user-environment-action> RequireImmutable <builder> [])))"
+meta-lojix "(Deploy (System (<cluster> <node> <deployment-kind> <proposal-source> <criomos-flake-ref> <system-action> <builder> <substituters> <trailing-option>)))"
 ```
 
-Use `RequireImmutable` for pinned flake revisions. Use `ResolveAndRecord` when the daemon should resolve a mutable source and record the resolved revision before building. A builder is `None` or `(Some <builder-node>)`. Extra substituters are explicit typed records in the request; there is no host-label shorthand.
+`SystemDeployment` holds nine positional fields: cluster, node, deployment kind, proposal source, CriomOS flake reference, system action, builder, extra substituters, and a trailing option. `<deployment-kind>` is `FullOs` or `HomeOnly`. `<system-action>` is `Switch`. `<builder>` and `<substituters>` match the home shape. The trailing option is `None` or `(Some <value>)`.
 
-`meta-lojix` returns when the daemon accepts a request. A `DeployAccepted DeployHandle` reply is admission evidence only; it does not prove build, copy, activation, or profile success.
+`meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success.
 
 ## Activation checks
 
-After submit, query the node until the expected artifact and closure become current or a rejection/failure is visible:
+After submit, query the node until the expected store path becomes current, or a rejection or failure is visible:
 
 ```sh
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
 
-For boot-profile host actions, verify the boot profile separately from the live system. For live host activation, verify activation and task-specific systemd or user units. For user-environment activation, verify the target user's profile and live session state; reboot persistence still depends on a system generation that pins the same home input.
+Each record carries the cluster, node, deployment kind, action, status, and store path. Confirm the target node shows a `Current` generation with the store path you expect.
 
-Niri configuration reload is an explicit operator procedure after a successful user-environment activation when the task requires live compositor config refresh:
+For live home activation, verify the target user's profile and live session state; reboot persistence still depends on a system generation that pins the same home input. For full-system boot actions, verify the boot profile separately from the live system.
+
+Reload Niri configuration explicitly after a successful home activation when the task requires a live compositor refresh:
 
 ```sh
 niri msg action load-config-file
