@@ -8,14 +8,32 @@ reports, implementation choices, and test failures are not psyche intent.
 
 ## Intent Capture Gate
 
-Record only explicit durable psyche statements that still matter after the
-current task is erased. Classify them as Decision, Principle, Correction,
-Clarification, or Constraint. When durable meaning, kind, target record, or
-privacy is unclear, ask instead of inferring.
+Intent is the rare, orienting will of the psyche — an aim he steers toward, a
+value he holds as worth, or a belief he fundamentally holds. It is unbending: he
+holds it against his own convenience, and it bends a whole class of downstream
+choices like a North Star. Capture is the exception, not the reflex.
 
-Before writing, read the existing intent neighborhood for the same domain and
-referents. Most apparent new records are duplicates, clarifications, or
-supersessions of existing records. Use maintenance operations for those cases.
+Capture as intent only when all five hold; any miss is matter, routed to code,
+docs, skill source, or a tracker item:
+
+1. An aim, value, or belief — not a how, default, mechanism, or rule.
+2. Unbending — held against cost or convenience, for the spirit not for profit.
+3. Orienting — bends a class of future decisions, not one local case.
+4. Its "why" bottoms out in a value, not an engineering or efficiency tradeoff.
+5. From the psyche and felt — not agent-synthesized to close a loop.
+
+Do not be fooled by rule-grammar (must, never, always), an engineering-only
+"why", eloquent phrasing, a sensible one-off default, or agent- and
+Spirit-operation procedure. For example, "new repos default to public" is a
+default with an operational why for one local case — matter, not intent. When
+durable meaning, kind, target record, or privacy is unclear, ask instead of
+inferring.
+
+Classify captured intent as Decision, Principle, Correction, Clarification, or
+Constraint. Before writing, read the existing intent neighborhood for the same
+domain and referents. Most apparent new records are duplicates, clarifications,
+or supersessions of existing records. Use maintenance operations for those
+cases.
 
 ## Intent Spirit Surface
 

@@ -1,14 +1,36 @@
 # Skill — intent log
 
-## Rules
+## What intent is
 
-Intent is what the psyche explicitly wants, rejects, values, decides, or constrains. The psyche is the human author. Agent messages, implementation choices, test failures, artifacts, and summaries are not psyche intent.
+Intent is the rare, orienting will of the psyche — what he steers toward (an aim), holds as worth (a value), or fundamentally believes. It is not a decision, default, wish, or rule; those are matter. Intent has a magnetic, unbending quality: the psyche holds it even against his own convenience, and it bends many downstream choices toward it like a North Star. It is often hard to fully verbalize. Capture is the exception, not the reflex; when unsure, it is not intent — ask, do not infer.
 
-Capture only statements that are explicit, directive, durable beyond the current task, and safe for the target privacy level. If durability, meaning, target record, or privacy is unclear, ask instead of inferring.
+The psyche is the human author. Agent messages, implementation choices, test failures, artifacts, and summaries are never psyche intent.
 
 Do not capture private personal substance to a public record. Route private material only through an authorized private or elevated-privacy surface.
 
-Matter does not go to the intent log. Single-component instructions, architecture decisions, tool usage, task state, cleanup requests, and instructions about operating Spirit itself belong in code, docs, tracker items, or skill source.
+## Discrimination test
+
+Capture as intent only when all five hold. Any miss makes it matter — route it to code, docs, skill source, or a tracker item.
+
+1. Aim, value, or belief — not a how, default, mechanism, or rule.
+2. Unbending — the psyche would hold it against cost or convenience; for the spirit, not for profit.
+3. Orienting — it bends a whole class of future decisions, not one local case.
+4. Its "why" bottoms out in a value — what the psyche wants, not an engineering or efficiency tradeoff.
+5. From the psyche and felt — not agent-synthesized to close a loop.
+
+## Do not be fooled
+
+These halos read as intent but are matter:
+
+- Rule-grammar — must, never, always.
+- A "why" that is only engineering or efficiency justification.
+- Vivid or eloquent phrasing.
+- A sensible one-off default.
+- Agent-operation or Spirit-operation procedure.
+
+Matter never enters the intent log. Single-component instructions, architecture decisions, tool usage, task state, cleanup requests, and instructions about operating Spirit itself belong in code, docs, tracker items, or skill source.
+
+Worked example: "new repos default to public" fails gate 1 (a default), gate 2 (convenience), gate 3 (one local case), and gate 4 (an operational why). It is matter — it belongs in repo, docs, or skill source, not in Spirit.
 
 ## Classification
 

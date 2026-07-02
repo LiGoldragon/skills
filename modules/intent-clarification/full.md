@@ -45,7 +45,11 @@ minutes. Never ask without options.
 
 ## After the psyche answers
 
-The psyche just gave a new statement — that's intent. Record it per
+The psyche just gave a new statement. Classify it before capturing:
+only the rare, unbending orienting will that passes the intent test
+in `skills/intent-log.md` is intent; matter — defaults, mechanisms,
+single-component or architectural decisions, Spirit-operation — goes
+to its owning surface, not Spirit. When it is intent, record it per
 `skills/intent-log.md`. If it supersedes prior intent, follow the
 supersession protocol in `skills/intent-maintenance.md`; if it
 merely extends, record under a new sub-topic. Reflect
