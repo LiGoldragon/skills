@@ -8,13 +8,13 @@ Choose tests that witness the behavior or invariant changed. Prefer small determ
 
 Expose durable project checks through the flake. Pure checks belong in flake checks. Test-only binaries use clear test names and do not become runtime services.
 
-Run the narrow check that proves the edit, then the broader gate required by the repo before commit. Record exact failures when a check cannot run.
+Run the narrow check that proves the edit, then the broader gate required by the repo before commit. Build that single check directly (`nix build .#checks.<system>.<check>`); reserve full `nix flake check` for pre-commit, and run whole-engine sweeps dry-run first with background builds and logs on disk. Record exact failures when a check cannot run.
 
 Do not substitute an unrelated passing check for the one that proves the edited surface.
 
 ## Keep state explicit
 
-Stateful tests name their resources, host requirements, cleanup, and failure artifacts. They do not depend on hidden local state. If a test needs credentials or hardware, mark the requirement and provide a safe skip or manual gate.
+Stateful tests name their resources, host requirements, cleanup, and failure artifacts. They do not depend on hidden local state. If a test needs credentials or hardware, mark the requirement and provide a safe skip or manual gate. Place a daemon-sandbox unix socket under a short run root (e.g. `/tmp/<lane>/`) so its path stays under the SUN_LEN limit; never nest the socket under the deep session scratchpad path.
 
 ## Test architecture, not just regression
 

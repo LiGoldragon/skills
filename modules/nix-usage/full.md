@@ -23,6 +23,12 @@ result=$(nix build <installable> --no-link --print-out-paths)
 ls "$result"
 ```
 
+Dry-run before a heavy build to read the miss/rebuild surface and catch remote-builder degradation early:
+
+```sh
+nix build <installable> --dry-run
+```
+
 Use a remote-builder smoke test only when that path is the claim. Force local slots to zero so the command fails instead of silently building locally:
 
 ```sh
