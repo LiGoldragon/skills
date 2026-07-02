@@ -72,6 +72,7 @@
   (repo-intent modules/repo-intent/full.md [] RuntimeSkill)
   (intent-manifestation modules/intent-manifestation/full.md [] RuntimeSkill)
   (main-feature-integration modules/main-feature-integration/full.md [] RuntimeSkill)
+  (nixos-vm-testing modules/nixos-vm-testing/full.md [] RoleComposition)
 
   (role-intent-translator roles/intent-translator/full.md [] RoleSource)
   (role-scout roles/scout/full.md [] RoleSource)
