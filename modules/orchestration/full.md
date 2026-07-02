@@ -73,7 +73,7 @@ Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, m
 
 Keep the orchestrator out of tracker mutation unless the active lane explicitly assigns tracker-only orchestration.
 
-Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions. Do not encode concrete model names in doctrine or prompts.
+Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions. Do not encode concrete positive model choices in doctrine or prompts; the right model tracks work intensity and the current fleet, not a fixed name. The one deliberate exception is a standing exclusion, not a hardcoded choice: never dispatch a worker on the `fable5` model (`claude-fable-5`), at any intensity.
 
 Use a separate auditor for substantial completed work, with strength matched to risk, unless the psyche declines.
 
