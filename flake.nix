@@ -263,9 +263,12 @@
               echo "orchestration must route candidate durable intent, not say the orchestrator captures it directly" >&2
               exit 1
             fi
-            grep -F 'Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.' "$orchestration" >/dev/null
+            grep -F "Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment." "$orchestration" >/dev/null
+            grep -F 'Ask at least one before proposing method or dispatching workers, even when the request seems obvious.' "$orchestration" >/dev/null
             grep -F 'Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.' "$orchestration" >/dev/null
             grep -F 'Confirm suspected interpretation with the psyche instead of silently assuming.' "$orchestration" >/dev/null
+            grep -F 'Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.' "$orchestration" >/dev/null
+            grep -F 'When a worker returns while other relevant workers are still running, emit only an extremely short interim note' "$orchestration" >/dev/null
             grep -F 'Treat the psyche as authority, bottleneck, and limited attention.' "$orchestration" >/dev/null
             grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
             grep -F 'Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.' "$orchestration" >/dev/null
@@ -274,6 +277,11 @@
             grep -F 'small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames' "$orchestration" >/dev/null
             grep -F 'normal implementation workers for ordinary implementation with local tests' "$orchestration" >/dev/null
             grep -F 'strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions' "$orchestration" >/dev/null
+            grep -F 'Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it.' "$orchestration" >/dev/null
+            if grep -F 'never dispatch a worker on the `fable5` model' "$orchestration" "$claude_orchestration"; then
+              echo "orchestration must not carry a global fable5 worker ban" >&2
+              exit 1
+            fi
             grep -F 'Use a separate auditor for substantial completed work, with strength matched to risk' "$orchestration" >/dev/null
             grep -F 'Keep context-handover separate and manual-load only' "$orchestration" >/dev/null
             grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
@@ -283,6 +291,18 @@
             grep -F '(orchestration ClaudeSkill [claude-orchestration])' "$target_insertions" >/dev/null
             grep -F '(orchestration ClaudeAgent [claude-orchestration])' "$target_insertions" >/dev/null
             grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_orchestration" >/dev/null
+            if grep -F 'Brief by default in interactive turns' "$claude_orchestration"; then
+              echo "generic reply shape belongs in shared orchestration" >&2
+              exit 1
+            fi
+            if grep -F 'When a worker returns while other relevant workers are still running' "$claude_orchestration"; then
+              echo "generic interim worker return guidance belongs in shared orchestration" >&2
+              exit 1
+            fi
+            if grep -F 'Claude orchestration surfaces' "$claude_orchestration"; then
+              echo "Claude overlay should read naturally in generated surfaces" >&2
+              exit 1
+            fi
             if grep -F 'multiple-choice, picker, or' "$orchestration"; then
               echo "Claude UI preference belongs in the Claude target overlay, not shared orchestration" >&2
               exit 1

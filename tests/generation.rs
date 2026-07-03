@@ -636,15 +636,19 @@ fn orchestration_doctrine_contains_required_rules() {
     for required in [
         "Treat the psyche as authority, bottleneck, and limited attention.",
         "Route candidate durable intent",
-        "Ask at least one brief, focused clarification or confirmation question before proposing method or dispatching workers, even when the request seems obvious.",
+        "Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment.",
+        "Ask at least one before proposing method or dispatching workers, even when the request seems obvious.",
         "Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.",
         "Confirm suspected interpretation with the psyche instead of silently assuming.",
+        "Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.",
+        "When a worker returns while other relevant workers are still running, emit only an extremely short interim note",
         "Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.",
         "Do not use a weaver for a single small bounded fix with one worker and no tracking value.",
         "Match worker model and thinking level to work intensity",
         "small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames",
         "normal implementation workers for ordinary implementation with local tests",
         "strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions",
+        "Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it.",
         "Use a separate auditor for substantial completed work, with strength matched to risk",
         "Keep context-handover separate and manual-load only",
         "Privacy is closed by default",
@@ -659,6 +663,7 @@ fn orchestration_doctrine_contains_required_rules() {
         );
     }
     assert!(!orchestration.contains("Capture durable intent"));
+    assert!(!orchestration.contains("never dispatch a worker on the `fable5` model"));
 }
 
 #[test]
@@ -741,7 +746,7 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     );
     fixture.write_source_file(
         "modules/claude-orchestration/full.md",
-        "# Module - Claude orchestration\n\n## Claude Reply Shape\n\nClaude overlay.\n",
+        "# Module - Target reply surface\n\n## Clarification UI\n\nTarget overlay.\n",
     );
 
     fixture
@@ -750,23 +755,23 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
 
     let agents_skill = fixture.read_workspace_file(".agents/skills/orchestration/SKILL.md");
     assert!(agents_skill.contains("Shared orchestration."));
-    assert!(!agents_skill.contains("Claude overlay."));
+    assert!(!agents_skill.contains("Target overlay."));
 
     let claude_skill = fixture.read_workspace_file(".claude/skills/orchestration/SKILL.md");
     assert!(claude_skill.contains("Shared orchestration."));
-    assert!(claude_skill.contains("Claude overlay."));
+    assert!(claude_skill.contains("Target overlay."));
 
     let claude_role = fixture.read_workspace_file(".claude/agents/worker.md");
     assert!(claude_role.contains("Shared orchestration."));
-    assert!(claude_role.contains("Claude overlay."));
+    assert!(claude_role.contains("Target overlay."));
 
     let codex_role = fixture.read_workspace_file(".codex/agents/worker.toml");
     assert!(codex_role.contains("Shared orchestration."));
-    assert!(!codex_role.contains("Claude overlay."));
+    assert!(!codex_role.contains("Target overlay."));
 
     let pi_role = fixture.read_workspace_file(".pi/agents/worker.md");
     assert!(pi_role.contains("Shared orchestration."));
-    assert!(!pi_role.contains("Claude overlay."));
+    assert!(!pi_role.contains("Target overlay."));
 }
 
 #[test]
