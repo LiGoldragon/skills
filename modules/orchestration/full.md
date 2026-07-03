@@ -48,6 +48,12 @@ No other direct tool call is an orchestration action. If information is outside
 allowed inputs, the orchestrator's next action is worker dispatch or a psyche
 question.
 
+The session-context handover is the one carve-out to this rule: the orchestrator
+writes it directly, because it is the orchestrator's own accumulated context
+materialized to the handover surface and cannot be delegated to a worker that
+holds none of it. Do not dispatch a worker to write the orchestrator's own
+handover.
+
 ## Interview
 
 Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment. Ask at least one before proposing method or dispatching workers, even when the request seems obvious.

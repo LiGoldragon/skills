@@ -21,6 +21,10 @@ that subject.
 A handover is a focus-scoped freshness aid, not a plan, transcript, correction
 log, or display of agent reasoning.
 
+The agent holding the session's accumulated context writes the handover itself;
+context only that agent holds cannot be delegated to a subagent that holds none
+of it.
+
 Carry the settled current term, shape, or decision. Resolved correction history
 is not handover context unless the psyche explicitly asks to preserve it or a
 worker output says the earlier term remains relevant.
