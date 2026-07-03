@@ -95,13 +95,13 @@
         "lastModified": 1782229580,
         "narHash": "sha256-owd0Lz3sRT0JMpw+F5/8Jz2gtbIJtT6dN63AoyxpvYI=",
         "owner": "LiGoldragon",
-        "repo": "nota-next",
+        "repo": "nota",
         "rev": "96e64bcdbe531eb33a900eb3abbc58a095e01f76",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "nota-next",
+        "repo": "nota",
         "type": "github"
       }
     },
@@ -161,13 +161,13 @@
         "lastModified": 1782317550,
         "narHash": "sha256-BSkUtBqGqmUOPFJBLHYkaknNdShBmscl3S3fWdztIf0=",
         "owner": "LiGoldragon",
-        "repo": "schema-rust-next",
+        "repo": "schema-rust",
         "rev": "abd31f48197c7e4db1da4b04a1c75cafd7276d3a",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "schema-rust-next",
+        "repo": "schema-rust",
         "type": "github"
       }
     },
@@ -177,13 +177,13 @@
         "lastModified": 1782313101,
         "narHash": "sha256-17uebtXm+R1LaK83TXNaTfimEs9YXOCPNUNXTJ2d2hY=",
         "owner": "LiGoldragon",
-        "repo": "schema-next",
+        "repo": "schema",
         "rev": "dea9b555d76a37f099db2477ead1c758a7517f37",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
-        "repo": "schema-next",
+        "repo": "schema",
         "type": "github"
       }
     },

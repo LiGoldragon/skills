@@ -19,14 +19,14 @@ default = ["nota-text"]
 nota-text = []
 
 [dependencies]
-nota = { package = "nota", git = "https://github.com/LiGoldragon/nota-next.git", branch = "main" }
+nota = { package = "nota", git = "https://github.com/LiGoldragon/nota.git", branch = "main" }
 pulldown-cmark = "0.13"
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror = "2"
 pathdiff = "0.2"
 
 [build-dependencies]
-schema-rust = { package = "schema-rust", git = "https://github.com/LiGoldragon/schema-rust-next.git", branch = "main" }
+schema-rust = { package = "schema-rust", git = "https://github.com/LiGoldragon/schema-rust.git", branch = "main" }
 
 [dev-dependencies]
 tempfile = "3"
