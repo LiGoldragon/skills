@@ -20,6 +20,14 @@ Intra-repository workspace paths are fine because they travel with the repositor
 
 Use local overrides only as uncommitted developer configuration while iterating.
 
+## Deployment independence
+
+Component logic is deployment- and environment-agnostic. It functions independent of any specific host, cluster, user, network, or environment, and never depends on being run in a particular environment to work.
+
+Deployment-, cluster-, environment-, and host-specific data — identities, hostnames, cluster, trust, and source references, secret locations — enters as configuration injected at the edge. Logic renders that data; it never bakes it in as a literal.
+
+Test clusters and fixtures are the sole exception and live only in test code.
+
 ## Split test
 
 Start a new component when the change introduces a distinct noun, a separate bounded vocabulary, a separate state owner, a new parser or codec, or a test surface that should run independently.
