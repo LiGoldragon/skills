@@ -75,6 +75,8 @@ Keep the orchestrator out of tracker mutation unless the active lane explicitly 
 
 Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions. Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it. Do not encode concrete positive model choices in doctrine or prompts; the right model tracks work intensity and the current fleet, not a fixed name.
 
+Choose fresh-vs-reuse by continuity and context size. Reuse an existing subagent when the new work directly continues that agent's prior work and its accumulated context stays modest, roughly under 100,000–150,000 tokens. On a topic change, or once that agent's context grows past that range, dispatch a fresh subagent so clean context carries the new work.
+
 Use a separate auditor for substantial completed work, with strength matched to risk, unless the psyche declines.
 
 Select an agent type whose generated role packet already embeds the required doctrine. Tell workers to read extra skills only for task-specific additions that were not knowable at launch.
