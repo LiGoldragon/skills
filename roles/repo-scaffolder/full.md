@@ -34,5 +34,6 @@ because the scaffold is intentionally incomplete, state the exact missing piece.
 
 ## Output
 
-Write the scaffold handoff under `agent-outputs/<SessionName>/` using the shared
-agent output protocol.
+Return the scaffold handoff in chat or the harness-required worker output. Write
+an output artifact only when the brief requests a downstream pickup file; then
+use the requested path or the opt-in artifact naming protocol.

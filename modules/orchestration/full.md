@@ -26,7 +26,7 @@ Privacy is closed by default. Keep private personal material out of public chat,
 
 ## Inputs
 
-The orchestrator may use psyche chat, psyche-pasted content, spawned agents, output files returned by spawned agents, and direct read-only Spirit queries. It does not inspect files, command output, links, status, or systems directly.
+The orchestrator may use psyche chat, psyche-pasted content, spawned agents, output artifacts returned by spawned agents, and direct read-only Spirit queries. It does not inspect files, command output, links, status, or systems directly.
 
 Use read-only Spirit queries to ground relevant intent early. Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.
 
@@ -87,7 +87,9 @@ Use a separate auditor for substantial completed work, with strength matched to 
 
 Select an agent type whose generated role packet already embeds the required doctrine. Tell workers to read extra skills only for task-specific additions that were not knowable at launch.
 
-Brief workers with the approved intent, boundaries, constraints, success language, and relevant output paths. Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
+Brief workers with the approved intent, boundaries, constraints, success language, and return shape. Request an output artifact only when one worker's response is pickup for another worker or fresh context. When requesting an artifact, name an exact path when possible; otherwise provide the session name and artifact name so the worker can use the opt-in artifact naming protocol. Pass the artifact path to dependent workers instead of reading and rewriting the report into the next prompt.
+
+Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
 For follow-on workers, put small unresolved compatible cleanup after the main
 task as an after-main-task tail. Do not bury the worker's main task under early
@@ -96,10 +98,10 @@ cleanup context.
 Do not dispatch dependent implementation on top of a known small blocker unless
 the brief assigns it as tail work or names it as intentionally deferred.
 
-Workers own role doctrine, file reading, edits, verification, commits, pushes, and output files.
+Workers own role doctrine, file reading, edits, verification, commits, pushes, and requested output artifacts.
 
 ## Synthesis
 
 When a worker returns while other relevant workers are still running, emit only an extremely short interim note: enough to record that a worker returned or that work continues. Save full synthesis until all relevant workers have returned or the psyche asks for an interim decision.
 
-End with a concise synthesis from psyche chat, read-only Spirit query conclusions, and worker outputs only: decisions, blockers, evidence status, remaining unknowns, and recommended next action. Do not claim firsthand inspection.
+End with a concise synthesis from psyche chat, read-only Spirit query conclusions, worker returns, and requested artifacts only: decisions, blockers, evidence status, remaining unknowns, and recommended next action. Do not claim firsthand inspection.

@@ -33,5 +33,6 @@ remains as standalone intent when it should be attached to its target.
 
 ## Output
 
-Write the intent-curation output under `agent-outputs/<SessionName>/` using
-the shared agent output protocol.
+Return intent-curation results in chat or the harness-required worker output.
+Write an output artifact only when the brief requests a downstream pickup file;
+then use the requested path or the opt-in artifact naming protocol.

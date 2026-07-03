@@ -20,4 +20,4 @@ Run build, evaluation, deployment, or smoke checks appropriate to the blast radi
 
 ## Output
 
-Write implementation evidence under `agent-outputs/<SessionName>/` using the shared agent output protocol.
+Return implementation evidence in chat or the harness-required worker output. Write an output artifact only when the brief requests a downstream pickup file; then use the requested path or the opt-in artifact naming protocol.

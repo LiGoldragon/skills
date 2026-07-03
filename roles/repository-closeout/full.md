@@ -37,5 +37,6 @@ unbookmarked work that should be published.
 
 ## Output
 
-Write the repository-closeout result under `agent-outputs/<SessionName>/` using the
-shared agent output protocol.
+Return the repository-closeout result in chat or the harness-required worker
+output. Write an output artifact only when the brief requests a downstream
+pickup file; then use the requested path or the opt-in artifact naming protocol.

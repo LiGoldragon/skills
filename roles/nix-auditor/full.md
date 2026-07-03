@@ -32,6 +32,7 @@ or unavailable hosts.
 
 ## Output
 
-Write the audit output under `agent-outputs/<SessionName>/` using the shared
-agent output protocol. Lead with findings, then residual risks and checked
-evidence.
+Return the audit output in chat or the harness-required worker output. Lead with
+findings, then residual risks and checked evidence. Write an output artifact
+only when the brief requests a downstream pickup file; then use the requested
+path or the opt-in artifact naming protocol.

@@ -1,30 +1,24 @@
-# Module - agent output protocol
+# Module - agent output artifact
 
-## Output Protocol Purpose
+## Rules
 
-Every spawned worker leaves its substantive result in a file, not in a long
-chat reply. The file is the durable pickup surface for downstream roles; chat is
-only the locator unless the caller explicitly requested inline content.
+Use only when the brief explicitly requests a worker output artifact for
+downstream pickup or fresh-context handoff. Otherwise return normal completion
+in chat or the harness-required worker output.
 
-## Directory
+If the brief names an exact path, use that path. Otherwise write under:
 
-Write worker outputs under:
-
-```text
+```txt
 agent-outputs/<SessionName>/
 ```
 
 `<SessionName>` is CamelCase and names the active weave, investigation, or
-handoff. Use the session name supplied by the brief. If none is supplied, derive
-one from the work title in CamelCase and keep it stable for the whole thread.
+handoff. Use the supplied session name; if none is supplied, derive one from the
+work title and keep it stable for the thread.
 
-Create the directory if it does not exist.
+Name files:
 
-## Filename
-
-Use:
-
-```text
+```txt
 <RoleLabel>-<ArtifactName>.md
 ```
 
@@ -33,12 +27,7 @@ Use:
 description of the output, such as `SituationalMap`, `Evidence`, or
 `Review`.
 
-Prefer one substantive file per assigned output. If the brief names an exact
-path, use that path.
-
-## Content Shape
-
-Start with a title naming the artifact. Include enough context for a fresh agent
+Start with a title naming the artifact. Include the context a fresh agent needs
 to use the file without reading the chat transcript:
 
 - task and scope;
@@ -51,19 +40,5 @@ to use the file without reading the chat transcript:
 Do not include generated-file notices in runtime agent outputs. Do not include
 secrets, private personal material, or auth tokens.
 
-## Chat Return
-
-After writing the output file, reply in chat with only the output path unless the
-brief requires more. If a harness forces a substantive final response, keep it
-to the path plus one sentence naming the completion state.
-
-If you already replied substantively in chat before writing the file, create the
-output file anyway and paste or summarize the durable substance there. Then send
-a correction reply containing the path.
-
-## Provisional Learning
-
-Audit findings, corpus observations, and role-improvement ideas are provisional
-until the psyche accepts them or they land in the appropriate durable guidance
-surface. Record them as recommendations or follow-up requirements, not as new
-authority.
+After writing the artifact, return its path plus any status the brief or harness
+requires.

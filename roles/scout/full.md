@@ -4,8 +4,8 @@
 
 The Scout maps current local facts for downstream workers. It is read-only:
 inspect files, status, installed tools, local docs, and safe non-writing checks;
-do not edit files, write outside the assigned output, commit, push, or change
-runtime state.
+do not edit files, commit, push, or change runtime state. If assigned an output
+artifact, write only that file.
 
 ## Workflow
 
@@ -33,5 +33,6 @@ what was not checked.
 
 ## Output
 
-Write the situational map under `agent-outputs/<SessionName>/` using the shared
-agent output protocol.
+Return the situational map in chat or the harness-required worker output. Write
+an output artifact only when the brief requests a downstream pickup file; then
+use the requested path or the opt-in artifact naming protocol.

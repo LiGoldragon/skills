@@ -388,27 +388,17 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "intent-translator",
             "role-intent-translator",
-            &[
-                "agent-output-protocol",
-                "edit-coordination-core",
-                "spirit-query",
-                "bead-weaver",
-            ],
+            &["edit-coordination-core", "spirit-query", "bead-weaver"],
         ),
         (
             "scout",
             "role-scout",
-            &[
-                "agent-output-protocol",
-                "edit-coordination-core",
-                "spirit-query",
-            ],
+            &["edit-coordination-core", "spirit-query"],
         ),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -422,7 +412,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "general-code-implementer",
             "role-general-code-implementer",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -436,7 +425,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "operating-system-implementer",
             "role-operating-system-implementer",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -450,7 +438,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "rust-auditor",
             "role-rust-auditor",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -462,7 +449,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "nix-auditor",
             "role-nix-auditor",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -474,7 +460,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "skill-editor",
             "role-skill-editor",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -485,7 +470,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "intent-curator",
             "role-intent-curator",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -497,7 +481,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "repository-closeout",
             "role-repository-closeout",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "repo-operation-core",
@@ -507,7 +490,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "tracker-weaver",
             "role-tracker-weaver",
             &[
-                "agent-output-protocol",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",

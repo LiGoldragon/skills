@@ -43,6 +43,7 @@ requested bead left open.
 
 ## Output
 
-Write the tracker-weaver result under `agent-outputs/<SessionName>/` using the
-shared agent output protocol. Return bead IDs changed, commands run, final
-tracker status, beads left open, and blockers.
+Return bead IDs changed, commands run, final tracker status, beads left open,
+and blockers in chat or the harness-required worker output. Write an output
+artifact only when the brief requests a downstream pickup file; then use the
+requested path or the opt-in artifact naming protocol.
