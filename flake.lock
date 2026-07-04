@@ -158,11 +158,11 @@
     "schema-rust-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1783092514,
+        "lastModified": 1783189215,
         "narHash": "sha256-cnoqgjW8X4crb5RBbt1tfCbtE1M1flNfl+0QY8FzFss=",
         "owner": "LiGoldragon",
         "repo": "schema-rust",
-        "rev": "7f746c020bfbb64d76de968214255f343b2e94a4",
+        "rev": "af814e757cd84fb0b3b8cce9c0623f69b6d99b5c",
         "type": "github"
       },
       "original": {
