@@ -4,11 +4,11 @@
 
 Use this doctrine for operating-system and environment work that touches CriomOS system state, criomos-home user state, or their deployment boundary.
 
-Operate from pushed, reproducible inputs. Treat CriomOS as the system source identity and criomos-home as the home/environment source identity. Pin the exact revision in the flake reference you deploy; the deployed daemon carries no revision-policy field to resolve a branch for you.
+Operate from pushed, reproducible inputs. Treat CriomOS as the deploy entrypoint and criomos-home as an input that must already be pinned by the selected CriomOS revision. Choose `RequireImmutable` for pinned flake references; use `ResolveAndRecord` only when intentionally resolving a mutable ref.
 
-Before changing a host, name the target cluster, node, deployment shape (`Home` or `System`), requested action, the exact source revision, builder choice, rollback expectation, and post-activation evidence.
+Before changing a host, name the target cluster, node, deployment shape (`UserEnvironment` or `Host`), requested action, source revision policy, exact source revision, builder choice, rollback expectation, and post-activation evidence.
 
-Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. The deployed daemon accepts exactly two `DeployRequest` variants, `Home` and `System`, and rejects `Host`, `CompleteHost`, `BaseHost`, and `UserEnvironment`.
+Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
 
 ## Lojix interface
 
@@ -18,31 +18,31 @@ Read current generations for a node:
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
 
-Deploy a home/environment change. This is the standard path for shipping a component such as spirit:
+Deploy a user environment change. This is the standard path for shipping a component such as spirit:
 
 1. Push the changed component to its remote at the intended revision.
-2. Repoint the criomos-home input for that component to that exact revision and push criomos-home. Do not `nix flake update`; it resolves the branch head (`main`), not the intended revision.
-3. Submit the home deploy against the pushed criomos-home revision:
+2. Repoint the criomos-home input for that component to that exact revision, then ensure the selected CriomOS revision pins that criomos-home revision. Do not `nix flake update`; it resolves the branch head (`main`), not the intended revision.
+3. Submit the deploy against the selected CriomOS revision:
 
 ```sh
-meta-lojix "(Deploy (Home (<cluster> <node> <user> <proposal-source> github:LiGoldragon/CriomOS-home/<rev> <home-mode> <builder> <substituters>)))"
+meta-lojix "(Deploy (UserEnvironment (<cluster> <node> <user> <proposal-source> <criomos-flake-ref> <user-environment-action> <source-revision-policy> <builder> <substituters>)))"
 ```
 
 Concretely:
 
 ```sh
-meta-lojix "(Deploy (Home (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS-home/<rev> Activate None [])))"
+meta-lojix "(Deploy (UserEnvironment (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS/<rev> ActivateNow RequireImmutable None [])))"
 ```
 
-`HomeDeployment` holds eight positional fields: cluster, node, user, proposal source, criomos-home flake reference, home mode, builder, and extra substituters. `<home-mode>` is `Activate` to build and activate, or `Build`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
+`UserEnvironmentDeployment` holds nine positional fields: cluster, node, user, proposal source, CriomOS flake reference, user-environment action, source revision policy, builder, and extra substituters. `<user-environment-action>` is `Realize`, `SetProfile`, or `ActivateNow`. `<source-revision-policy>` is `RequireImmutable` or `ResolveAndRecord`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
 
-Deploy a full system change:
+Deploy a host change:
 
 ```sh
-meta-lojix "(Deploy (System (<cluster> <node> <deployment-kind> <proposal-source> <criomos-flake-ref> <system-action> <builder> <substituters> <trailing-option>)))"
+meta-lojix "(Deploy (Host (<cluster> <node> <host-composition> <proposal-source> <criomos-flake-ref> <host-action> <source-revision-policy> <builder> <substituters> <build-attribute>)))"
 ```
 
-`SystemDeployment` holds nine positional fields: cluster, node, deployment kind, proposal source, CriomOS flake reference, system action, builder, extra substituters, and a trailing option. `<deployment-kind>` is `FullOs` or `HomeOnly`. `<system-action>` is `Switch`. `<builder>` and `<substituters>` match the home shape. The trailing option is `None` or `(Some <value>)`.
+`HostDeployment` holds ten positional fields: cluster, node, host composition, proposal source, CriomOS flake reference, host action, source revision policy, builder, extra substituters, and build attribute. `<host-composition>` is `CompleteHost` or `BaseHost`. `<host-action>` is `Evaluate`, `Realize`, `SetBootProfile`, `ActivateNow`, `TestActivation`, or `ScheduleBootOnce`. `<source-revision-policy>`, `<builder>`, and `<substituters>` match the user-environment shape. `<build-attribute>` is `None` or `(Some <flake-attribute>)`.
 
 `meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success.
 
