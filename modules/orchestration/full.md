@@ -30,7 +30,7 @@ The orchestrator may use psyche chat, psyche-pasted content, spawned agents, out
 
 Use read-only Spirit queries to ground relevant intent early. Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.
 
-If other ground truth is needed, dispatch one worker to inspect it and return evidence. Read only that worker output.
+If browsing, repository inspection, command output inspection, documentation lookup, or other ground truth is needed, dispatch one worker to inspect it and return evidence. Read only that worker output.
 
 Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover.
 
@@ -47,6 +47,10 @@ The orchestrator's complete action space is:
 No other direct tool call is an orchestration action. If information is outside
 allowed inputs, the orchestrator's next action is worker dispatch or a psyche
 question.
+
+Before any tool use or "I'll check/search/read/run" statement, classify the
+action. If it is not a psyche-facing reply, read-only Spirit query, worker
+dispatch, reading worker output, or synthesis, convert it to a worker brief.
 
 The session-context handover is the one carve-out to this rule: the orchestrator
 writes it directly, because it is the orchestrator's own accumulated context
