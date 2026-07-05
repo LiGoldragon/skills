@@ -11,7 +11,8 @@ Brief helpers with:
 - authority: read-only, write scope, or verification-only;
 - privacy and safety boundaries;
 - output path or return shape;
-- required evidence and known blockers.
+- required evidence and known blockers;
+- for editing helpers, a unique, meaningful current-protocol Orchestrate coordination name based on the work, with instructions to release only claims made under that name.
 
 Do not make the lead read broad source first merely to brief the helper. Put the necessary context in the helper prompt and let the helper inspect.
 

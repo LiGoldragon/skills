@@ -87,7 +87,9 @@ Use a separate auditor for substantial completed work, with strength matched to 
 
 Select an agent type whose generated role packet already embeds the required doctrine. Tell workers to read extra skills only for task-specific additions that were not knowable at launch.
 
-Brief workers with the approved intent, boundaries, constraints, success language, and relevant output paths. Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
+Brief workers with the approved intent, boundaries, constraints, success language, and relevant output paths. For every editing-capable worker, assign a unique, meaningful current-protocol Orchestrate coordination name based on the work, not the role, and include it in the brief. Tell the worker to use that name for claims and to release only claims it made under that name. This is interim compatibility for current Orchestrate behavior, not the final session-lane design.
+
+Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
 For follow-on workers, put small unresolved compatible cleanup after the main
 task as an after-main-task tail. Do not bury the worker's main task under early
