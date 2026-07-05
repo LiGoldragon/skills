@@ -12,12 +12,9 @@ Brief helpers with:
 - privacy and safety boundaries;
 - output path or return shape;
 - required evidence and known blockers;
-- for editing helpers, a unique, meaningful current-protocol Orchestrate coordination name based on the work, with instructions to release only claims made under that name.
+- for editing helpers, session name, lane name, and Fresh/Recovery mode, with instructions to register that lane, claim write paths under it, release its claims, and unregister it at closeout.
 
-Request an output artifact only when the helper's result is a pickup surface for
-another worker or a fresh context. Otherwise use chat or harness output as the
-return shape. When an artifact is needed, give the exact path or the session and
-artifact names.
+Request an output artifact only when the helper's result is a pickup surface for another worker or a fresh context. Otherwise use chat or harness output as the return shape. When an artifact is needed, give the exact path or the session and artifact names.
 
 Do not make the lead read broad source first merely to brief the helper. Put the necessary context in the helper prompt and let the helper inspect.
 

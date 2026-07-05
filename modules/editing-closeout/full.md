@@ -2,24 +2,14 @@
 
 ## Editing Closeout
 
-An editing-capable agent that changes workspace files commits and pushes those
-changes before final output. This is unconditional.
+An editing-capable agent that changes workspace files commits and pushes those changes before final output. This is unconditional.
 
-A prompt cannot turn file-editing work into uncommitted work. If the desired
-result must remain uncommitted or unpushed, do not edit files; ask for a
-non-editing assignment or report the blocker.
+A prompt cannot turn file-editing work into uncommitted work. If the desired result must remain uncommitted or unpushed, do not edit files; ask for a non-editing assignment or report the blocker.
 
-The assigned worker output file alone does not make a read-only role
-editing-capable. Once a role changes source, configuration, documentation,
-generated, tracker, or other workspace files, it owns verification evidence,
-commit creation, push, and status reporting for those changes.
+The assigned worker output file alone does not make a read-only role editing-capable. Once a role changes source, configuration, documentation, generated, tracker, or other workspace files, it owns verification evidence, commit creation, push, and status reporting for those changes.
 
-Preserve peer edits. Commit only agent-authored changes when repo doctrine
-permits scoped commits; when repo doctrine requires whole-working-copy commits,
-name unrelated changes included in the closeout.
+Preserve peer edits. Commit only agent-authored changes when repo doctrine permits scoped commits; when repo doctrine requires whole-working-copy commits, name unrelated changes included in the closeout.
 
-Release only Orchestrate claims you made under your assigned unique coordination
-name. Do not release generic role names or another worker's claims.
+At closeout, release only resource claims made under your assigned lane, then unregister that lane. Clear or end a session only when orchestration owns session cleanup or all remaining lanes are yours. Do not release generic names or another worker's lane.
 
-Agent-authored commit messages include the acting model and
-thinking/provenance level when the harness or role packet supplies them.
+Agent-authored commit messages include the acting model and thinking/provenance level when the harness or role packet supplies them.

@@ -6,7 +6,7 @@ Use repository closeout after implementation and validation evidence exist. Insp
 
 Use `jj`/Jujutsu for normal version control. Every description-taking command uses an inline message. Before publishing, confirm bookmark reachability, repository status, and that no descriptionless authored commit is being pushed. Agent-authored commit messages include the acting model and thinking/provenance level in the message body when available.
 
-After validation, commit and push implementation changes. Do not leave edited work uncommitted or unpushed. At closeout, release only Orchestrate claims you made under your assigned unique coordination name; do not release generic role names or another worker's claims.
+After validation, commit and push implementation changes. Do not leave edited work uncommitted or unpushed. At closeout, release only resource claims made under your assigned lane, then unregister that lane. Do not release generic names or another worker's lane.
 
 If the work creates or consumes a producer dependency, make that dependency portable before publishing. If portable closeout is not possible, report it as a hard blocker.
 

@@ -32,7 +32,7 @@ Use read-only Spirit queries to ground relevant intent early. Do not record, cla
 
 If browsing, repository inspection, command output inspection, documentation lookup, or other ground truth is needed, dispatch one worker to inspect it and return evidence. Read only that worker output.
 
-Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover.
+Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover. Handover ends active lanes; do not inherit lanes through handover.
 
 ## Action Space
 
@@ -92,7 +92,9 @@ Select an agent type whose generated role packet already embeds the required doc
 
 Brief workers with the approved intent, boundaries, constraints, success language, and return shape. Request an output artifact only when one worker's response is pickup for another worker or fresh context. When requesting an artifact, name an exact path when possible; otherwise provide the session name and artifact name so the worker can use the opt-in artifact naming protocol. Pass the artifact path to dependent workers instead of reading and rewriting the report into the next prompt.
 
-For every editing-capable worker, assign a unique, meaningful current-protocol Orchestrate coordination name based on the work, not the role, and include it in the brief. Tell the worker to use that name for claims and to release only claims it made under that name. This is interim compatibility for current Orchestrate behavior, not the final session-lane design.
+For every editing-capable worker, assign a Session name, a meaningful Lane name, and Fresh/Recovery registration mode. Tell the worker to register that lane, claim write paths under it, release its claims, and unregister it at closeout. Fresh mode is the default for new work; use Recovery only when the orchestrator intentionally reconnects a worker to the same active lane after interruption.
+
+Use CamelCase Session names and task-specific Lane names. Do not use generic role names as lanes. If an editing worker cannot receive a session, lane, and mode, do not dispatch it as editing-capable.
 
 Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
