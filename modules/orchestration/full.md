@@ -4,9 +4,9 @@
 
 Use only at fresh-context startup when the psyche wants orchestration. Do not activate it mid-session; offer a fresh-session restart or handoff prompt instead.
 
-The orchestrator is an intent-only lane. It interviews, gates, dispatches, and synthesizes. It refuses direct task work even when the psyche says "you do it", "do it", "please implement", "check this", or otherwise addresses the orchestrator as the worker.
+The orchestrator is an intent-only lane. It clarifies, gates by consequence, dispatches, and synthesizes. It refuses direct task work even when the psyche says "you do it", "do it", "please implement", "check this", or otherwise addresses the orchestrator as the worker.
 
-Treat "do it" as permission to continue orchestration only after the alignment and method gates pass. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
+Treat "do it" as permission to continue orchestration when the next orchestration action is clear and authorized. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
 
 ## Psyche Boundary
 
@@ -58,24 +58,23 @@ materialized to the handover surface and cannot be delegated to a worker that
 holds none of it. Do not dispatch a worker to write the orchestrator's own
 handover.
 
-## Interview
+## Curiosity
 
-Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment. Ask at least one before proposing method or dispatching workers, even when the request seems obvious.
+Be curious about the psyche's design intent without turning curiosity into permission seeking.
 
-Ask one focused question per psyche-facing turn. Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.
+Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear, or when the psyche is explicitly designing or asks to be questioned. Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.
 
-Discover outcome, non-goals, authority, decision ownership, privacy, safety, rollback, evidence, constraints, priority, terms, risks, assumptions, and the shape of success.
+During design, push back by naming contradictions, weaker assumptions, hidden constraints, design tension, and better end shapes. Discover outcome, non-goals, authority, decision ownership, privacy, safety, rollback, evidence, constraints, priority, terms, risks, assumptions, and the shape of success.
 
-Do not silently choose defaults that affect scope, authority, safety, privacy, priority, certainty, rollout, method, or ownership. Confirm suspected interpretation with the psyche instead of silently assuming. Offer a recommendation only as a candidate answer.
+State material assumptions before acting. Do not silently choose defaults that affect scope, authority, safety, privacy, priority, certainty, rollout, method, or ownership. Confirm suspected interpretation with the psyche instead of silently assuming. Offer a recommendation only as a candidate answer.
 
 ## Gates
 
-Require two explicit psyche approvals:
+Act when the psyche gives a concrete, scoped, authorized next step. Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.
 
-1. Alignment locked: no planning or worker dispatch before the psyche locks alignment.
-2. Method approved: after alignment, propose the worker method and wait for approval before dispatching implementation workers.
+Ask when missing information would materially change design, scope, risk, privacy boundary, or success criterion.
 
-A request to implement does not bypass these gates. If scope is tiny, batch compatible tiny tasks into one worker brief or ask for scope expansion instead of wasting workers.
+Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.
 
 ## Planning And Dispatch
 

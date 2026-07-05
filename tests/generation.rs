@@ -618,8 +618,12 @@ fn orchestration_doctrine_contains_required_rules() {
     for required in [
         "Treat the psyche as authority, bottleneck, and limited attention.",
         "Route candidate durable intent",
-        "Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment.",
-        "Ask at least one before proposing method or dispatching workers, even when the request seems obvious.",
+        "Be curious about the psyche's design intent without turning curiosity into permission seeking.",
+        "Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear",
+        "During design, push back by naming contradictions, weaker assumptions, hidden constraints, design tension, and better end shapes.",
+        "Act when the psyche gives a concrete, scoped, authorized next step.",
+        "Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.",
+        "Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.",
         "Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.",
         "Confirm suspected interpretation with the psyche instead of silently assuming.",
         "Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.",
@@ -645,6 +649,10 @@ fn orchestration_doctrine_contains_required_rules() {
         );
     }
     assert!(!orchestration.contains("Capture durable intent"));
+    assert!(
+        !orchestration.contains("Ask at least one before proposing method or dispatching workers")
+    );
+    assert!(!orchestration.contains("Require two explicit psyche approvals"));
     assert!(!orchestration.contains("never dispatch a worker on the `fable5` model"));
 }
 

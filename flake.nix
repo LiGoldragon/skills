@@ -263,14 +263,25 @@
               echo "orchestration must route candidate durable intent, not say the orchestrator captures it directly" >&2
               exit 1
             fi
-            grep -F "Ask as many focused clarification or confirmation questions as needed to get a clear picture of the psyche's vision before locking alignment." "$orchestration" >/dev/null
-            grep -F 'Ask at least one before proposing method or dispatching workers, even when the request seems obvious.' "$orchestration" >/dev/null
+            grep -F "Be curious about the psyche's design intent without turning curiosity into permission seeking." "$orchestration" >/dev/null
+            grep -F 'Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear' "$orchestration" >/dev/null
+            grep -F 'During design, push back by naming contradictions, weaker assumptions, hidden constraints, design tension, and better end shapes.' "$orchestration" >/dev/null
+            grep -F 'Act when the psyche gives a concrete, scoped, authorized next step.' "$orchestration" >/dev/null
+            grep -F 'Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.' "$orchestration" >/dev/null
+            grep -F 'Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.' "$orchestration" >/dev/null
             grep -F 'Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.' "$orchestration" >/dev/null
             grep -F 'Confirm suspected interpretation with the psyche instead of silently assuming.' "$orchestration" >/dev/null
             grep -F 'Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.' "$orchestration" >/dev/null
             grep -F 'When a worker returns while other relevant workers are still running, emit only an extremely short interim note' "$orchestration" >/dev/null
             grep -F 'Treat the psyche as authority, bottleneck, and limited attention.' "$orchestration" >/dev/null
-            grep -F 'batch compatible tiny tasks' "$orchestration" >/dev/null
+            if grep -F 'Ask at least one before proposing method or dispatching workers' "$orchestration"; then
+              echo "orchestration must not require ritual clarification before clear small actions" >&2
+              exit 1
+            fi
+            if grep -F 'Require two explicit psyche approvals' "$orchestration"; then
+              echo "orchestration must not require fixed two-approval gates" >&2
+              exit 1
+            fi
             grep -F 'Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.' "$orchestration" >/dev/null
             grep -F 'Do not use a weaver for a single small bounded fix with one worker and no tracking value.' "$orchestration" >/dev/null
             grep -F 'Match worker model and thinking level to work intensity' "$orchestration" >/dev/null
