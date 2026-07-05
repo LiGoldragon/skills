@@ -25,9 +25,9 @@ schema-designer iterates the forward-looking design on a `next/` line in
   the codec.
 - **`.schema` source surfaces** — the import / Input-roots / Output-roots
   / declaration-body shape; what a contract declares and in what order.
-- **The schema toolchain design** — `nota-next` (codec + derives),
-  `schema-next` (the `Schema`/`Declaration`/`EnumVariant`/`TypeReference`
-  AST and lowering), `schema-rust-next` (the build-time Rust emission:
+- **The schema toolchain design** — `nota` (codec + derives),
+  `schema` (the `Schema`/`Declaration`/`EnumVariant`/`TypeReference`
+  AST and lowering), `schema-rust` (the build-time Rust emission:
   `GenerationPlan` / `ModuleEmission` / `GenerationDriver`). Designer
   specifies; operator implements.
 - **The `signal-*` wire contracts** as *schema artifacts* — the

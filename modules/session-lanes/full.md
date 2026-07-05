@@ -8,6 +8,8 @@ A lane carries its discipline as metadata. The discipline says what kind of agen
 
 Use the lane name supplied by the harness or psyche. Do not infer it from a neighboring session, role packet, directory name, or prior convention. If the lane is missing and the task needs durable artifacts, derive one stable CamelCase name from the work title.
 
+Current Orchestrate coordination names are an interim compatibility surface, not full lanes. For editing claims, use the dispatcher-assigned unique coordination name; if it is missing, pause instead of deriving a claim owner from the role or discipline.
+
 ## Registration
 
 When a live lane registry is in scope, register through the owner-only meta CLI, not the working CLI. The role vector ends with the base discipline and preceding tokens name the session intent, for example `[NewLanesDesign Designer]`.

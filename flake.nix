@@ -9,15 +9,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nota-source = {
-      url = "github:LiGoldragon/nota-next";
+      url = "github:LiGoldragon/nota";
       flake = false;
     };
     schema-source = {
-      url = "github:LiGoldragon/schema-next";
+      url = "github:LiGoldragon/schema";
       flake = false;
     };
     schema-rust-source = {
-      url = "github:LiGoldragon/schema-rust-next";
+      url = "github:LiGoldragon/schema-rust";
       flake = false;
     };
   };
@@ -62,15 +62,15 @@
             chmod -R u+w "$out/vendor-sources"
             cat >> "$out/Cargo.toml" <<'EOF'
 
-          [patch."https://github.com/LiGoldragon/nota-next.git"]
+          [patch."https://github.com/LiGoldragon/nota.git"]
           nota = { path = "vendor-sources/nota" }
           nota-derive = { path = "vendor-sources/nota/derive" }
 
-          [patch."https://github.com/LiGoldragon/schema-next.git"]
+          [patch."https://github.com/LiGoldragon/schema.git"]
           schema = { path = "vendor-sources/schema" }
           schema-cc = { path = "vendor-sources/schema/schema-cc" }
 
-          [patch."https://github.com/LiGoldragon/schema-rust-next.git"]
+          [patch."https://github.com/LiGoldragon/schema-rust.git"]
           schema-rust = { path = "vendor-sources/schema-rust" }
           EOF
         '';

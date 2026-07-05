@@ -3,14 +3,23 @@
 ## Edit Coordination
 
 Before editing shared files or running a command that writes them, claim the
-exact path or repository with Orchestrate. Use the session lane when one is
-registered; otherwise use the current role identifier. Do not edit projected
-lock files by hand.
+exact path or repository with Orchestrate. Use the registered session lane when
+one is supplied for this work; otherwise use the dispatcher-assigned unique,
+meaningful coordination name. This interim current-Orchestrate compatibility
+keeps same-role workers from releasing each other's claims while first-class
+session lanes are not deployed.
+
+If no unique coordination name is assigned and the task needs a claim, pause and
+ask or report the missing name. Do not use generic role names such as
+`general-code-implementer`, `skill-editor`, or `rust-auditor` as claim owners.
+Release only claims you made under your assigned name.
+
+Do not edit projected lock files by hand.
 
 ```sh
 orchestrate "(Observe Roles)"
-orchestrate "(Claim (<lane> [(Path /absolute/path)] [reason]))"
-orchestrate "(Release <lane>)"
+orchestrate "(Claim (<assigned-name> [(Path /absolute/path)] [reason]))"
+orchestrate "(Release <assigned-name>)"
 ```
 
 If the local repository or worktree is already claimed or visibly in use, do

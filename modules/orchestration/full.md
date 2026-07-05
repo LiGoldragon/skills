@@ -93,6 +93,8 @@ Select an agent type whose generated role packet already embeds the required doc
 
 Brief workers with the approved intent, boundaries, constraints, success language, and return shape. Request an output artifact only when one worker's response is pickup for another worker or fresh context. When requesting an artifact, name an exact path when possible; otherwise provide the session name and artifact name so the worker can use the opt-in artifact naming protocol. Pass the artifact path to dependent workers instead of reading and rewriting the report into the next prompt.
 
+For every editing-capable worker, assign a unique, meaningful current-protocol Orchestrate coordination name based on the work, not the role, and include it in the brief. Tell the worker to use that name for claims and to release only claims it made under that name. This is interim compatibility for current Orchestrate behavior, not the final session-lane design.
+
 Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
 For follow-on workers, put small unresolved compatible cleanup after the main

@@ -18,5 +18,8 @@ Preserve peer edits. Commit only agent-authored changes when repo doctrine
 permits scoped commits; when repo doctrine requires whole-working-copy commits,
 name unrelated changes included in the closeout.
 
+Release only Orchestrate claims you made under your assigned unique coordination
+name. Do not release generic role names or another worker's claims.
+
 Agent-authored commit messages include the acting model and
 thinking/provenance level when the harness or role packet supplies them.
