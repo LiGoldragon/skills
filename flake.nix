@@ -9,15 +9,27 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nota-source = {
-      url = "github:LiGoldragon/nota";
+      url = "github:LiGoldragon/nota/ce7c564de0a0518eaa1938d55dccc460a67cadb4";
       flake = false;
     };
     schema-source = {
-      url = "github:LiGoldragon/schema";
+      url = "github:LiGoldragon/schema/f351f90d3b8898205cf3057f3c253a5e451180a9";
       flake = false;
     };
     schema-rust-source = {
       url = "github:LiGoldragon/schema-rust";
+      flake = false;
+    };
+    signal-frame-source = {
+      url = "github:LiGoldragon/signal-frame/bb86bef67e478ff52690a4dcceec8f22d2b005ad";
+      flake = false;
+    };
+    triad-runtime-source = {
+      url = "github:LiGoldragon/triad-runtime/0031b5519572f4571bf3895f78221de9404d4810";
+      flake = false;
+    };
+    kameo-source = {
+      url = "github:LiGoldragon/kameo/main";
       flake = false;
     };
   };
@@ -31,6 +43,9 @@
       nota-source,
       schema-source,
       schema-rust-source,
+      signal-frame-source,
+      triad-runtime-source,
+      kameo-source,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -59,6 +74,9 @@
             cp -R ${nota-source} "$out/vendor-sources/nota"
             cp -R ${schema-source} "$out/vendor-sources/schema"
             cp -R ${schema-rust-source} "$out/vendor-sources/schema-rust"
+            cp -R ${signal-frame-source} "$out/vendor-sources/signal-frame"
+            cp -R ${triad-runtime-source} "$out/vendor-sources/triad-runtime"
+            cp -R ${kameo-source} "$out/vendor-sources/kameo"
             chmod -R u+w "$out/vendor-sources"
             cat >> "$out/Cargo.toml" <<'EOF'
 
@@ -72,6 +90,17 @@
 
           [patch."https://github.com/LiGoldragon/schema-rust.git"]
           schema-rust = { path = "vendor-sources/schema-rust" }
+
+          [patch."https://github.com/LiGoldragon/signal-frame.git"]
+          signal-frame = { path = "vendor-sources/signal-frame" }
+          signal-frame-macros = { path = "vendor-sources/signal-frame/macros" }
+
+          [patch."https://github.com/LiGoldragon/triad-runtime.git"]
+          triad-runtime = { path = "vendor-sources/triad-runtime" }
+
+          [patch."https://github.com/LiGoldragon/kameo.git"]
+          kameo = { path = "vendor-sources/kameo" }
+          kameo_macros = { path = "vendor-sources/kameo/macros" }
           EOF
         '';
 
@@ -80,7 +109,18 @@
           import re
           import sys
 
-          path_dependency_names = {"nota", "nota-derive", "schema", "schema-cc", "schema-rust"}
+          path_dependency_names = {
+              "kameo",
+              "kameo_macros",
+              "nota",
+              "nota-derive",
+              "schema",
+              "schema-cc",
+              "schema-rust",
+              "signal-frame",
+              "signal-frame-macros",
+              "triad-runtime",
+          }
           source_text = open(sys.argv[1]).read()
           blocks = source_text.split("[[package]]")
           header, entries = blocks[0], blocks[1:]

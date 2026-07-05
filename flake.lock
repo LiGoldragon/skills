@@ -73,6 +73,23 @@
         "type": "github"
       }
     },
+    "kameo-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781859599,
+        "narHash": "sha256-yEide3elYr0mtRUStsD3AlOwdl/sKWtslj3vBp8VzVE=",
+        "owner": "LiGoldragon",
+        "repo": "kameo",
+        "rev": "f491b45d7dcb55e5837eddde3d5d7ca8ceaa9f01",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "ref": "main",
+        "repo": "kameo",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1782175435,
@@ -92,27 +109,31 @@
     "nota-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1782838308,
-        "narHash": "sha256-iJ2qwoFSnYkQlHGdHuJ3bYoWVW7Kwuo8bpTkqU6/yWg=",
+        "lastModified": 1783224919,
+        "narHash": "sha256-0sYkfB1gE/RmWJX5ltxQmTkrFSx+2AhpWCPGCgacm/g=",
         "owner": "LiGoldragon",
         "repo": "nota",
-        "rev": "bea7e2840ac2cf3e384f07b5c10eeb0890cead25",
+        "rev": "ce7c564de0a0518eaa1938d55dccc460a67cadb4",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "nota",
+        "rev": "ce7c564de0a0518eaa1938d55dccc460a67cadb4",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "kameo-source": "kameo-source",
         "nixpkgs": "nixpkgs",
         "nota-source": "nota-source",
         "rust-build": "rust-build",
         "schema-rust-source": "schema-rust-source",
-        "schema-source": "schema-source"
+        "schema-source": "schema-source",
+        "signal-frame-source": "signal-frame-source",
+        "triad-runtime-source": "triad-runtime-source"
       }
     },
     "rust-analyzer-src": {
@@ -174,16 +195,34 @@
     "schema-source": {
       "flake": false,
       "locked": {
-        "lastModified": 1783088422,
-        "narHash": "sha256-97Rvby1s8qchVzjZ03RuERxYgNlHz1XrsgkJCAep3Pc=",
+        "lastModified": 1783222520,
+        "narHash": "sha256-BRRzVoCKwJVSoRmy3dhWQaw1V6+Ba/FklAZjFkcAmhE=",
         "owner": "LiGoldragon",
         "repo": "schema",
-        "rev": "a393c8c822cea737d7ed8e823eae7d821ea19bf2",
+        "rev": "f351f90d3b8898205cf3057f3c253a5e451180a9",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "schema",
+        "rev": "f351f90d3b8898205cf3057f3c253a5e451180a9",
+        "type": "github"
+      }
+    },
+    "signal-frame-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783222439,
+        "narHash": "sha256-zENsOLXSrpZPvnhEaGPgCWT0AMBVekhdz+AHlWLm25k=",
+        "owner": "LiGoldragon",
+        "repo": "signal-frame",
+        "rev": "bb86bef67e478ff52690a4dcceec8f22d2b005ad",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "signal-frame",
+        "rev": "bb86bef67e478ff52690a4dcceec8f22d2b005ad",
         "type": "github"
       }
     },
@@ -214,6 +253,23 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "triad-runtime-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783227049,
+        "narHash": "sha256-xG3atTakbEv9afdVAtHk+8dXUcXKsVqiJOe4V/UdFvg=",
+        "owner": "LiGoldragon",
+        "repo": "triad-runtime",
+        "rev": "0031b5519572f4571bf3895f78221de9404d4810",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LiGoldragon",
+        "repo": "triad-runtime",
+        "rev": "0031b5519572f4571bf3895f78221de9404d4810",
         "type": "github"
       }
     }
