@@ -14,7 +14,7 @@ The agent holding the session's accumulated context writes the handover itself; 
 
 Handover ends active lanes. Do not inherit a lane through handover; the next worker receives a new lane or an explicit Recovery registration.
 
-Put handover content in chat or the response. Use a file only when the prompt or workflow needs an artifact, and do not make the file the only handover surface.
+Print handover content in the agent response. Never write a handover to a file.
 
 Carry the settled current term, shape, or decision. Resolved correction history is not handover context unless the psyche explicitly asks to preserve it or a worker output says the earlier term remains relevant.
 
