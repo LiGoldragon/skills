@@ -32,11 +32,17 @@ role packets from the active manifest and dependency index.
 
 ## Skill Source Reconciliation
 
-After source edits, run the generator or check command when available. Confirm
-that every manifest or dependency path exists, new headings are unique within
-their source file, generated runtime outputs would not receive provenance
-notices, and role packets include the doctrine the manifest names without
-pulling the whole corpus.
+After source edits, run the generator or check command when available. Treat a
+skill edit as deployed only when the generated runtime surfaces active agents
+read are reconciled; stale generated outputs are a deployment gap. Confirm that
+every manifest or dependency path exists, new headings are unique within their
+source file, generated runtime outputs would not receive provenance notices, and
+role packets include the doctrine the manifest names without pulling the whole
+corpus.
+
+Dirty consuming workspaces do not block generation or required whole-working-copy
+commits. Only direct ownership of a required generated path blocks deployment;
+name the owner and path precisely.
 
 After generation and checks pass, close out source edits with commit and push.
 Name unrelated working-copy changes or included peer changes according to repo

@@ -31,7 +31,10 @@
 - Do not create or expand repo-specific skills. Durable repo guidance belongs in
   AGENTS.md, ARCHITECTURE.md, or README.md.
 - After source edits, run generator/checks when available and reconcile generated
-  runtime surfaces. If generation cannot run, name the unreconciled surfaces.
+  runtime surfaces active agents read. Stale generated surfaces are deployment
+  gaps; a dirty consuming workspace is not a blocker to generation or a required
+  whole-working-copy commit. Only direct ownership of a required generated path
+  blocks deployment; name the owner and path precisely.
 
 ## Verification
 
