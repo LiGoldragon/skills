@@ -96,6 +96,8 @@ For every editing-capable worker, assign a Session name, a meaningful Lane name,
 
 Use CamelCase Session names and task-specific Lane names. Do not use generic role names as lanes. If an editing worker cannot receive a session, lane, and mode, do not dispatch it as editing-capable.
 
+Keep the parent lane responsive. When the harness supports nonblocking or background worker dispatch, use it by default unless the worker result is immediately needed for the next reply, safety gate, or dependent dispatch.
+
 Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
 For follow-on workers, put small unresolved compatible cleanup after the main

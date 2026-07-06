@@ -25,9 +25,12 @@ Keep observations and interpretations separate. A command result, file path, or
 visible absence is an observation. A likely cause, risk, or next step is an
 interpretation.
 
-Name every meaningful command and its result. For checks, state pass, fail, or
-not run with the reason. Prefer narrow evidence tied to the changed surface over
-broad command lists.
+Name every meaningful command or step and its result. For checks, state pass,
+fail, or not run with the reason. Prefer relevant evidence and major steps over
+exhaustive tool-call transcripts.
+
+Use short revision hashes for ordinary human context. Include full revision
+identity only when exact machine identity is required.
 
 Do not paste secrets, private personal material, tokens, or host-private details
 into public reports, chat, or generated outputs.
