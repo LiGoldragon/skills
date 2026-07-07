@@ -11,6 +11,8 @@ Edit the nearest architecture file that owns the component or subsystem. If no o
 - Agent operating rules go in `AGENTS.md`.
 - Architecture, invariants, and durable project direction go in `ARCHITECTURE.md` (or a code stub with an explanatory comment).
 - User-facing overview and setup go in `README.md`.
+- Speculative future project ideas go in `IDEAS.md` until they become accepted
+  architecture or active work.
 - Required hacks and workaround instructions go in `NON_IDEAL_AGENTS.md` so they
   remain visible as debt, not architecture.
 - Work items go in the tracker.
@@ -38,7 +40,7 @@ A good architecture statement can become a test, review check, or design gate. P
 
 ## Carry uncertainty without cementing it
 
-If uncertainty must be preserved, mark it as undecided and keep it separate from accepted architecture. Name the decision needed and the evidence that would settle it. Remove uncertainty sections once a decision lands.
+If uncertainty must be preserved, mark it as undecided and keep it separate from accepted architecture. Name the decision needed and the evidence that would settle it. Move speculative future projects to `IDEAS.md` when they are not accepted structure yet. Remove uncertainty sections once a decision lands.
 
 State only accepted structure. Include extension points only when the accepted architecture depends on them.
 

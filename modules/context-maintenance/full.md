@@ -10,6 +10,7 @@ Use this authority order:
 - repository operating guidance goes to `AGENTS.md`;
 - architecture facts go to `ARCHITECTURE.md`;
 - project overview material goes to `README.md`;
+- speculative future project ideas go to `IDEAS.md`;
 - required workaround guidance goes to `NON_IDEAL_AGENTS.md`;
 - active work goes to the tracker;
 - reusable agent discipline goes to skills only when it is not repo-specific;

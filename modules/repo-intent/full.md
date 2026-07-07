@@ -12,7 +12,7 @@ Record repo direction only when psyche-stated intent applies to the repository. 
 
 Include psyche-stated goals, constraints, principles, and anti-patterns for the project alongside the architecture they shape. Keep prose tight and traceable to the statement. If the psyche did not say it, do not add it.
 
-Do not put audit history, task status, or agent rationale into the direction prose. Put those in the owning source surface or the tracker.
+Do not put audit history, task status, agent rationale, or speculative future project ideas into the direction prose. Put those in the owning source surface, `IDEAS.md`, or the tracker.
 
 Use brief verbatim psyche quotes only when they are needed to preserve wording. Keep private material out of public repository surfaces.
 
