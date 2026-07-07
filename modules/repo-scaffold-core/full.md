@@ -20,10 +20,11 @@ Use `ghq` for finding or fetching clones and `gh` for GitHub repository objects.
 
 Create only the guidance and build surfaces the accepted brief needs:
 `AGENTS.md`, `ARCHITECTURE.md` when architecture or psyche-stated project
-direction is already known, repo-local `skills.md` when the repo has specific
-working rules, build metadata, source layout, and test entry points. Durable
-project direction lands in `ARCHITECTURE.md` (or a code stub with an
-explanatory comment), never a per-repo `INTENT.md`.
+direction is already known, `NON_IDEAL_AGENTS.md` when required workaround debt
+must guide agents, and repo-local `skills.md` when the repo has specific working
+rules, build metadata, source layout, and test entry points. Durable project
+direction lands in `ARCHITECTURE.md` (or a code stub with an explanatory
+comment), never a per-repo `INTENT.md`.
 
 Do not invent product behavior, public APIs, storage schemas, deployment
 promises, or role authority. Leave TODOs only for real downstream work that the

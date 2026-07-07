@@ -11,6 +11,8 @@ Edit the nearest architecture file that owns the component or subsystem. If no o
 - Agent operating rules go in `AGENTS.md`.
 - Architecture, invariants, and durable project direction go in `ARCHITECTURE.md` (or a code stub with an explanatory comment).
 - User-facing overview and setup go in `README.md`.
+- Required hacks and workaround instructions go in `NON_IDEAL_AGENTS.md` so they
+  remain visible as debt, not architecture.
 - Work items go in the tracker.
 - Historical evidence stays in artifacts only while it is an active pickup surface.
 

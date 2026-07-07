@@ -97,7 +97,8 @@ impl MarkdownFragment {
     ) -> Result<String> {
         let body =
             MarkdownBody::new(self.path.full_path(), self.text.as_str()).without_frontmatter()?;
-        let links_rebased = MarkdownLinks::new(&body, &self.path, output_path).rebased();
+        let runtime_body = SourceMaintenanceNotes::new(body).runtime_text();
+        let links_rebased = MarkdownLinks::new(&runtime_body, &self.path, output_path).rebased();
         let heading_normalized = HeadingNormalizer::new(links_rebased, index, title).normalized();
         Ok(heading_normalized)
     }
@@ -106,6 +107,8 @@ impl MarkdownFragment {
         MarkdownBody::new(self.path.full_path(), self.text.as_str())
             .without_frontmatter()
             .ok()
+            .map(SourceMaintenanceNotes::new)
+            .map(SourceMaintenanceNotes::runtime_text)
             .and_then(|body| HeadingText::from_markdown(&body).first_title())
     }
 }
@@ -415,6 +418,38 @@ impl<'a> MarkdownBody<'a> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+struct SourceMaintenanceNotes {
+    text: String,
+}
+
+impl SourceMaintenanceNotes {
+    fn new(text: String) -> Self {
+        Self { text }
+    }
+
+    fn runtime_text(self) -> String {
+        let mut offset = 0;
+        for line in self.text.split_inclusive('\n') {
+            if self.is_source_maintenance_heading(line) {
+                let retained = self.text[..offset].trim_end();
+                if retained.is_empty() {
+                    return String::new();
+                }
+                return format!("{retained}\n");
+            }
+            offset += line.len();
+        }
+        self.text
+    }
+
+    fn is_source_maintenance_heading(&self, line: &str) -> bool {
+        AtxHeading::parse(line).is_some_and(|heading| {
+            heading.level() == 2 && heading.text() == "Source Maintenance Notes"
+        })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct HeadingNormalizer<'a> {
     text: String,
     fragment_index: usize,
@@ -431,29 +466,48 @@ impl<'a> HeadingNormalizer<'a> {
     }
 
     fn normalized(&self) -> String {
-        if self.fragment_index == 0 {
-            return self.text.clone();
-        }
         let mut output = String::new();
         let mut first_heading_seen = false;
-        for line in self.text.lines() {
+        let lines = self.text.lines().collect::<Vec<_>>();
+        for (line_index, line) in lines.iter().enumerate() {
             if let Some(heading) = AtxHeading::parse(line) {
+                let visible_text = CompositionHeadingTitle::new(heading.text()).visible_text();
                 let normalized = HeadingName::new(heading.text()).normalized();
                 if !first_heading_seen
+                    && self.fragment_index > 0
                     && heading.level() == 1
-                    && self.title == Some(normalized.as_str())
+                    && (self.title == Some(normalized.as_str())
+                        || self.leading_title_duplicates_next_heading(line_index, &lines))
                 {
                     first_heading_seen = true;
                     continue;
                 }
                 first_heading_seen = true;
-                output.push_str(&heading.demoted_line());
+                output.push_str(&heading.rendered_line(visible_text.as_str(), self.fragment_index));
             } else {
                 output.push_str(line);
             }
             output.push('\n');
         }
         output
+    }
+
+    fn leading_title_duplicates_next_heading(&self, line_index: usize, lines: &[&str]) -> bool {
+        let Some(heading) = AtxHeading::parse(lines[line_index]) else {
+            return false;
+        };
+        let title = CompositionHeadingTitle::new(heading.text());
+        if !title.has_composition_prefix() {
+            return false;
+        }
+        let normalized_title = HeadingName::new(heading.text()).normalized();
+        lines
+            .iter()
+            .skip(line_index + 1)
+            .find_map(|line| AtxHeading::parse(line))
+            .is_some_and(|next_heading| {
+                HeadingName::new(next_heading.text()).normalized() == normalized_title
+            })
     }
 }
 
@@ -487,9 +541,13 @@ impl<'a> AtxHeading<'a> {
         self.text
     }
 
-    fn demoted_line(&self) -> String {
-        let next_level = (self.level + 1).min(6);
-        format!("{} {}", "#".repeat(next_level), self.text)
+    fn rendered_line(&self, visible_text: &str, fragment_index: usize) -> String {
+        let level = if fragment_index == 0 {
+            self.level
+        } else {
+            (self.level + 1).min(6)
+        };
+        format!("{} {}", "#".repeat(level), visible_text)
     }
 }
 
@@ -819,10 +877,52 @@ impl<'a> HeadingName<'a> {
     }
 
     fn normalized(&self) -> String {
-        self.text
+        CompositionHeadingTitle::new(self.text)
+            .visible_text()
             .split_whitespace()
             .collect::<Vec<_>>()
             .join(" ")
             .to_ascii_lowercase()
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct CompositionHeadingTitle<'a> {
+    text: &'a str,
+}
+
+impl<'a> CompositionHeadingTitle<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn visible_text(&self) -> String {
+        self.composition_prefix()
+            .and_then(|prefix| self.text.strip_prefix(prefix))
+            .unwrap_or(self.text)
+            .to_owned()
+    }
+
+    fn has_composition_prefix(&self) -> bool {
+        self.composition_prefix().is_some()
+    }
+
+    fn composition_prefix(&self) -> Option<&'static str> {
+        [
+            "Skill - ",
+            "Skill – ",
+            "Skill — ",
+            "Skill: ",
+            "Module - ",
+            "Module – ",
+            "Module — ",
+            "Module: ",
+            "Role - ",
+            "Role – ",
+            "Role — ",
+            "Role: ",
+        ]
+        .into_iter()
+        .find(|prefix| self.text.starts_with(prefix))
     }
 }

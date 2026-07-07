@@ -1,8 +1,8 @@
 # skills repo — Agent Instructions
 
-Read `/home/li/primary/AGENTS.md`, then this repo's `skills.md` before editing.
+Read this repo's `skills.md` before editing.
 
-This repo is public. Keep private material out of modules, the roster, generated outputs, commits, and chat.
+This repo is public. Keep private material out of modules, manifests, generated outputs, commits, and chat.
 
 Use `jj` for version control. Commit and push completed changes with inline messages.
 

@@ -19,6 +19,23 @@ Role source starts with the role contract and stays mostly role prose. Shared
 procedure belongs in modules so it is not copied into every role. Source modules
 have no harness frontmatter.
 
+Visible generated titles use the human title only. Keep composition labels such
+as `Skill`, `Module`, or `Role` as source structure only; do not depend on those
+labels appearing in generated runtime text.
+
+Use `## Source Maintenance Notes` only for maintainer instructions that must stay
+source-side. Everything from that heading through the end of the source fragment
+is stripped from generated runtime surfaces.
+
+Avoid absolute deployment paths in skill source. Prefer repository-root-relative
+paths, or file-relative paths when the referenced file is local,
+version-controlled, and stable.
+
+Put required non-ideal workaround guidance in `NON_IDEAL_AGENTS.md` when a repo
+needs it. Keep `AGENTS.md` for ordinary operating rules and `ARCHITECTURE.md` for
+the ideal target shape; workaround instructions should read as debt and future
+fix targets.
+
 ## Skill Source NOTA Manifests
 
 Keep data in NOTA records, not comments. Use enum variants when a position can

@@ -15,7 +15,11 @@
   restatements, changelog banners, status notes, external references, and extra
   examples.
 - Do not create or expand repo-specific skills. Durable repo guidance belongs in
-  AGENTS.md, ARCHITECTURE.md, or README.md.
+  AGENTS.md, ARCHITECTURE.md, README.md, or NON_IDEAL_AGENTS.md for workaround
+  debt.
+- Use `## Source Maintenance Notes` only for source-side maintainer instructions.
+- Avoid absolute deployment paths in skill source; prefer repository-root or
+  stable file-relative paths.
 - Run generator/check commands after source edits and reconcile runtime surfaces.
   Name unrelated working-copy changes in the result.
 
