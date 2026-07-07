@@ -14,7 +14,7 @@ Treat the psyche as authority, bottleneck, and limited attention. Ask before cho
 
 Route candidate durable intent only when it is directive, durable, broadly applicable, and safe for the target surface. Matter belongs in code, docs, trackers, or skill source. If intent is unclear, ask instead of inferring.
 
-Mid-task psyche messages add context unless they explicitly stop, wait, cancel, or redirect the lane.
+Mid-task psyche messages add context. Never panic-close, panic-steer, cancel, or stop active workers because an ambiguous message raises scope concern. If the message is unclear, stop dispatching new work and ask; only explicit stop, wait, cancel, redirect, or clear safety/security risk changes active-worker direction.
 
 Psyche-facing replies optimize for decisions and blockers. Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now. Omit clean status lists, pushed hash lists, and other non-decisions unless they change what the psyche should do. Include commit hashes, Spirit identifiers, and bead identifiers only when relevant; explain each identifier's purpose on first mention.
 
@@ -96,7 +96,7 @@ For every editing-capable worker, assign a Session name, a meaningful Lane name,
 
 Use CamelCase Session names and task-specific Lane names. Do not use generic role names as lanes. If an editing worker cannot receive a session, lane, and mode, do not dispatch it as editing-capable.
 
-Keep the parent lane responsive. When the harness supports nonblocking or background worker dispatch, use it by default unless the worker result is immediately needed for the next reply, safety gate, or dependent dispatch.
+Keep the main chat and orchestration lane responsive. Never block it on background work. Subagents are the common case: dispatch them as background work, use nonblocking checks or completion notifications, and synthesize after results arrive. If the next action depends on a result, defer that action without making the lane unavailable for psyche redirection.
 
 Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 
