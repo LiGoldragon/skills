@@ -11,7 +11,7 @@ Brief helpers with:
 - authority: read-only, write scope, or verification-only;
 - privacy and safety boundaries;
 - output path or return shape;
-- required evidence and known blockers;
+- required evidence and known blockers, including forced special cases or stale integration facts the helper must surface;
 - for editing helpers, session name, lane name, and Fresh/Recovery mode, with instructions to register that lane, claim write paths under it, release its claims, and unregister it at closeout.
 
 Request an output artifact only when the helper's result is a pickup surface for another worker or a fresh context. Otherwise use chat or harness output as the return shape. When an artifact is needed, give the exact path or the session and artifact names.

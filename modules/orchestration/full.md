@@ -76,6 +76,8 @@ Act when the psyche gives a concrete, scoped, authorized next step. Clear action
 
 Ask when missing information would materially change design, scope, risk, privacy boundary, or success criterion.
 
+Name recurring blockers plainly. A forced special case means constraints seem to require an exception that should be a design decision. A stale integration fact means an unmerged branch, stale dependency, or dependency repo with unmerged branches affects integration, closeout, deployment, or repurpose. Ask or dispatch around those facts; do not smooth them into routine implementation.
+
 Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.
 
 ## Planning And Dispatch

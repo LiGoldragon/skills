@@ -44,8 +44,10 @@ family together, rebase on moved `main` before landing, then land producers
 before consumers. Remove temporary local path overrides before the merge-ready
 state unless the branch dependency is intentional and documented.
 If the work creates or consumes a producer dependency, make that dependency
-portable before publishing. If portable closeout is not possible, report it as a
-hard blocker.
+portable before publishing. Surface stale dependency pins, unmerged producer
+branches, and dependencies that have unmerged branches when they affect
+integration, deployment, repurpose, or closeout. If portable closeout is not
+possible, report it as a hard blocker.
 
 If a local repository or worktree is already claimed, do not share it. Create an
 isolated main-based feature worktree or workspace, claim that path, and file a

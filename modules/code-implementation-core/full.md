@@ -21,7 +21,9 @@ instead of scattering conditionals.
 
 Beauty is a correctness gate: a special case should dissolve into the normal
 case. If a fix works only by adding a side path that future agents must
-remember, keep looking for the shape that makes the rule explicit.
+remember, keep looking for the shape that makes the rule explicit. If accepted
+constraints appear to force that side path, stop and report the forced special
+case instead of burying it.
 
 ## Implementation Version Compatibility
 
@@ -41,5 +43,7 @@ are inner-loop evidence unless the repo says otherwise.
 ## Implementation Dependency Portability
 
 If the change creates or consumes a producer dependency, make that dependency
-portable before closeout. If portable closeout is not possible, report it as a
-hard blocker.
+portable before closeout. Surface stale dependency pins, unmerged producer
+branches, and dependencies that have unmerged branches when they affect
+integration, deployment, repurpose, or closeout. If portable closeout is not
+possible, report it as a hard blocker.

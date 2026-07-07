@@ -31,6 +31,10 @@ jj git push --bookmark main
 
 Push each completed logical commit. Do not accumulate a local stack that is ready but unpushed.
 
+## Integration facts
+
+Branch and dependency staleness is closeout evidence. Surface unmerged branches, stale dependency pins, and dependencies that have unmerged branches when they affect integration, deployment, repurpose, or closeout; do not silently push past them.
+
 ## Descriptions are explicit
 
 Do not run `jj describe @` as a finalization step. Do not leave a real commit descriptionless. If a command would open an editor, cancel and rerun with `-m`, `--message`, or the command's headless equivalent.

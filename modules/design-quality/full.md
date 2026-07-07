@@ -16,6 +16,11 @@ are: terseness, symmetry, schema-driven emission, self-describing
 surfaces, interfaces-first shaping, composable boundaries. A design
 that satisfies correctness but fails any of these is not yet done.
 
+Forced special cases are decision material. If constraints appear to
+require an exception that cannot dissolve, stop before burying it in
+implementation: name the constraint, name the exception it forces, and
+ask for design clarity or psyche redirection.
+
 ## Beauty as primary audit lens
 
 Audits apply the beauty filter as the primary lens. Before asking

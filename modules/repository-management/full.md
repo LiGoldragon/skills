@@ -32,4 +32,6 @@ Use Jujutsu for local history and bookmark pushes. Do not use raw Git for ordina
 
 Create a new repository only for a genuinely new project or concern. Major rewrites, experiments, mockups, fixtures, reproductions, and alternate versions of an existing project belong on branches or tracked work items in the existing repository.
 
+Before creating or repurposing a repository, surface unmerged branches, stale dependencies, and dependencies with unmerged branches that affect the decision.
+
 When unsure whether a name should become a repository, ask before creating the repo.

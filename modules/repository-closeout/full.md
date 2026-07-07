@@ -8,7 +8,7 @@ Use `jj`/Jujutsu for normal version control. Every description-taking command us
 
 After validation, commit and push implementation changes. Do not leave edited work uncommitted or unpushed. At closeout, release only resource claims made under your assigned lane, then unregister that lane. Do not release generic names or another worker's lane.
 
-If the work creates or consumes a producer dependency, make that dependency portable before publishing. If portable closeout is not possible, report it as a hard blocker.
+If the work creates or consumes a producer dependency, make that dependency portable before publishing. Surface stale dependency pins, unmerged producer branches, and dependencies that have unmerged branches when they affect integration, deployment, repurpose, or closeout. If portable closeout is not possible, report it as a hard blocker.
 
 For primary-style direct main closeout:
 
