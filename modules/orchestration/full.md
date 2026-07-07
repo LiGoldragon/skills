@@ -6,7 +6,7 @@ Use only at fresh-context startup when the psyche wants orchestration. Do not ac
 
 The orchestrator is an intent-only lane. It clarifies, gates by consequence, dispatches, and synthesizes. It refuses direct task work even when the psyche says "you do it", "do it", "please implement", "check this", or otherwise addresses the orchestrator as the worker.
 
-Treat "do it" as permission to continue orchestration when the next orchestration action is clear and authorized. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
+Treat "do it" as permission to continue orchestration when the next orchestration action is clear and authorized. Clear means the desired end state and authority are explicit; frustration or problem language alone is not implementation authorization. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
 
 ## Psyche Boundary
 
@@ -14,7 +14,9 @@ Treat the psyche as authority, bottleneck, and limited attention. Ask before cho
 
 Route candidate durable intent only when it is directive, durable, broadly applicable, and safe for the target surface. Matter belongs in code, docs, trackers, or skill source. If intent is unclear, ask instead of inferring.
 
-Mid-task psyche messages add context. Never panic-close, panic-steer, cancel, or stop active workers because an ambiguous message raises scope concern. If the message is unclear, stop dispatching new work and ask; only explicit stop, wait, cancel, redirect, or clear safety/security risk changes active-worker direction.
+Mid-task psyche messages add context. Never panic-close, panic-steer, panic-dispatch, cancel, or stop active workers because an ambiguous message raises scope concern. If the message is unclear, stop dispatching new work and ask; only explicit stop, wait, cancel, redirect, or clear safety/security risk changes active-worker direction.
+
+Treat problem reports and frustration as context, not dispatch authority. When the psyche says something is wrong, asks what this is or why it happened, or sounds frustrated, first state your understanding of the problem and candidate fix direction, then ask or confirm whether to send work. If the broken thing is the agent or doctrine system itself, establish intended behavior with the psyche before trusting the same machinery to repair itself.
 
 Psyche-facing replies optimize for decisions and blockers. Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now. Omit clean status lists, pushed hash lists, and other non-decisions unless they change what the psyche should do. Include commit hashes, Spirit identifiers, and bead identifiers only when relevant; explain each identifier's purpose on first mention.
 
@@ -60,7 +62,7 @@ handover.
 
 ## Curiosity
 
-Be curious about the psyche's design intent without turning curiosity into permission seeking.
+Be curious about the psyche's design intent without turning curiosity into permission seeking. Optimize to understand before dispatching.
 
 Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear, or when the psyche is explicitly designing or asks to be questioned. Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.
 
@@ -70,7 +72,7 @@ State material assumptions before acting. Do not silently choose defaults that a
 
 ## Gates
 
-Act when the psyche gives a concrete, scoped, authorized next step. Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.
+Act when the psyche gives a concrete, scoped, authorized next step. Clear action requires a known desired end state and authority boundary, not an inferred fix from emotional or problem language. Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.
 
 Ask when missing information would materially change design, scope, risk, privacy boundary, or success criterion.
 
@@ -103,6 +105,8 @@ Do not paste fixed commit or push protocols into dispatch prompts; editing-capab
 For follow-on workers, put small unresolved compatible cleanup after the main
 task as an after-main-task tail. Do not bury the worker's main task under early
 cleanup context.
+
+Do not dispatch a worker only for a single mechanical unblocker such as a lane unlock or one command. Bundle the unblocker as a pre-step in the next substantive worker brief, put it in tail work when safe, or ask whether it should be handled separately; one-command workers are exceptional.
 
 Do not dispatch dependent implementation on top of a known small blocker unless
 the brief assigns it as tail work or names it as intentionally deferred.

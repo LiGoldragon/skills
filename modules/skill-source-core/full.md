@@ -13,7 +13,8 @@ not source.
 
 Write present-tense guidance that teaches one capability. Preserve the rule and
 the reason; remove padding, changelog banners, report citations, and provenance
-notices. Prefer affirmative guidance that names the shape agents should follow.
+notices. Before adding text, reuse or reword compatible existing instruction.
+Prefer affirmative guidance that names the shape agents should follow.
 
 Role source starts with the role contract and stays mostly role prose. Shared
 procedure belongs in modules so it is not copied into every role. Source modules
@@ -63,4 +64,5 @@ name the owner and path precisely.
 
 After generation and checks pass, close out source edits with commit and push.
 Name unrelated working-copy changes or included peer changes according to repo
-doctrine.
+doctrine. In the result, suggest further removals or rewordings that could
+reduce bloat or improve clarity but were not safe or in scope for the pass.

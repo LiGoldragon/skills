@@ -14,7 +14,7 @@
   names the scope, the body starts with rules.
 - Keep instruction terse, present-tense, and current. Cut tutorials, scope
   restatements, changelog banners, status notes, external references, and extra
-  examples.
+  examples. Before adding text, reuse or reword compatible existing instruction.
 - Inline material every branch needs. Move branch-only detail into sibling
   reference files and point only from the branch that uses it.
 - Delete any sentence whose removal would not change observable agent behavior
@@ -39,7 +39,9 @@
   runtime surfaces active agents read. Stale generated surfaces are deployment
   gaps; a dirty consuming workspace is not a blocker to generation or a required
   whole-working-copy commit. Only direct ownership of a required generated path
-  blocks deployment; name the owner and path precisely.
+  blocks deployment; name the owner and path precisely. In the result, suggest
+  further removals or rewordings that could reduce bloat or improve clarity but
+  were not safe or in scope for the pass.
 
 ## Verification
 
