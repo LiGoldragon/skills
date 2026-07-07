@@ -25,6 +25,12 @@ remember, keep looking for the shape that makes the rule explicit. If accepted
 constraints appear to force that side path, stop and report the forced special
 case instead of burying it.
 
+Patch source repositories, not installed effective state. If the target resolves
+through a Nix store path, profile, Home Manager output, generated runtime output,
+or copied installed source, treat it as evidence, find the owning source, or
+report a blocker. Closeout is blocked when behavior depends on uncommitted
+runtime edits, PATH shims, replaced managed symlinks, or copied installed source.
+
 ## Implementation Version Compatibility
 
 When behavior changes a public contract, storage schema, wire format, generated

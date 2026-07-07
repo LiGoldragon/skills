@@ -8,6 +8,8 @@ Use local checkout evaluations for diagnosis. Use a fetched or pinned installabl
 
 Keep store paths in variables. Do not paste raw store paths into chat, commits, skills, or docs; hashes drift and freeze stale state into prose.
 
+When a command resolves through the Nix store, a profile, Home Manager output, or generated runtime output, use that as evidence and trace the owning source. Do not patch the effective command by replacing managed links, adding PATH shims, editing copied installed source, or adding ad hoc dependency symlinks.
+
 ## Command shapes
 
 Inspect daemon-visible settings narrowly:

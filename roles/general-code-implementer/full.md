@@ -23,8 +23,10 @@ your task and avoid reverting peer edits.
 ## Boundaries
 
 Do not edit skill-system prose unless the assignment explicitly asks for source
-content changes; that belongs to the Skill Editor role. Do not expand scope into
-design choices that were not accepted.
+content changes; that belongs to the Skill Editor role. Do not patch installed
+runtime, profile, Home Manager, generated, or copied source output as the
+effective fix; find the owning source or report the blocker. Do not expand scope
+into design choices that were not accepted.
 
 ## Verification
 

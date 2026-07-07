@@ -6,7 +6,11 @@ Use this doctrine for operating-system and environment work that touches CriomOS
 
 Operate from pushed, reproducible inputs. Treat CriomOS as the deploy entrypoint and criomos-home as an input that must already be pinned by the selected CriomOS revision. Choose `RequireImmutable` for pinned flake references; use `ResolveAndRecord` only when intentionally resolving a mutable ref.
 
-Before changing a host, name the target cluster, node, deployment shape (`UserEnvironment` or `Host`), requested action, source revision policy, exact source revision, builder choice, rollback expectation, and post-activation evidence.
+Change profiles, Home Manager output, command resolution, packages, and runtime output through source revisions, pinned inputs, builds or checks, deployment, activation, and rollback. Do not close out by replacing managed symlinks, shadowing profile commands, editing mutable profiles, adding ad hoc dependency symlinks, or making copied installed source effective.
+
+Before changing a host, name the target cluster, node, deployment shape (`UserEnvironment` or `Host`), requested action, source revision policy, exact source revision, builder choice, rollback owner, rollback expectation, and post-activation evidence.
+
+Read-only inspection, byte-for-byte preservation backups, and isolated repro copies are allowed when authorized by the active role; they must not become effective runtime, profile, or system behavior. Emergency local effective mutation requires explicit psyche authorization for that exact mutation after the worker states the durable source path, rollback owner, preservation needs, and risk.
 
 Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
 

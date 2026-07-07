@@ -16,6 +16,8 @@ Commands that prove a change should build from the committed flake state or an e
 
 Compiled artifacts are build outputs. Do not compile at service start. Runtime scripts may select, configure, and launch artifacts; they do not build them.
 
+Command resolution, Home Manager profiles, package profiles, and runtime outputs are owned by source plus activation. Change them through flake inputs, modules, packages, checks, and deployment, not by PATH shadowing, replacing managed symlinks, mutable profile edits, ad hoc dependency symlinks, or copied store/profile output.
+
 ## Cargo dependencies in crane flakes
 
 For Rust git dependencies, keep the dependency identity in Cargo metadata and let the lock file carry the revision. Do not add manual output hashes to flake code as the normal fix.
