@@ -15,7 +15,7 @@ orchestrate "(Release <LaneName>)"
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <details>))"
 ```
 
-Observe only when coordination state is evidence after registration or during audit:
+Observe only when coordination state is evidence after registration or during audit. When relaying observed claims, show direct age, not only a start timestamp.
 
 ```sh
 orchestrate "(Observe Sessions)"
@@ -23,6 +23,8 @@ orchestrate "(Observe Lanes)"
 orchestrate "(Observe (SessionLanes <SessionName>))"
 ```
 
-Do not edit projected lock files by hand. If a checkout is already claimed or visibly in use, do not share it; create an isolated `main`-based worktree or JJ workspace, claim that path under the registered lane, and file a BEADS/beads item naming the repository, branch, worktree, and required disposition: discard, partial merge, or full merge.
+Do not edit projected lock files by hand. Do not claim `.beads/`. Treat an Orchestrate claim on `.beads/` as invalid agent policy state; force-release or remove that claim instead of treating it as a lock.
+
+If a checkout is already claimed or visibly in use, do not share it; create an isolated `main`-based worktree or JJ workspace, claim that path under the registered lane, and file a BEADS/beads item naming the repository, branch, worktree, and required disposition: discard, partial merge, or full merge.
 
 For bead-managed Git worktrees, use `bd worktree create <worktree> --branch <branch>`. For JJ workspaces, use `jj workspace add --revision main --message '<branch>' <worktree>` and move the feature bookmark to the completed commit with `jj bookmark set <branch> -r @-`.

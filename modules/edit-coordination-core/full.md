@@ -17,13 +17,15 @@ orchestrate "(Release <LaneName>)"
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <details>))"
 ```
 
-Observe only when coordination state is evidence after registration or during audit:
+Observe only when coordination state is evidence after registration or during audit. When relaying observed claims, show direct age, not only a start timestamp.
 
 ```sh
 orchestrate "(Observe Sessions)"
 orchestrate "(Observe Lanes)"
 orchestrate "(Observe (SessionLanes <SessionName>))"
 ```
+
+Do not claim `.beads/`. Treat an Orchestrate claim on `.beads/` as invalid agent policy state; force-release or remove that claim instead of treating it as a lock.
 
 If the local repository or worktree is already claimed or visibly in use, do not share that checkout. Start from `main` in an isolated feature worktree, claim that worktree path under the registered lane, and file a bead naming the repository, branch, worktree, and required final disposition: discard, partial merge, or full merge.
 

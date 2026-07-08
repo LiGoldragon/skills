@@ -31,4 +31,4 @@ Run `bd` commands sequentially. If embedded Dolt reports another process holds
 the exclusive `.beads/embeddeddolt` lock, wait briefly and retry the same
 command before reporting a blocker.
 
-Do not claim `.beads/`. If you begin working a bead after filing it, claim the task if the workspace uses claims; filing alone is not a claim.
+Do not claim `.beads/`. Treat an Orchestrate `.beads/` claim as invalid agent policy state; force-release or remove it instead of treating it as a lock. If you begin working a bead after filing it, claim the task if the workspace uses claims; filing alone is not a claim.

@@ -23,7 +23,7 @@ meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structu
 
 A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context.
 
-Observe with the ordinary Orchestrate surface when coordination state is evidence: sessions, all lanes, or lanes in one session. Lane observations include age, status, and resource claims.
+Observe with the ordinary Orchestrate surface when coordination state is evidence: sessions, all lanes, or lanes in one session. Lane observations include age, status, and resource claims. When showing claim information to agents, include direct age rather than only a wall-clock or start timestamp.
 
 ```sh
 orchestrate "(Observe Sessions)"
