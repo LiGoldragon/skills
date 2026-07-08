@@ -4,7 +4,7 @@
 
 Keep boundaries typed. In-process values stay Rust types. A daemon's runtime and public boundary speaks typed signal over rkyv. Durable mutable state uses the component's typed store. Human-facing text is a projection, not the machine truth.
 
-Daemons are not text systems. They do not parse or emit JSON or NOTA. Use JSON, TOML, NOTA, or other text formats only at boundaries that require them. Keep the adapter, client, CLI, tool, or harness at the edge and convert immediately into typed domain values.
+Daemons are not text systems. They do not parse or emit JSON or NOTA. Internal tools, tests, evals, fixtures, diagnostics, and new surfaces use typed Rust records with NOTA projection. Use JSON, YAML, CSV, TOML, or other non-NOTA text only when a named external consumer or protocol requires that exact format, such as a provider HTTP API. Keep the adapter, client, CLI, tool, or harness at the edge and convert immediately into typed domain values.
 
 ## Storage
 

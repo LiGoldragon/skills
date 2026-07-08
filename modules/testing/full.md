@@ -34,7 +34,7 @@ Assertions should say what invariant failed and show the relevant values. Do not
 
 ## Keep fixtures minimal
 
-Fixtures carry only the state needed to prove the case. Prefer named builders or typed records over copied blobs. When a fixture encodes compatibility, state the compatibility boundary in the test name or nearby assertion.
+Fixtures carry only the state needed to prove the case. Prefer named builders or typed records over copied blobs. Internal test, eval, and diagnostic artifacts use typed Rust records with NOTA projection; non-NOTA text fixtures name the external consumer or protocol that requires that exact format. When a fixture encodes compatibility, state the compatibility boundary in the test name or nearby assertion.
 
 ## Do not weaken tests to pass
 
