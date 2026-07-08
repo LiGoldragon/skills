@@ -2,9 +2,9 @@
 
 ## Rules
 
-Keep boundaries typed. In-process values stay Rust types. Rust-to-Rust wire bytes use the component family's typed binary contract. Durable mutable state uses the component's typed store. Human-facing text is a projection, not the machine truth.
+Keep boundaries typed. In-process values stay Rust types. A daemon's runtime and public boundary speaks typed signal over rkyv. Durable mutable state uses the component's typed store. Human-facing text is a projection, not the machine truth.
 
-Use JSON, TOML, or other external formats only at boundaries that require them. Keep the adapter at the edge and convert immediately into typed domain values.
+Daemons are not text systems. They do not parse or emit JSON or NOTA. Use JSON, TOML, NOTA, or other text formats only at boundaries that require them. Keep the adapter, client, CLI, tool, or harness at the edge and convert immediately into typed domain values.
 
 ## Storage
 
@@ -20,11 +20,15 @@ A channel carries one shared frame type from a contract crate. Add request kinds
 
 Validate bytes on receive before reading fields. Newtype platform-dependent or ambiguous values before they cross the wire.
 
-Do not send NOTA text between Rust components as the hot-path protocol. NOTA is for authored input, diagnostics, CLI surfaces, tests, and human-readable projections.
+Do not send NOTA text between Rust components as the hot-path protocol. NOTA is the human and agent projection of typed signals, not the daemon wire protocol.
+
+Diagnostics and events from daemon runtime are typed signals. Text rendering, reporting, debug dumps, and audit output belong to tools and clients.
 
 ## Human projection
 
-A CLI, lock file, debug dump, or audit output may project typed values to NOTA. The daemon keeps the typed value as truth and regenerates the projection; it does not reconstruct owned state by parsing its own projection.
+A CLI, tool, harness, or adapter may project typed rkyv signals to NOTA, and parse NOTA back into typed signals when text is needed. The daemon keeps the typed value as truth and regenerates projections; it does not reconstruct owned state by parsing its own projection.
+
+When a daemon needs model judgment or another text-mediated service, put prompts, raw model text parsing, and text diagnostic artifacts in an adapter or client process. That process returns a typed rkyv signal to the daemon.
 
 ## Schema changes
 
