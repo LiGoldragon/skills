@@ -1,6 +1,6 @@
 # Skill — NOTA design
 
-## Rules
+## Design Rules
 
 Use `nota-schema-design` when authoring schema for new NOTA types. Use `nota-literacy` when replying to a prompt that supplies a NOTA schema/help projection or examples.
 

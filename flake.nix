@@ -335,7 +335,7 @@
             fi
             grep -F 'Use a separate auditor for substantial completed work, with strength matched to risk' "$orchestration" >/dev/null
             grep -F 'Keep context-handover separate and manual-load only' "$orchestration" >/dev/null
-            grep -F '(orchestration modules/orchestration/full.md [spirit-query] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
             grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
             grep -F '(claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)' "$index" >/dev/null
@@ -363,16 +363,20 @@
           role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
-            grep -F '(spirit-query modules/spirit-query/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(spirit-query modules/spirit-query/full.md [nota-design] RuntimeSkill)' "$index" >/dev/null
             grep -F '(Skill (spirit-query spirit-query Meta Topic' "$manifest" >/dev/null
             for role in intent-translator scout repo-scaffolder general-code-implementer operating-system-implementer rust-auditor nix-auditor skill-editor intent-curator tracker-weaver; do
-              grep -E "\\(Role \\($role [^]]*spirit-query" "$manifest" >/dev/null || {
-                echo "$role role must embed read-only Spirit query doctrine" >&2
+              grep -E "\\(Role \\($role [^]]*spirit-query[^]]*nota-design" "$manifest" >/dev/null || {
+                echo "$role role must embed read-only Spirit query and NOTA design doctrine" >&2
                 exit 1
               }
             done
+            grep -E "\\(Role \\(repository-closeout [^]]*nota-design" "$manifest" >/dev/null || {
+              echo "repository-closeout role must embed NOTA design doctrine" >&2
+              exit 1
+            }
             if grep -F '(Role (repository-closeout ' "$manifest" | grep -F 'spirit-query'; then
-              echo "repository-closeout is the mechanical closeout exemption and must not embed spirit-query" >&2
+              echo "repository-closeout remains the mechanical closeout exemption and must not embed spirit-query" >&2
               exit 1
             fi
             touch "$out"

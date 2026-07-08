@@ -325,6 +325,20 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         !dependency_modules.contains("human-interaction"),
         "human-interaction is deleted from the dependency index"
     );
+    let spirit_query_dependency = module_dependencies
+        .payload()
+        .iter()
+        .find(|dependency| dependency.module_identifier.as_ref() == "spirit-query")
+        .expect("spirit-query dependency indexed");
+    assert_eq!(
+        spirit_query_dependency
+            .dependency_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["nota-design"]
+    );
     let orchestration_dependency = module_dependencies
         .payload()
         .iter()
@@ -337,7 +351,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["spirit-query"]
+        ["spirit-query", "nota-design"]
     );
     for nota_module in ["nota-design", "nota-schema-design", "nota-literacy"] {
         let dependency = module_dependencies
@@ -404,12 +418,17 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "intent-translator",
             "role-intent-translator",
-            &["edit-coordination-core", "spirit-query", "bead-weaver"],
+            &[
+                "edit-coordination-core",
+                "spirit-query",
+                "nota-design",
+                "bead-weaver",
+            ],
         ),
         (
             "scout",
             "role-scout",
-            &["edit-coordination-core", "spirit-query"],
+            &["edit-coordination-core", "spirit-query", "nota-design"],
         ),
         (
             "repo-scaffolder",
@@ -418,6 +437,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "repo-scaffold-core",
                 "code-implementation-core",
                 "rust-core",
@@ -431,6 +451,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "code-implementation-core",
                 "rust-core",
                 "nix-core",
@@ -444,6 +465,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "code-implementation-core",
                 "nix-core",
                 "operating-system-operations",
@@ -457,6 +479,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "rust-core",
                 "architectural-truth-tests",
             ],
@@ -468,6 +491,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "nix-core",
                 "nixos-vm-testing",
             ],
@@ -479,6 +503,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "skill-source-core",
             ],
         ),
@@ -489,6 +514,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "intent-core",
                 "spirit-cli",
             ],
@@ -499,6 +525,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
+                "nota-design",
                 "repo-operation-core",
             ],
         ),
@@ -509,6 +536,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
+                "nota-design",
                 "bead-weaver",
             ],
         ),
@@ -583,7 +611,7 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["spirit-query"]
+        ["spirit-query", "nota-design"]
     );
     assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
     assert!(
@@ -703,6 +731,7 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(claude.find("# worker") < claude.find("## shared"));
     assert!(claude.find("## shared") < claude.find("## feature"));
     assert_eq!(claude.matches("## shared").count(), 1);
+    assert_eq!(claude.matches("Dependency first.").count(), 1);
     assert!(!claude.contains("@generated"));
     assert!(!claude.contains("generated by"));
 
