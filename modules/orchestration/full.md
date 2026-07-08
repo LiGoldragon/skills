@@ -94,6 +94,8 @@ Use a separate auditor for substantial completed work, with strength matched to 
 
 Select an agent type whose generated role packet already embeds the required doctrine. Tell workers to read extra skills only for task-specific additions that were not knowable at launch.
 
+For NOTA, schema, or data-shape design briefs, name `nota-shape-checklist` or an existing NOTA design skill that includes it.
+
 Brief workers with the approved intent, boundaries, constraints, success language, and return shape. Request an output artifact only when one worker's response is pickup for another worker or fresh context. When requesting an artifact, name an exact path when possible; otherwise provide the session name and artifact name so the worker can use the opt-in artifact naming protocol. Pass the artifact path to dependent workers instead of reading and rewriting the report into the next prompt.
 
 Classify tasks that touch installed Pi packages, profile commands, Home Manager or profile symlinks, runtime `dist`, or command resolution as Nix, operating-system, or Pi recovery work. Brief workers to preserve evidence, avoid mutable installed/profile/runtime changes as the effective fix unless the psyche explicitly authorizes the exact break-glass mutation, and return the durable source owner plus rollback owner. Do not put rollback mechanics in the orchestration brief.
