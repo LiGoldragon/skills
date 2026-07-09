@@ -68,6 +68,8 @@ If a remote URL blocks push mechanics, use raw git only to inspect or change the
 
 If push is rejected because the remote advanced, stop normal work. Fetch with jj, inspect divergence, and ask before rebasing or force-moving shared history unless the task explicitly authorizes that repair.
 
+During an authorized landing, replaying your landing stack over a compatible commit that reached `main` mid-flight is in scope and expected; it produces new `main` commits and orphans the stack's feature branches, so clean up the orphaned branches afterward. Pause and ask only when the rebase would rewrite commits outside your landing stack or that you did not author.
+
 ## Restore carefully
 
 `jj restore` discards working-copy content. Use it only when the exact path and loss are understood. Prefer reading diffs and making a forward edit.

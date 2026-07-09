@@ -23,7 +23,7 @@ meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structu
 
 Use exactly one NOTA string object in each detail slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
-A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context.
+A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context. To resume a lane this session previously registered and released, register it in Recovery mode, not Fresh; Fresh conflicts with the session's own released record.
 
 Observe with the ordinary Orchestrate surface when coordination state is evidence: sessions, all lanes, or lanes in one session. Lane observations include age, status, and resource claims. When showing claim information to agents, include direct age rather than only a wall-clock or start timestamp.
 
