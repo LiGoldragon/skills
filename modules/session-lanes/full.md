@@ -17,9 +17,11 @@ Lane lifecycle mutation is meta-owned: register a lane, unregister a lane, and c
 Lane registration is the atomic check. Do not pre-observe before registration.
 
 ```sh
-meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <details>) Fresh))"
-meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <details>) Recovery))"
+meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-atom>) Fresh))"
+meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-atom>) Recovery))"
 ```
+
+Use a single bare NOTA atom in each `<detail-atom>` slot; quoted strings and pipe text are rejected.
 
 A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context.
 
@@ -40,8 +42,8 @@ Before editing shared files or running write commands, register the assigned lan
 At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when orchestration owns session cleanup or all remaining lanes are yours.
 
 ```sh
-meta-orchestrate "(Unregister (<SessionName> <LaneName> <details>))"
-meta-orchestrate "(ClearSession (<SessionName> <details>))"
+meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-atom>))"
+meta-orchestrate "(ClearSession (<SessionName> <detail-atom>))"
 ```
 
 Handover ends active lanes. Do not inherit lanes through handover; the next worker receives a new lane or an explicit Recovery registration. Put handover content in chat or the response, not only in a file.
