@@ -12,6 +12,8 @@ Run the narrow check that proves the edit, then the broader gate required by the
 
 Do not substitute an unrelated passing check for the one that proves the edited surface.
 
+Do not pipe a test or check run through `tail` or `head` when judging pass/fail — the pipe substitutes the pager's exit code for the run's own and can truncate per-binary results into a false green. Capture full output to a file and read the run's real exit status (or `${PIPESTATUS[0]}` when a pipe is unavoidable); judge pass/fail from that exit status, not a piped tail.
+
 ## Keep state explicit
 
 Stateful tests name their resources, host requirements, cleanup, and failure artifacts. They do not depend on hidden local state. If a test needs credentials or hardware, mark the requirement and provide a safe skip or manual gate. Place a daemon-sandbox unix socket under a short run root (e.g. `/tmp/<lane>/`) so its path stays under the SUN_LEN limit; never nest the socket under the deep session scratchpad path.
