@@ -17,7 +17,7 @@ use crate::{
         ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModuleLifecycle,
         ModulePath, Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
         SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion, TargetModuleInsertions,
-        TargetSurface,
+        TargetSurface, UniversalRoleModules,
     },
     workspace_path::WorkspacePath,
 };
@@ -188,18 +188,25 @@ impl GenerationSource {
             .unwrap_or_else(|| PathBuf::from("module-dependencies.nota"));
         let module_dependencies: ModuleDependencies =
             SourceFile::new(self.source_root.clone(), dependency_path).read()?;
-        let insertion_path = PathBuf::from(self.manifest_path.as_ref())
+        let manifest_directory = PathBuf::from(self.manifest_path.as_ref())
             .parent()
-            .map(|parent| parent.join("target-module-insertions.nota"))
-            .unwrap_or_else(|| PathBuf::from("target-module-insertions.nota"));
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        let insertion_path = manifest_directory.join("target-module-insertions.nota");
         let target_module_insertions: TargetModuleInsertions =
             SourceFile::new(self.source_root.clone(), insertion_path)
                 .read_optional()?
                 .unwrap_or_else(|| TargetModuleInsertions::new(Vec::new()));
+        let universal_role_modules_path = manifest_directory.join("universal-role-modules.nota");
+        let universal_role_modules: UniversalRoleModules =
+            SourceFile::new(self.source_root.clone(), universal_role_modules_path)
+                .read_optional()?
+                .unwrap_or_else(|| UniversalRoleModules::new(Vec::new()));
         Ok(GenerationConfiguration::active(
             active_outputs,
             module_dependencies,
             target_module_insertions,
+            universal_role_modules,
         ))
     }
 
@@ -325,6 +332,7 @@ struct GenerationConfiguration {
     active_outputs: ActiveOutputs,
     module_dependencies: ModuleDependencies,
     target_module_insertions: TargetModuleInsertions,
+    universal_role_modules: UniversalRoleModules,
     compatibility_roster: Option<SkillRoster>,
 }
 
@@ -333,11 +341,13 @@ impl GenerationConfiguration {
         active_outputs: ActiveOutputs,
         module_dependencies: ModuleDependencies,
         target_module_insertions: TargetModuleInsertions,
+        universal_role_modules: UniversalRoleModules,
     ) -> Self {
         Self {
             active_outputs,
             module_dependencies,
             target_module_insertions,
+            universal_role_modules,
             compatibility_roster: None,
         }
     }
@@ -347,6 +357,7 @@ impl GenerationConfiguration {
             active_outputs: roster.active_outputs(),
             module_dependencies: roster.module_dependencies(),
             target_module_insertions: TargetModuleInsertions::new(Vec::new()),
+            universal_role_modules: UniversalRoleModules::new(Vec::new()),
             compatibility_roster: Some(roster),
         }
     }
@@ -402,7 +413,7 @@ impl GenerationConfiguration {
         )?;
         let mut manifests = Vec::new();
         for role in self.active_roles() {
-            for manifest in role.manifests(&module_index)? {
+            for manifest in role.manifests(&module_index, &self.universal_role_modules)? {
                 manifests.push(manifest);
             }
         }
@@ -536,7 +547,11 @@ impl ActiveSkill {
 }
 
 impl ActiveRole {
-    fn manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
+    fn manifests(
+        &self,
+        module_index: &ModuleIndex,
+        universal_role_modules: &UniversalRoleModules,
+    ) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
         for surface in self.role_target_surfaces.payload() {
             let output_surface = OutputSurface::from(surface);
@@ -547,7 +562,11 @@ impl ActiveRole {
                 output_kind: output_surface.role_output_kind(),
                 output_surface,
                 frontmatter: self.frontmatter(),
-                modules: Modules::new(self.assembled_modules(module_index, output_surface)?),
+                modules: Modules::new(self.assembled_modules(
+                    module_index,
+                    universal_role_modules,
+                    output_surface,
+                )?),
             });
         }
         Ok(manifests)
@@ -556,11 +575,15 @@ impl ActiveRole {
     fn assembled_modules(
         &self,
         module_index: &ModuleIndex,
+        universal_role_modules: &UniversalRoleModules,
         output_surface: OutputSurface,
     ) -> Result<Vec<ModulePath>> {
         let mut expansion =
             ModuleExpansion::new(module_index, ModuleUse::RoleContent, output_surface);
         expansion.append_role_source(&self.module_identifier)?;
+        for module_identifier in universal_role_modules.payload() {
+            expansion.append(module_identifier)?;
+        }
         for module_identifier in self.included_modules.payload() {
             expansion.append(module_identifier)?;
         }

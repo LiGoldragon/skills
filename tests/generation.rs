@@ -10,7 +10,7 @@ use skills::{
     schema::assembly::{
         ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
         ModuleDependencies, ModuleKind, ModuleLifecycle, RoleTargetSurface, SkillRoster,
-        SourceRoot, TargetModuleInsertions, TargetSurface, WorkspaceRoot,
+        SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -229,7 +229,13 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/target-module-insertions.nota"))
             .parse::<TargetModuleInsertions>()
             .expect("target module insertion index parses");
+    let universal_role_modules =
+        NotaSource::new(include_str!("../manifests/universal-role-modules.nota"))
+            .parse::<UniversalRoleModules>()
+            .expect("universal role module manifest parses");
 
+    // These hardcoded generation expectations intentionally catch membership drift.
+    // Update them when module membership, role includes, or universal role modules change.
     let skill_count = active_outputs
         .payload()
         .iter()
@@ -259,6 +265,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "design-quality",
         "version-control",
         "work-tracking",
+        "repository-publication",
         "nota-shape-checklist",
     ] {
         assert!(
@@ -272,6 +279,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "jj",
         "beads",
         "human-interaction",
+        "agent-feedback-loop",
     ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
@@ -405,6 +413,15 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ),
         ]
     );
+    assert_eq!(
+        universal_role_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["agent-feedback-loop"]
+    );
+
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
         .iter()
@@ -420,7 +437,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "intent-translator",
             "role-intent-translator",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "spirit-query",
                 "nota-design",
@@ -430,18 +446,12 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "scout",
             "role-scout",
-            &[
-                "agent-feedback-loop",
-                "edit-coordination-core",
-                "spirit-query",
-                "nota-design",
-            ],
+            &["edit-coordination-core", "spirit-query", "nota-design"],
         ),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -456,7 +466,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "general-code-implementer",
             "role-general-code-implementer",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -471,7 +480,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "operating-system-implementer",
             "role-operating-system-implementer",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -486,7 +494,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "rust-auditor",
             "role-rust-auditor",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -499,7 +506,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "nix-auditor",
             "role-nix-auditor",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -512,7 +518,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "skill-editor",
             "role-skill-editor",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -524,7 +529,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "intent-curator",
             "role-intent-curator",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -537,7 +541,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "repository-closeout",
             "role-repository-closeout",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "nota-design",
@@ -548,7 +551,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "tracker-weaver",
             "role-tracker-weaver",
             &[
-                "agent-feedback-loop",
                 "edit-coordination-core",
                 "editing-closeout",
                 "spirit-query",
@@ -772,6 +774,57 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(inventory.contains(".claude/agents/worker.md"));
     assert!(inventory.contains(".codex/agents/worker.toml"));
     assert!(inventory.contains(".pi/agents/worker.md"));
+}
+
+#[test]
+fn universal_role_modules_expand_into_every_role_packet_without_per_role_manifest_entries() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (worker worker [feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RoleSource) (universal modules/universal/full.md [] RoleComposition) (feature modules/feature/full.md [] RoleComposition)]\n",
+    );
+    fixture.write_source_file("manifests/universal-role-modules.nota", "[universal]\n");
+    fixture.write_source_file(
+        "roles/worker/full.md",
+        "# Role - worker\n\n## Contract\n\nRole body.\n",
+    );
+    fixture.write_source_file(
+        "modules/universal/full.md",
+        "# Module - universal\n\n## Universal Rule\n\nUniversal doctrine.\n",
+    );
+    fixture.write_source_file(
+        "modules/feature/full.md",
+        "# Module - feature\n\n## Feature Rule\n\nPer-role doctrine.\n",
+    );
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("universal role modules generate");
+
+    let claude = fixture.read_workspace_file(".claude/agents/worker.md");
+    assert!(claude.contains("Universal doctrine."));
+    assert!(claude.contains("Per-role doctrine."));
+    assert!(claude.find("Role body.") < claude.find("Universal doctrine."));
+    assert!(claude.find("Universal doctrine.") < claude.find("Per-role doctrine."));
+    assert_eq!(claude.matches("Universal doctrine.").count(), 1);
+    assert_eq!(
+        fixture
+            .read_workspace_file(".pi/agents/worker.md")
+            .matches("Universal doctrine.")
+            .count(),
+        1
+    );
+    assert_eq!(
+        fixture
+            .read_workspace_file(".codex/agents/worker.toml")
+            .matches("Universal doctrine.")
+            .count(),
+        1
+    );
 }
 
 #[test]

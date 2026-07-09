@@ -9,6 +9,7 @@ This repo owns source modules, the active output manifest, the module dependency
 - Keep active generated outputs in `manifests/active-outputs.nota`. It lists only active `Skill` and `Role` outputs; absent means inactive.
 - Keep source paths, module dependencies, and module kind in `manifests/module-dependencies.nota`. `RuntimeSkill` may emit as a skill, `RoleSource` is a role root, and `RoleComposition` is a generator-only role packet component.
 - Keep target-specific module overlays in `manifests/target-module-insertions.nota`. Route by generated `OutputSurface`, not by model choice.
+- Keep broad doctrine every role receives in `manifests/universal-role-modules.nota`. Do not repeat universal modules in every `Role` record.
 - Keep generation metadata out of role prose. Skill and role source markdown carries reusable instruction body; manifest records carry output identity, descriptions, tiers, and target surfaces.
 - `manifests/skills-roster.nota` remains the Rust CLI compatibility input for legacy checks and archived/deleted skill modeling, but normal generation is driven by `manifests/active-outputs.nota` plus `manifests/module-dependencies.nota`.
 - Put harness-specific frontmatter metadata in manifest records or the compatibility roster, not in reusable module prose.
@@ -18,6 +19,7 @@ This repo owns source modules, the active output manifest, the module dependency
 - Treat duplicate headings as generation failures, not warnings.
 - Do not add provenance headers to generated outputs.
 - Regenerate all configured outputs with `nix run github:LiGoldragon/skills#generate-skills -- <workspace-root>`; check drift with `nix run github:LiGoldragon/skills#check-skills -- <workspace-root>`.
+- Update hardcoded generation expectations in `tests/generation.rs` when active module membership, role include membership, or universal role modules intentionally change.
 - `generate-skills` may prune generated harness skill surfaces (`.agents/skills`, `.claude/skills`). Role packet target directories are path-owned rather than directory-owned: stale role cleanup uses `skills/generated-role-outputs.nota` and must preserve files that were not listed as generated role outputs. `check-skills` remains non-writing and reports stale archived/deleted skill outputs with update/regenerate/rerun guidance.
 
 ## See also

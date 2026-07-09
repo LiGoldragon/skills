@@ -380,6 +380,14 @@ pub struct ModuleDependencies(Vec<ModuleDependency>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct UniversalRoleModules(Vec<ModuleIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModuleDependency {
     pub module_identifier: ModuleIdentifier,
     pub module_path: ModulePath,
@@ -1052,6 +1060,25 @@ impl ModuleDependencies {
 #[rustfmt::skip]
 impl From<Vec<ModuleDependency>> for ModuleDependencies {
     fn from(payload: Vec<ModuleDependency>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl UniversalRoleModules {
+    pub fn new(payload: Vec<ModuleIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ModuleIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ModuleIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ModuleIdentifier>> for UniversalRoleModules {
+    fn from(payload: Vec<ModuleIdentifier>) -> Self {
         Self::new(payload)
     }
 }

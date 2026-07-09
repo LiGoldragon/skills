@@ -3,6 +3,7 @@
 ;; RuntimeSkill modules may emit as skills; RoleSource modules are role roots;
 ;; RoleComposition modules are generator-only role packet components.
 ;; Target-specific module insertion lives in target-module-insertions.nota.
+;; Universal role packet modules live in universal-role-modules.nota.
 ;; The active output manifest decides what emits; this file records source module edges and kind.
 [
   (agent-output-protocol modules/agent-output-protocol/full.md [] RoleComposition)
@@ -17,7 +18,7 @@
   (repo-operation-core modules/repo-operation-core/full.md [repository-publication] RoleComposition)
   (edit-coordination modules/edit-coordination/full.md [] RuntimeSkill)
   (code-implementation modules/code-implementation/full.md [] RuntimeSkill)
-  (repository-closeout modules/repository-closeout/full.md [repository-publication] RuntimeSkill)
+  (repository-closeout modules/repository-closeout/full.md [] RuntimeSkill)
   (skill-source-core modules/skill-source-core/full.md [] RoleComposition)
   (component-architecture modules/component-architecture/full.md [] RuntimeSkill)
   (structural-forms modules/structural-forms/full.md [] RuntimeSkill)
@@ -64,7 +65,7 @@
   (work-tracking modules/work-tracking/full.md [] RuntimeSkill)
   (bead-weaver modules/bead-weaver/full.md [] RoleComposition)
   (repository-publication modules/repository-publication/full.md [] RuntimeSkill)
-  (repository-management modules/repository-management/full.md [repository-publication] RuntimeSkill)
+  (repository-management modules/repository-management/full.md [] RuntimeSkill)
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
   (orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)
   (claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)

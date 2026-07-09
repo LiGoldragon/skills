@@ -33,6 +33,7 @@
   RoleTargetSurfaces (Vector RoleTargetSurface)
   RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
   ModuleDependencies (Vector ModuleDependency)
+  UniversalRoleModules (Vector ModuleIdentifier)
   ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }
   ModuleKind [RuntimeSkill RoleSource RoleComposition]
   DependencyModules (Vector ModuleIdentifier)
