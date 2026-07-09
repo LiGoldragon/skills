@@ -2,19 +2,19 @@
 
 ## Rules
 
-NOTA is strict structured communication. The schema, help projection, or concrete examples supplied in the prompt give the expression its meaning.
+NOTA is strict structured communication. The schema, help projection, or concrete examples supplied in the prompt give the expression its expected type and meaning.
 
 Use the provided schema/help projection and examples as authoritative. For API-like calls, do not assume a runtime help tool is available; answer from the prompt's supplied contract.
 
 Reply with only the requested NOTA expression unless the prompt explicitly provides a diagnostic or prose escape hatch. If such a hatch exists and the contract is unclear, use it to say what is unclear and what should be improved.
 
-Parenthesized records and variants are positional. Field order matters, values do not carry field names, and every positional component appears in the expression.
+Parenthesized records and variants are positional. Field order matters, values do not carry field names, and every positional component appears in the expression. No extra slots, no missing slots.
 
-Read field names in schema/help text as position labels, not as keys to emit. Do not turn records into maps unless the schema says the value is a map.
+Read field names in schema/help text as position labels, not as keys to emit. Do not turn records into maps unless the expected type is a map.
 
-Use bare atoms for canonical strings, variants, identities, and stable names when the value is valid as an atom. Use the string/text form shown or required by the prompt when whitespace, delimiters, prose, or arbitrary text are part of the value.
+Use bare atoms for canonical strings, variants, identities, and stable names when the value is valid as an atom. Capitalization does not infer type state: a bare capitalized atom may be a string when the expected type is `String`, and enum slots decode by exact variant match.
 
-Represent optionality exactly as the supplied type shape requires. Do not omit positional fields; choose the explicit variant, option record, named optional field, or sentinel shape the schema provides.
+Represent optionality exactly as typed data in the supplied shape. Do not omit positional fields; choose the explicit variant, option record, or required sentinel shape the schema provides.
 
 Do not wrap the answer in markdown fences, JSON, YAML, comments, explanations, or surrounding prose. Do not invent double-quoted strings, field names, maps, or alternate delimiters.
 
