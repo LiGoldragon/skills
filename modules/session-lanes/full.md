@@ -17,11 +17,11 @@ Lane lifecycle mutation is meta-owned: register a lane, unregister a lane, and c
 Lane registration is the atomic check. Do not pre-observe before registration.
 
 ```sh
-meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-atom>) Fresh))"
-meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-atom>) Recovery))"
+meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-string>) Fresh))"
+meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-string>) Recovery))"
 ```
 
-Use a single bare NOTA atom in each `<detail-atom>` slot; quoted strings and pipe text are rejected.
+Use exactly one NOTA string object in each detail slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
 A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context.
 
@@ -42,8 +42,8 @@ Before editing shared files or running write commands, register the assigned lan
 At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when orchestration owns session cleanup or all remaining lanes are yours.
 
 ```sh
-meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-atom>))"
-meta-orchestrate "(ClearSession (<SessionName> <detail-atom>))"
+meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
+meta-orchestrate "(ClearSession (<SessionName> <detail-string>))"
 ```
 
 Handover ends active lanes. Do not inherit lanes through handover; the next worker receives a new lane or an explicit Recovery registration. Put handover content in chat or the response, not only in a file.

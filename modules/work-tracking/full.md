@@ -12,10 +12,12 @@ Record the claim in the tracker surface the repo uses. If no tracker is configur
 
 ## Retry transient tracker locks
 
-Run `bd` tracker commands sequentially. If a command fails because embedded
-Dolt reports another process holds the exclusive `.beads/embeddeddolt` lock,
-wait briefly and retry the same command. Treat the lock as a blocker only after
-several short retries fail, and report the exact command and error.
+Run `bd` tracker commands sequentially, not through parallel tool calls or
+concurrent shells. `bd` uses a single-writer embedded Dolt store; if a command
+reports the exclusive `.beads/embeddeddolt` lock, wait for the owning operation
+to finish and retry the same command. Do not spawn concurrent retries. Treat the
+lock as a blocker only after several short retries fail, and report the exact
+command and error.
 
 ## Keep bead text executable
 

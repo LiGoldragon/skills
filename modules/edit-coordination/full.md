@@ -9,13 +9,13 @@ If the task needs editing and no session name, lane name, or Fresh/Recovery mode
 Lane registration is the atomic check. Do not pre-observe before registration. Treat Fresh duplicate registration as a conflict/blocker. Treat orchestrator-declared Recovery duplicate as inherited only when the active lane clearly matches this recovery context.
 
 ```sh
-meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-atom>) Fresh))"
-orchestrate "(Claim (<LaneName> [(Path <absolute-path>)] <reason>))"
+meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-string>) Fresh))"
+orchestrate "(Claim (<LaneName> [(Path <absolute-path>)] <reason-string>))"
 orchestrate "(Release <LaneName>)"
-meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-atom>))"
+meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
 ```
 
-Use a single bare NOTA atom in each `<detail-atom>` slot; quoted strings and pipe text are rejected.
+Use exactly one NOTA string object in each detail or reason slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[refresh coordination docs]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
 Observe only when coordination state is evidence after registration or during audit. When relaying observed claims, show direct age, not only a start timestamp.
 

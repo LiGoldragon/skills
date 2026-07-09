@@ -27,8 +27,8 @@ bd dep <blocker-bead> --blocks <blocked-bead>
 
 File blockers first so dependency commands read in work order. Read the graph back with `bd show` or `bd list` and fix unclear descriptions immediately.
 
-Run `bd` commands sequentially. If embedded Dolt reports another process holds
-the exclusive `.beads/embeddeddolt` lock, wait briefly and retry the same
-command before reporting a blocker.
+Run `bd` commands sequentially, not through parallel tool calls. If embedded
+Dolt reports the exclusive `.beads/embeddeddolt` lock, wait for the owning
+operation to finish and retry the same command; do not spawn concurrent retries.
 
 Do not claim `.beads/`. Treat an Orchestrate `.beads/` claim as invalid agent policy state; force-release or remove it instead of treating it as a lock. If you begin working a bead after filing it, claim the task if the workspace uses claims; filing alone is not a claim.
