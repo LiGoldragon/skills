@@ -10,9 +10,7 @@ inside the repo without guessing.
 
 A new repository is for a genuinely distinct project. Major rewrites,
 experiments, mockups, repros, and alternate versions of an existing project use
-a branch or worktree in the existing repository. Public is the default
-visibility unless secrets, private data, unpublished third-party code, or an
-explicit confidentiality constraint require private.
+a branch or worktree in the existing repository.
 
 Use `ghq` for finding or fetching clones and `gh` for GitHub repository objects. Use `jj` for local history and pushing.
 

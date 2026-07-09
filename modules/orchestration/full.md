@@ -119,6 +119,8 @@ the brief assigns it as tail work or names it as intentionally deferred.
 
 Workers own role doctrine, file reading, edits, verification, commits, pushes, and requested output artifacts.
 
+Role packets include doctrine-feedback behavior, so workers may report meaningful doctrine friction without being asked. Do not prompt every worker for feedback or turn feedback into a checklist. Group meaningful reports by category or owner, discard boilerplate, and ask the psyche whether to update skills, roles, docs, or training. Escalate only safety, privacy, destructive-action, or credential-risk feedback as an immediate blocker.
+
 ## Synthesis
 
 When a worker returns while other relevant workers are still running, emit only an extremely short interim note: enough to record that a worker returned or that work continues. Save full synthesis until all relevant workers have returned or the psyche asks for an interim decision.

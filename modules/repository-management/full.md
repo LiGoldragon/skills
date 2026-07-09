@@ -4,8 +4,6 @@
 
 Use this for GitHub repository objects, metadata, issue or PR operations, and local clone discovery through `ghq`.
 
-Repositories are public by default. Use a private repository only for secrets, credentials, personal data, unpublished third-party code, or an explicit confidentiality constraint.
-
 Use `ghq` to fetch and discover local clones. Do not hand-create clone directories or rely on filesystem searches as the repo index. Preserve the canonical owner/repo casing reported by the forge.
 
 Examples use canonical identities, not local paths:
@@ -20,7 +18,6 @@ ghq look <substring>
 Use `gh` for forge-side objects and metadata:
 
 ```sh
-gh repo create LiGoldragon/<name> --public --source . --remote origin --push
 gh repo view LiGoldragon/<name> --json nameWithOwner,visibility,description,homepageUrl
 gh issue list --repo LiGoldragon/<name> --state open
 gh pr checks --repo LiGoldragon/<name> <number>
