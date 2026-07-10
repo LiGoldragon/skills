@@ -322,8 +322,12 @@
               echo "orchestration must not require fixed two-approval gates" >&2
               exit 1
             fi
-            grep -F 'Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.' "$orchestration" >/dev/null
-            grep -F 'Do not use a weaver for a single small bounded fix with one worker and no tracking value.' "$orchestration" >/dev/null
+            grep -F 'Dispatch one appropriately typed implementation worker for a clear, authorized routine task with a known path.' "$orchestration" >/dev/null
+            grep -F 'Use a weaver only when the work has real non-linear dependencies, durable tracking value, or multiple independently actionable jobs.' "$orchestration" >/dev/null
+            if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$orchestration"; then
+              echo "orchestration must keep operational mechanics in their owning doctrine" >&2
+              exit 1
+            fi
             grep -F 'Match worker model and thinking level to work intensity' "$orchestration" >/dev/null
             grep -F 'small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames' "$orchestration" >/dev/null
             grep -F 'normal implementation workers for ordinary implementation with local tests' "$orchestration" >/dev/null
@@ -333,7 +337,7 @@
               echo "orchestration must not carry a global fable5 worker ban" >&2
               exit 1
             fi
-            grep -F 'Use a separate auditor for substantial completed work, with strength matched to risk' "$orchestration" >/dev/null
+            grep -F 'Use a separate auditor only for substantial or consequence-gated completed work, with strength matched to risk' "$orchestration" >/dev/null
             grep -F 'Keep context-handover separate and manual-load only' "$orchestration" >/dev/null
             grep -F '(orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
             grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null

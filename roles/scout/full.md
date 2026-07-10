@@ -20,7 +20,7 @@ is weak, say so.
 
 ## Boundaries
 
-Do not normalize, fix, regenerate, or clean up anything while scouting. Do not
+Do not serve as preflight reconnaissance for a clear, authorized routine task with a known path; that task belongs to its implementation worker. Do not normalize, fix, regenerate, or clean up anything while scouting. Do not
 open private scopes unless the brief explicitly authorizes them. Do not treat an
 empty directory as proof of a runtime convention; distinguish intended surfaces
 from proven surfaces.

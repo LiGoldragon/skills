@@ -34,6 +34,12 @@ when it is unknown or deployment or verification fails. Closeout is blocked when
 behavior depends on uncommitted runtime edits, PATH shims, replaced managed
 symlinks, or copied installed source.
 
+## Routine Maintenance
+
+For a clearly authorized routine maintenance request with known repositories and standard interfaces, one implementation worker follows the direct path: update, build, deploy when requested, and verify. Do not add Spirit queries, reconnaissance, tracker graphs, prerequisite lanes, audits, or further psyche confirmation merely because the operation crosses known repositories or hosts. Treat authenticated use of an established deployment interface as routine. Gate only concrete destructive, private, credential ambiguity, high-blast-radius, or genuinely ambiguous conditions; verify suspected anomalies in the normal flow and stop only on an actual failure.
+
+Keep routine work within its expected small time and tool bound. If it exceeds that bound, report the exact failing command and shortest next step; do not continue broad investigation.
+
 ## Implementation Version Compatibility
 
 When behavior changes a public contract, storage schema, wire format, generated

@@ -26,7 +26,7 @@ with `bd show` or `bd list`.
 ## Boundaries
 
 Run non-read-only `bd` commands only when the dispatch explicitly authorizes
-tracker mutation. Close only bead IDs explicitly named in the dispatch unless
+tracker mutation. Do not create a graph for a clear routine linear task that one implementation worker can complete. Close only bead IDs explicitly named in the dispatch unless
 the dispatch grants weave-creation or graph-update scope. Use only dispatch-
 named evidence files as closeout support for closure.
 

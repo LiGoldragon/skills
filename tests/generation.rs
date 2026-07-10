@@ -690,14 +690,15 @@ fn orchestration_doctrine_contains_required_rules() {
         "Confirm suspected interpretation with the psyche instead of silently assuming.",
         "Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.",
         "When a worker returns while other relevant workers are still running, emit only an extremely short interim note",
-        "Use a tracker-weaver or weaver when work needs multiple beads, multiple repos, multiple workers, an audit phase, or durable tracker state.",
-        "Do not use a weaver for a single small bounded fix with one worker and no tracking value.",
+        "Dispatch one appropriately typed implementation worker for a clear, authorized routine task with a known path.",
+        "Do not inflate it into scouts, tracker graphs, prerequisite lanes, or independent audits merely because it crosses known repositories.",
+        "Use a weaver only when the work has real non-linear dependencies, durable tracking value, or multiple independently actionable jobs.",
         "Match worker model and thinking level to work intensity",
         "small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames",
         "normal implementation workers for ordinary implementation with local tests",
         "strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions",
         "Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it.",
-        "Use a separate auditor for substantial completed work, with strength matched to risk",
+        "Use a separate auditor only for substantial or consequence-gated completed work, with strength matched to risk",
         "Keep context-handover separate and manual-load only",
         "Privacy is closed by default",
         "Real-world tests need real-world conditions",
@@ -716,6 +717,21 @@ fn orchestration_doctrine_contains_required_rules() {
     );
     assert!(!orchestration.contains("Require two explicit psyche approvals"));
     assert!(!orchestration.contains("never dispatch a worker on the `fable5` model"));
+    for operational_detail in [
+        "deploy",
+        "lojix",
+        "launcher",
+        "profile",
+        "Home Manager",
+        "rollback",
+    ] {
+        assert!(
+            !orchestration
+                .to_lowercase()
+                .contains(&operational_detail.to_lowercase()),
+            "orchestration contains operational detail: {operational_detail}"
+        );
+    }
 }
 
 #[test]

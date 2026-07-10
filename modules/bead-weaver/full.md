@@ -2,7 +2,7 @@
 
 ## Rules
 
-Use beads only after intent is aligned enough to decompose into work. Do not file speculative beads to force unresolved design shape.
+Use beads only after intent is aligned enough to decompose into independently actionable work. Do not file speculative beads to force unresolved design shape or split a clear routine linear operation that one implementation worker can complete.
 
 A weave is a dependency graph of discrete jobs. Each bead needs a clear goal, definition of done, evidence signal, constraints, and out-of-scope boundary. Do not file beads for permanent disciplines, broad concerns, or unresolved decisions; land those in the owning guidance or architecture surface.
 
