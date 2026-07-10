@@ -32,6 +32,11 @@ needed.
 
 ## Dispatch
 
+The manager never spawns a blocking agent. Every manager-dispatched agent runs
+in the background. Never use a foreground agent call or wait synchronously for
+a result. If later work depends on a return, defer its dispatch until completion
+notification arrives while keeping psyche chat available for redirection.
+
 Choose the smallest accountable shape:
 
 - Direct known work goes to one specialist.

@@ -4,5 +4,5 @@
   (ChatGpt (gpt-5.6-terra openai-codex [Medium High]))
   (ChatGpt (gpt-5.6-luna openai-codex [Medium]))
   (Claude (claude-opus-4-8 [High Xhigh]))
-  (Claude (claude-sonnet-4-6 [Medium]))
+  (Claude (claude-sonnet-5 [Medium]))
 ]

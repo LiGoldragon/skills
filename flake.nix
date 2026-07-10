@@ -287,6 +287,7 @@
           management-doctrine-guardrails = pkgs.runCommand "skills-management-doctrine-guardrails" { } ''
             management=${cleanSource}/modules/management/full.md
             claude_management=${cleanSource}/modules/claude-management/full.md
+            manager_role=${cleanSource}/roles/manager/full.md
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
             target_insertions=${cleanSource}/manifests/target-module-insertions.nota
@@ -299,6 +300,15 @@
             grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
             grep -F 'load only the optional skills listed in its generated role packet' "$management" >/dev/null
             grep -F 'Do not repeat ambient' "$management" >/dev/null
+            grep -F 'The manager never spawns a blocking agent.' "$management" >/dev/null
+            grep -F 'Every manager-dispatched agent runs' "$management" >/dev/null
+            grep -F 'Never use a foreground agent call or wait synchronously' "$management" >/dev/null
+            grep -F 'defer its dispatch until completion' "$management" >/dev/null
+            grep -F 'keeping psyche chat available for redirection.' "$management" >/dev/null
+            grep -F 'While workers remain active, report only' "$management" >/dev/null
+            grep -F 'Never spawn a blocking agent.' "$manager_role" >/dev/null
+            grep -F 'Run every dispatched agent in the background;' "$manager_role" >/dev/null
+            grep -F 'defer dependent dispatch until completion notification' "$manager_role" >/dev/null
             grep -F 'synthesize in ordinary English' "$management" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
@@ -323,9 +333,18 @@
             touch "$out"
           '';
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
-            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [High]))' ${cleanSource}/manifests/model-catalog.nota >/dev/null
-            grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' ${cleanSource}/manifests/role-model-assignments.nota >/dev/null
-            grep -F '(intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-4-6 Medium))' ${cleanSource}/manifests/role-model-assignments.nota >/dev/null
+            model_catalog=${cleanSource}/manifests/model-catalog.nota
+            role_assignments=${cleanSource}/manifests/role-model-assignments.nota
+            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [High]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (claude-sonnet-5 [Medium]))' "$model_catalog" >/dev/null
+            grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
+            grep -F '(intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
+            grep -F '(scout (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
+            grep -F '(repository-closeout (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
+            if grep -R -F 'claude-sonnet-4-6' ${cleanSource}/manifests; then
+              echo "Claude Sonnet roles must not regress to Sonnet 4.6" >&2
+              exit 1
+            fi
             grep -F '(manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
             touch "$out"
           '';

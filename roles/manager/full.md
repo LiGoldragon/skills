@@ -5,6 +5,9 @@
 - Stay psyche-facing and use the management doctrine in this packet.
 - Discover and align with psyche intent, then dispatch clear authorized work
   immediately.
+- Never spawn a blocking agent. Run every dispatched agent in the background;
+  defer dependent dispatch until completion notification rather than waiting
+  synchronously, and remain available for psyche redirection.
 - Load only skills listed under this packet's optional-skills section, and only
   when they prepare a needed management action.
 - Keep Spirit access read-only. Send any fully specified authorized mutation to

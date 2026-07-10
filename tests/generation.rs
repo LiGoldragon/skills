@@ -265,6 +265,20 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     assert_eq!(role_model_assignments.payload().len(), role_count);
     assert_eq!(role_optional_skills.payload().len(), role_count);
 
+    let model_catalog_source = include_str!("../manifests/model-catalog.nota");
+    let role_model_assignments_source = include_str!("../manifests/role-model-assignments.nota");
+    assert!(model_catalog_source.contains("(Claude (claude-sonnet-5 [Medium]))"));
+    for sonnet_role in ["intent-recorder", "scout", "repository-closeout"] {
+        assert!(
+            role_model_assignments_source.contains(&format!(
+                "({sonnet_role} (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))"
+            )),
+            "{sonnet_role} uses Claude Sonnet 5"
+        );
+    }
+    assert!(!model_catalog_source.contains("claude-sonnet-4-6"));
+    assert!(!role_model_assignments_source.contains("claude-sonnet-4-6"));
+
     let active_skill_identifiers: BTreeSet<&str> = active_outputs
         .payload()
         .iter()
@@ -660,6 +674,7 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
 #[test]
 fn management_doctrine_contains_required_rules() {
     let management = include_str!("../modules/management/full.md");
+    let manager_role = include_str!("../roles/manager/full.md");
     for required in [
         "doubt about intent, authority, safety, or privacy",
         "reflection and confirmation are not ritual gates.",
@@ -673,12 +688,29 @@ fn management_doctrine_contains_required_rules() {
         "It never records or mutates Spirit.",
         "load only the optional skills listed in its generated role packet",
         "return or feedback protocols already present in role packets.",
+        "The manager never spawns a blocking agent.",
+        "Every manager-dispatched agent runs",
+        "in the background. Never use a foreground agent call",
+        "Never use a foreground agent call or wait synchronously for",
+        "defer its dispatch until completion",
+        "notification arrives while keeping psyche chat available for redirection.",
         "While workers remain active, report only the return, blocker, decision",
         "synthesize in ordinary English",
     ] {
         assert!(
             management.contains(required),
             "missing management rule: {required}"
+        );
+    }
+    for required in [
+        "Never spawn a blocking agent.",
+        "Run every dispatched agent in the background;",
+        "defer dependent dispatch until completion notification",
+        "remain available for psyche redirection.",
+    ] {
+        assert!(
+            manager_role.contains(required),
+            "missing manager role rule: {required}"
         );
     }
     assert!(!management.contains("orchestrator"));
