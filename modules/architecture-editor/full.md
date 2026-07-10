@@ -34,6 +34,12 @@ Use headings that match the component, not a fixed template. Common sections are
 
 Keep sections short. Use bullets for constraints and invariants. Avoid prose that only says the file is important.
 
+## Keep architecture prose, not code
+
+Architecture files hold only prose architectural design and constraints. Do not
+put implementation code or pseudo-code in them. The sole exception is example
+surface syntax of a language the document is actually designing.
+
 ## Write constraints as test seeds
 
 A good architecture statement can become a test, review check, or design gate. Prefer precise constraints: ownership, forbidden dependencies, direction of calls, state transitions, persistence boundaries, and protocol compatibility.
