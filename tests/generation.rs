@@ -9,8 +9,9 @@ use skills::{
     Error,
     schema::assembly::{
         ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
-        ModuleDependencies, ModuleKind, ModuleLifecycle, RoleTargetSurface, SkillRoster,
-        SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules, WorkspaceRoot,
+        ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SkillRoster, SourceRoot, TargetModuleInsertions,
+        TargetSurface, UniversalRoleModules, WorkspaceRoot,
     },
 };
 use tempfile::TempDir;
@@ -233,6 +234,17 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/universal-role-modules.nota"))
             .parse::<UniversalRoleModules>()
             .expect("universal role module manifest parses");
+    let model_catalog = NotaSource::new(include_str!("../manifests/model-catalog.nota"))
+        .parse::<ModelCatalog>()
+        .expect("model catalog parses");
+    let role_model_assignments =
+        NotaSource::new(include_str!("../manifests/role-model-assignments.nota"))
+            .parse::<RoleModelAssignments>()
+            .expect("role model assignments parse");
+    let role_optional_skills =
+        NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
+            .parse::<RoleOptionalSkills>()
+            .expect("role optional skills parse");
 
     // These hardcoded generation expectations intentionally catch membership drift.
     // Update them when module membership, role includes, or universal role modules change.
@@ -248,7 +260,10 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .count();
 
     assert_eq!(skill_count, 61);
-    assert_eq!(role_count, 11);
+    assert_eq!(role_count, 14);
+    assert_eq!(model_catalog.payload().len(), 5);
+    assert_eq!(role_model_assignments.payload().len(), role_count);
+    assert_eq!(role_optional_skills.payload().len(), role_count);
 
     let active_skill_identifiers: BTreeSet<&str> = active_outputs
         .payload()
@@ -267,6 +282,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "work-tracking",
         "repository-publication",
         "nota-shape-checklist",
+        "management",
     ] {
         assert!(
             active_skill_identifiers.contains(required_skill),
@@ -280,6 +296,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "beads",
         "human-interaction",
         "agent-feedback-loop",
+        "orchestration",
     ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
@@ -317,6 +334,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "architectural-truth-tests",
         "rust-discipline",
         "bead-weaver",
+        "return-to-manager",
+        "spirit-submission",
     ];
     for module_identifier in role_composition_modules {
         assert_eq!(
@@ -328,7 +347,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     assert_eq!(
         module_kinds.get("spirit-query"),
         Some(&ModuleKind::RuntimeSkill),
-        "spirit-query remains a first-class read-only skill and role-embedded runtime module"
+        "spirit-query remains a first-class read-only skill"
     );
     assert!(
         !dependency_modules.contains("human-interaction"),
@@ -348,19 +367,16 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         ["nota-design"]
     );
-    let orchestration_dependency = module_dependencies
+    let management_dependency = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
-        .expect("orchestration dependency indexed");
-    assert_eq!(
-        orchestration_dependency
+        .find(|dependency| dependency.module_identifier.as_ref() == "management")
+        .expect("management dependency indexed");
+    assert!(
+        management_dependency
             .dependency_modules
             .payload()
-            .iter()
-            .map(|module| module.as_ref())
-            .collect::<Vec<_>>(),
-        ["spirit-query", "nota-design"]
+            .is_empty()
     );
     for nota_module in ["nota-design", "nota-schema-design", "nota-literacy"] {
         let dependency = module_dependencies
@@ -378,7 +394,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         );
     }
     assert!(
-        !orchestration_dependency
+        !management_dependency
             .dependency_modules
             .payload()
             .iter()
@@ -402,14 +418,14 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         [
             (
-                "orchestration",
+                "management",
                 skills::schema::assembly::OutputSurface::ClaudeSkill,
-                vec!["claude-orchestration"]
+                vec!["claude-management"]
             ),
             (
-                "orchestration",
+                "management",
                 skills::schema::assembly::OutputSurface::ClaudeAgent,
-                vec!["claude-orchestration"]
+                vec!["claude-management"]
             ),
         ]
     );
@@ -419,7 +435,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["agent-feedback-loop"]
+        ["agent-feedback-loop", "return-to-manager"]
     );
 
     let active_roles: BTreeMap<&str, _> = active_outputs
@@ -433,33 +449,35 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         })
         .collect();
     let expected_roles: &[(&str, &str, &[&str])] = &[
+        ("manager", "role-manager", &["management"]),
         (
-            "intent-translator",
-            "role-intent-translator",
+            "generalist",
+            "role-generalist",
             &[
                 "edit-coordination-core",
-                "spirit-query",
-                "nota-design",
-                "bead-weaver",
+                "editing-closeout",
+                "code-implementation-core",
             ],
         ),
         (
-            "scout",
-            "role-scout",
-            &["edit-coordination-core", "spirit-query", "nota-design"],
+            "intent-recorder",
+            "role-intent-recorder",
+            &["spirit-submission"],
         ),
+        (
+            "intent-translator",
+            "role-intent-translator",
+            &["edit-coordination-core", "bead-weaver"],
+        ),
+        ("scout", "role-scout", &["edit-coordination-core"]),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "repo-scaffold-core",
                 "code-implementation-core",
-                "rust-core",
-                "nix-core",
             ],
         ),
         (
@@ -468,12 +486,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "code-implementation-core",
-                "rust-core",
-                "nix-core",
-                "operating-system-operations",
             ],
         ),
         (
@@ -482,8 +495,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "code-implementation-core",
                 "nix-core",
                 "operating-system-operations",
@@ -496,8 +507,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "rust-core",
                 "architectural-truth-tests",
             ],
@@ -508,8 +517,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "nix-core",
                 "nixos-vm-testing",
             ],
@@ -520,22 +527,13 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "spirit-query",
-                "nota-design",
                 "skill-source-core",
             ],
         ),
         (
             "intent-curator",
             "role-intent-curator",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "spirit-query",
-                "nota-design",
-                "intent-core",
-                "spirit-cli",
-            ],
+            &["edit-coordination-core", "editing-closeout", "intent-core"],
         ),
         (
             "repository-closeout",
@@ -543,20 +541,13 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             &[
                 "edit-coordination-core",
                 "editing-closeout",
-                "nota-design",
                 "repo-operation-core",
             ],
         ),
         (
             "tracker-weaver",
             "role-tracker-weaver",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "spirit-query",
-                "nota-design",
-                "bead-weaver",
-            ],
+            &["edit-coordination-core", "editing-closeout", "bead-weaver"],
         ),
     ];
 
@@ -617,23 +608,15 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
     let module_dependencies = NotaSource::new(index_text)
         .parse::<ModuleDependencies>()
         .expect("module dependency index parses");
-    let orchestration = module_dependencies
+    let management = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
-        .expect("orchestration dependency indexed");
-    assert_eq!(
-        orchestration
-            .dependency_modules
-            .payload()
-            .iter()
-            .map(|module| module.as_ref())
-            .collect::<Vec<_>>(),
-        ["spirit-query", "nota-design"]
-    );
+        .find(|dependency| dependency.module_identifier.as_ref() == "management")
+        .expect("management dependency indexed");
+    assert!(management.dependency_modules.payload().is_empty());
     assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
     assert!(
-        !orchestration
+        !management
             .dependency_modules
             .payload()
             .iter()
@@ -675,48 +658,31 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
 }
 
 #[test]
-fn orchestration_doctrine_contains_required_rules() {
-    let orchestration = include_str!("../modules/orchestration/full.md");
+fn management_doctrine_contains_required_rules() {
+    let management = include_str!("../modules/management/full.md");
     for required in [
-        "Treat the psyche as authority, bottleneck, and limited attention.",
-        "Route candidate durable intent",
-        "Be curious about the psyche's design intent without turning curiosity into permission seeking.",
-        "Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear",
-        "During design, push back by naming contradictions, weaker assumptions, hidden constraints, design tension, and better end shapes.",
-        "Act when the psyche gives a concrete, scoped, authorized next step.",
-        "Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.",
-        "Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.",
-        "Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.",
-        "Confirm suspected interpretation with the psyche instead of silently assuming.",
-        "Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.",
-        "When a worker returns while other relevant workers are still running, emit only an extremely short interim note",
-        "Dispatch one appropriately typed implementation worker for a clear, authorized routine task with a known path.",
-        "Do not inflate it into scouts, tracker graphs, prerequisite lanes, or independent audits merely because it crosses known repositories.",
-        "Use a weaver only when the work has real non-linear dependencies, durable tracking value, or multiple independently actionable jobs.",
-        "Match worker model and thinking level to work intensity",
-        "small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames",
-        "normal implementation workers for ordinary implementation with local tests",
-        "strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions",
-        "Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it.",
-        "Use a separate auditor only for substantial or consequence-gated completed work, with strength matched to risk",
-        "Keep context-handover separate and manual-load only",
-        "Privacy is closed by default",
-        "Real-world tests need real-world conditions",
-        "It refuses direct task work",
-        "Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.",
-        "It does not inspect files, command output, links, status, or systems directly.",
+        "doubt about intent, authority, safety, or privacy",
+        "reflection and confirmation are not ritual gates.",
+        "Direct known work goes to one specialist.",
+        "Unfamiliar non-trivial work goes first to a fast, cheap",
+        "Tightly coupled cross-specialty work goes to one accountable Generalist.",
+        "Independent work goes to peer specialists in parallel.",
+        "A Generalist may use subagents when useful",
+        "Do not impose a rigid one-level delegation limit.",
+        "does not inspect repositories, commands, links, or systems",
+        "It never records or mutates Spirit.",
+        "load only the optional skills listed in its generated role packet",
+        "return or feedback protocols already present in role packets.",
+        "While workers remain active, report only the return, blocker, decision",
+        "synthesize in ordinary English",
     ] {
         assert!(
-            orchestration.contains(required),
-            "missing orchestration rule: {required}"
+            management.contains(required),
+            "missing management rule: {required}"
         );
     }
-    assert!(!orchestration.contains("Capture durable intent"));
-    assert!(
-        !orchestration.contains("Ask at least one before proposing method or dispatching workers")
-    );
-    assert!(!orchestration.contains("Require two explicit psyche approvals"));
-    assert!(!orchestration.contains("never dispatch a worker on the `fable5` model"));
+    assert!(!management.contains("orchestrator"));
+    assert!(!management.contains("orchestration"));
     for operational_detail in [
         "deploy",
         "lojix",
@@ -726,10 +692,10 @@ fn orchestration_doctrine_contains_required_rules() {
         "rollback",
     ] {
         assert!(
-            !orchestration
+            !management
                 .to_lowercase()
                 .contains(&operational_detail.to_lowercase()),
-            "orchestration contains operational detail: {operational_detail}"
+            "management contains operational detail: {operational_detail}"
         );
     }
 }
@@ -756,7 +722,9 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
         .expect("role generation succeeds");
 
     let claude = fixture.read_workspace_file(".claude/agents/worker.md");
-    assert!(claude.starts_with("---\nname: worker\ndescription: 'Worker role.'\n---\n\n"));
+    assert!(claude.starts_with(
+        "---\nname: worker\ndescription: 'Worker role.'\nmodel: claude-test\neffort: high\n---\n\n"
+    ));
     assert!(claude.contains("# worker"));
     assert!(claude.contains("## shared"));
     assert!(claude.contains("## feature"));
@@ -772,6 +740,8 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     let codex = fixture.read_workspace_file(".codex/agents/worker.toml");
     assert!(codex.contains("name = \"worker\""));
     assert!(codex.contains("description = \"Worker role.\""));
+    assert!(codex.contains("model = \"gpt-test\""));
+    assert!(codex.contains("model_reasoning_effort = \"high\""));
     assert!(codex.contains("developer_instructions = \"# worker"));
     assert!(codex.contains("## shared"));
     assert!(codex.contains("## feature"));
@@ -783,7 +753,7 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\n---\n\n"));
+    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\nmodel: 'openai-codex/gpt-test'\nthinking: high\n---\n\n"));
     assert!(!pi.contains("Skill-read de-duplication"));
 
     let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
@@ -793,12 +763,264 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
+fn role_profiles_and_optional_skills_render_without_preloading_skill_bodies() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+    );
+    fixture.write_source_file(
+        "modules/example/full.md",
+        "# Skill - example\n\n## Example Rule\n\nThis body must not be preloaded.\n",
+    );
+    fixture.write_source_file(
+        "roles/worker/full.md",
+        "# Role - worker\n\n## Contract\n\nRole body.\n",
+    );
+    fixture.write_role_metadata(&["worker"]);
+    fixture.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker [example])]\n",
+    );
+
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("profiled role with optional skill generates");
+
+    let claude = fixture.read_workspace_file(".claude/agents/worker.md");
+    assert!(claude.contains("model: claude-test\neffort: high"));
+    assert!(claude.contains("## optional skills"));
+    assert!(claude.contains("- `example`"));
+    assert!(!claude.contains("This body must not be preloaded."));
+
+    let pi = fixture.read_workspace_file(".pi/agents/worker.md");
+    assert!(pi.contains("model: 'openai-codex/gpt-test'\nthinking: high\nskills: example"));
+    assert!(pi.contains("## optional skills"));
+    assert!(!pi.contains("This body must not be preloaded."));
+
+    let codex = fixture.read_workspace_file(".codex/agents/worker.toml");
+    assert!(codex.contains("model = \"gpt-test\""));
+    assert!(codex.contains("model_reasoning_effort = \"high\""));
+    assert!(codex.contains("## optional skills"));
+    assert!(!codex.contains("This body must not be preloaded."));
+}
+
+#[test]
+fn role_model_assignments_reject_missing_duplicate_stale_and_duplicate_catalog_entries() {
+    let missing = Fixture::new();
+    missing.write_role_generation_sources();
+    missing.write_source_file("manifests/role-model-assignments.nota", "[]\n");
+    let error = missing
+        .generate(GenerationMode::Write)
+        .expect_err("missing assignment fails");
+    assert!(
+        matches!(error, Error::MissingRoleModelAssignment { .. }),
+        "{error:?}"
+    );
+
+    let duplicate = Fixture::new();
+    duplicate.write_role_generation_sources();
+    duplicate.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(worker (gpt-test High) (claude-test High)) (worker (gpt-test High) (claude-test High))]\n",
+    );
+    let error = duplicate
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate assignment fails");
+    assert!(
+        matches!(error, Error::DuplicateRoleModelAssignment { .. }),
+        "{error:?}"
+    );
+
+    let stale = Fixture::new();
+    stale.write_role_generation_sources();
+    stale.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(worker (gpt-test High) (claude-test High)) (retired-role (gpt-test High) (claude-test High))]\n",
+    );
+    let error = stale
+        .generate(GenerationMode::Write)
+        .expect_err("stale assignment fails");
+    assert!(
+        matches!(error, Error::StaleRoleModelAssignment { .. }),
+        "{error:?}"
+    );
+
+    let duplicate_catalog = Fixture::new();
+    duplicate_catalog.write_role_generation_sources();
+    duplicate_catalog.write_source_file(
+        "manifests/model-catalog.nota",
+        "[(ChatGpt (gpt-test openai-codex [High])) (ChatGpt (gpt-test openai-codex [High])) (Claude (claude-test [High]))]\n",
+    );
+    let error = duplicate_catalog
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate catalog entry fails");
+    assert!(
+        matches!(error, Error::DuplicateModelCatalogEntry { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn role_model_assignments_reject_unsupported_effort_and_family_mismatch() {
+    let unsupported = Fixture::new();
+    unsupported.write_role_generation_sources();
+    unsupported.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(worker (unknown-model High) (claude-test High))]\n",
+    );
+    let error = unsupported
+        .generate(GenerationMode::Write)
+        .expect_err("unknown model fails");
+    assert!(
+        matches!(error, Error::UnsupportedRoleModel { .. }),
+        "{error:?}"
+    );
+
+    let effort = Fixture::new();
+    effort.write_role_generation_sources();
+    effort.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(worker (gpt-test Xhigh) (claude-test High))]\n",
+    );
+    let error = effort
+        .generate(GenerationMode::Write)
+        .expect_err("unsupported effort fails");
+    assert!(
+        matches!(error, Error::UnsupportedRoleModelEffort { .. }),
+        "{error:?}"
+    );
+
+    let family = Fixture::new();
+    family.write_role_generation_sources();
+    family.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(worker (claude-test High) (gpt-test High))]\n",
+    );
+    let error = family
+        .generate(GenerationMode::Write)
+        .expect_err("family mismatch fails");
+    assert!(
+        matches!(error, Error::RoleModelFamilyMismatch { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn optional_skill_metadata_rejects_missing_duplicate_stale_and_inactive_references() {
+    let missing = Fixture::new();
+    missing.write_role_generation_sources();
+    missing.write_source_file("manifests/role-optional-skills.nota", "[]\n");
+    let error = missing
+        .generate(GenerationMode::Write)
+        .expect_err("missing optional metadata fails");
+    assert!(
+        matches!(error, Error::MissingRoleOptionalSkills { .. }),
+        "{error:?}"
+    );
+
+    let duplicate = Fixture::new();
+    duplicate.write_role_generation_sources();
+    duplicate.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker []) (worker [])]\n",
+    );
+    let error = duplicate
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate optional metadata fails");
+    assert!(
+        matches!(error, Error::DuplicateRoleOptionalSkills { .. }),
+        "{error:?}"
+    );
+
+    let stale = Fixture::new();
+    stale.write_role_generation_sources();
+    stale.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker []) (retired-role [])]\n",
+    );
+    let error = stale
+        .generate(GenerationMode::Write)
+        .expect_err("stale optional metadata fails");
+    assert!(
+        matches!(error, Error::StaleRoleOptionalSkills { .. }),
+        "{error:?}"
+    );
+
+    let inactive = Fixture::new();
+    inactive.write_role_generation_sources();
+    inactive.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker [renamed-skill])]\n",
+    );
+    let error = inactive
+        .generate(GenerationMode::Write)
+        .expect_err("inactive optional skill fails");
+    assert!(
+        matches!(error, Error::MissingOptionalSkill { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
+    let duplicate = Fixture::new();
+    duplicate.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    duplicate.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+    );
+    duplicate.write_role_metadata(&["worker"]);
+    duplicate.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker [example example])]\n",
+    );
+    let error = duplicate
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate optional skill fails");
+    assert!(
+        matches!(error, Error::DuplicateOptionalSkill { .. }),
+        "{error:?}"
+    );
+
+    let incompatible = Fixture::new();
+    incompatible.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example example Craft Topic [Example skill.] [ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+    );
+    incompatible.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+    );
+    incompatible.write_role_metadata(&["worker"]);
+    incompatible.write_source_file(
+        "manifests/role-optional-skills.nota",
+        "[(worker [example])]\n",
+    );
+    let error = incompatible
+        .generate(GenerationMode::Write)
+        .expect_err("target-incompatible skill fails");
+    assert!(
+        matches!(error, Error::TargetIncompatibleOptionalSkill { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
 fn universal_role_modules_expand_into_every_role_packet_without_per_role_manifest_entries() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
         "[(Role (worker worker [feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
+    fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
         "[(worker roles/worker/full.md [] RoleSource) (universal modules/universal/full.md [] RoleComposition) (feature modules/feature/full.md [] RoleComposition)]\n",
@@ -869,26 +1091,27 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (orchestration orchestration Meta Mechanism [Orchestration skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [orchestration] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (management management Meta Mechanism [Management skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [management] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
+    fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (orchestration modules/orchestration/full.md [] RuntimeSkill) (claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)]\n",
+        "[(worker roles/worker/full.md [] RoleSource) (management modules/management/full.md [] RuntimeSkill) (claude-management modules/claude-management/full.md [] RuntimeSkill)]\n",
     );
     fixture.write_source_file(
         "manifests/target-module-insertions.nota",
-        "[(orchestration ClaudeSkill [claude-orchestration]) (orchestration ClaudeAgent [claude-orchestration])]\n",
+        "[(management ClaudeSkill [claude-management]) (management ClaudeAgent [claude-management])]\n",
     );
     fixture.write_source_file(
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_source_file(
-        "modules/orchestration/full.md",
-        "# Skill - orchestration\n\n## Shared Rule\n\nShared orchestration.\n",
+        "modules/management/full.md",
+        "# Skill - management\n\n## Shared Rule\n\nShared management.\n",
     );
     fixture.write_source_file(
-        "modules/claude-orchestration/full.md",
+        "modules/claude-management/full.md",
         "# Module - Target reply surface\n\n## Clarification UI\n\nTarget overlay.\n",
     );
 
@@ -896,30 +1119,36 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
         .generate(GenerationMode::Write)
         .expect("target insertions generate");
 
-    let agents_skill = fixture.read_workspace_file(".agents/skills/orchestration/SKILL.md");
-    assert!(agents_skill.contains("Shared orchestration."));
+    let agents_skill = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
+    assert!(agents_skill.contains("Shared management."));
     assert!(!agents_skill.contains("Target overlay."));
 
-    let claude_skill = fixture.read_workspace_file(".claude/skills/orchestration/SKILL.md");
-    assert!(claude_skill.contains("Shared orchestration."));
+    let claude_skill = fixture.read_workspace_file(".claude/skills/management/SKILL.md");
+    assert!(claude_skill.contains("Shared management."));
     assert!(claude_skill.contains("Target overlay."));
 
     let claude_role = fixture.read_workspace_file(".claude/agents/worker.md");
-    assert!(claude_role.contains("Shared orchestration."));
+    assert!(claude_role.contains("Shared management."));
     assert!(claude_role.contains("Target overlay."));
 
     let codex_role = fixture.read_workspace_file(".codex/agents/worker.toml");
-    assert!(codex_role.contains("Shared orchestration."));
+    assert!(codex_role.contains("Shared management."));
     assert!(!codex_role.contains("Target overlay."));
 
     let pi_role = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi_role.contains("Shared orchestration."));
+    assert!(pi_role.contains("Shared management."));
     assert!(!pi_role.contains("Target overlay."));
 }
 
 #[test]
 fn role_generation_rejects_retired_current_destination_prose() {
-    for phrase in ["Repo Operator", "Weave Operator", "Intent Maintainer"] {
+    for phrase in [
+        "Repo Operator",
+        "Weave Operator",
+        "Intent Maintainer",
+        "workspace essence",
+        "workspace intent",
+    ] {
         let fixture = Fixture::new();
         fixture.write_role_generation_sources();
         fixture.write_source_file(
@@ -1020,6 +1249,7 @@ fn generation_rejects_duplicate_role_output_paths_before_write() {
         "manifests/active-outputs.nota",
         "[(Role (worker worker [] [Worker role.] [ClaudeAgent ClaudeAgent]))]\n",
     );
+    fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
         "[(worker roles/worker/full.md [] RoleSource)]\n",
@@ -1093,6 +1323,7 @@ fn generation_rejects_runtime_module_as_role_source() {
         "manifests/active-outputs.nota",
         "[(Role (worker worker [] [Worker role.] [ClaudeAgent]))]\n",
     );
+    fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
         "[(worker roles/worker/full.md [] RuntimeSkill)]\n",
@@ -1124,6 +1355,7 @@ fn generation_rejects_role_required_module_missing_from_dependency_index() {
         "manifests/active-outputs.nota",
         "[(Role (worker worker [spirit-query] [Worker role.] [ClaudeAgent]))]\n",
     );
+    fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
         "[(worker roles/worker/full.md [] RoleSource)]\n",
@@ -1344,6 +1576,7 @@ fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
         "manifests/active-outputs.nota",
         "[(Skill (new-skill new-skill Craft Topic [New skill.] [AgentsSkill ClaudeSkill])) (Role (new-worker new-worker [] [New worker.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
+    fixture.write_role_metadata(&["new-worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
         "[(new-skill modules/new-skill/full.md [] RuntimeSkill) (new-worker roles/new-worker/full.md [] RoleSource)]\n",
@@ -1437,6 +1670,32 @@ impl Fixture {
         self.write_source_file(
             "manifests/module-dependencies.nota",
             "[(worker roles/worker/full.md [] RoleSource) (shared modules/shared/full.md [] RoleComposition) (feature modules/feature/full.md [shared] RoleComposition)]\n",
+        );
+        self.write_role_metadata(&["worker"]);
+    }
+
+    fn write_role_metadata(&self, role_identifiers: &[&str]) {
+        self.write_source_file(
+            "manifests/model-catalog.nota",
+            "[(ChatGpt (gpt-test openai-codex [Medium High])) (Claude (claude-test [Medium High]))]\n",
+        );
+        let assignments = role_identifiers
+            .iter()
+            .map(|role| format!("({role} (gpt-test High) (claude-test High))"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.write_source_file(
+            "manifests/role-model-assignments.nota",
+            &format!("[{assignments}]\n"),
+        );
+        let optional_skills = role_identifiers
+            .iter()
+            .map(|role| format!("({role} [])"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.write_source_file(
+            "manifests/role-optional-skills.nota",
+            &format!("[{optional_skills}]\n"),
         );
     }
 

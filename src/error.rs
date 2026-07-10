@@ -47,6 +47,75 @@ pub enum Error {
     #[error("module dependency cycle: {}", module_identifiers.join(" -> "))]
     ModuleDependencyCycle { module_identifiers: Vec<String> },
 
+    #[error("model `{model_identifier}` is listed more than once in the model catalog")]
+    DuplicateModelCatalogEntry { model_identifier: String },
+
+    #[error("active role `{role_identifier}` has no model assignment")]
+    MissingRoleModelAssignment { role_identifier: String },
+
+    #[error("role `{role_identifier}` is listed more than once in role model assignments")]
+    DuplicateRoleModelAssignment { role_identifier: String },
+
+    #[error("model assignment names inactive role `{role_identifier}`")]
+    StaleRoleModelAssignment { role_identifier: String },
+
+    #[error("role `{role_identifier}` assigns unsupported model `{model_identifier}`")]
+    UnsupportedRoleModel {
+        role_identifier: String,
+        model_identifier: String,
+    },
+
+    #[error(
+        "role `{role_identifier}` assigns `{model_identifier}` as {expected_family}, but the catalog marks it {actual_family}"
+    )]
+    RoleModelFamilyMismatch {
+        role_identifier: String,
+        model_identifier: String,
+        expected_family: String,
+        actual_family: String,
+    },
+
+    #[error(
+        "role `{role_identifier}` assigns unsupported effort `{effort}` to model `{model_identifier}`"
+    )]
+    UnsupportedRoleModelEffort {
+        role_identifier: String,
+        model_identifier: String,
+        effort: String,
+    },
+
+    #[error("active role `{role_identifier}` has no optional-skill metadata")]
+    MissingRoleOptionalSkills { role_identifier: String },
+
+    #[error("role `{role_identifier}` is listed more than once in optional-skill metadata")]
+    DuplicateRoleOptionalSkills { role_identifier: String },
+
+    #[error("optional-skill metadata names inactive role `{role_identifier}`")]
+    StaleRoleOptionalSkills { role_identifier: String },
+
+    #[error("role `{role_identifier}` lists optional skill `{skill_identifier}` more than once")]
+    DuplicateOptionalSkill {
+        role_identifier: String,
+        skill_identifier: String,
+    },
+
+    #[error(
+        "role `{role_identifier}` lists inactive or renamed optional skill `{skill_identifier}`"
+    )]
+    MissingOptionalSkill {
+        role_identifier: String,
+        skill_identifier: String,
+    },
+
+    #[error(
+        "optional skill `{skill_identifier}` for role `{role_identifier}` does not support role surface `{role_surface}`"
+    )]
+    TargetIncompatibleOptionalSkill {
+        role_identifier: String,
+        skill_identifier: String,
+        role_surface: String,
+    },
+
     #[error(
         "generated output path `{relative_path}` resolves to duplicate physical path {physical_path}"
     )]

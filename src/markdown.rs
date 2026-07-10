@@ -79,6 +79,13 @@ pub struct MarkdownFragment {
 }
 
 impl MarkdownFragment {
+    pub fn from_text(path: WorkspacePath, text: impl Into<String>) -> Self {
+        Self {
+            path,
+            text: text.into(),
+        }
+    }
+
     pub fn read(path: WorkspacePath) -> Result<Self> {
         let full_path = path.full_path();
         fs::read_to_string(&full_path)

@@ -2,9 +2,9 @@
 
 ## Rules
 
-A Session is a first-class cognitive grouping named by the orchestrator in CamelCase. It groups related lanes and is not an edit lock.
+A Session is a first-class cognitive grouping named by the Manager in CamelCase. It groups related lanes and is not an edit lock.
 
-A Lane belongs to one Session and names one worker's live task. The orchestrator assigns each editing worker a meaningful lane name. Do not use a role, discipline, or generic agent type as the lane name.
+A Lane belongs to one Session and names one worker's live task. The Manager assigns each editing worker a meaningful lane name. Do not use a role, discipline, or generic agent type as the lane name.
 
 The lane carries role and authority metadata. The role says what kind of agent acts; the lane says what this worker is doing now.
 
@@ -23,7 +23,7 @@ meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structu
 
 Use exactly one NOTA string object in each detail slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
-A Fresh duplicate registration is a conflict and blocker. An orchestrator-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context. To resume a lane this session previously registered and released, register it in Recovery mode, not Fresh; Fresh conflicts with the session's own released record.
+A Fresh duplicate registration is a conflict and blocker. A manager-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context. To resume a lane this session previously registered and released, register it in Recovery mode, not Fresh; Fresh conflicts with the session's own released record.
 
 Observe with the ordinary Orchestrate surface when coordination state is evidence: sessions, all lanes, or lanes in one session. Lane observations include age, status, and resource claims. When showing claim information to agents, include direct age rather than only a wall-clock or start timestamp.
 
@@ -39,7 +39,7 @@ Large passive timeout or age is evidence for judgment only; do not invent a hear
 
 Before editing shared files or running write commands, register the assigned lane, then make ordinary Orchestrate claims under that lane.
 
-At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when orchestration owns session cleanup or all remaining lanes are yours.
+At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when Manager owns session cleanup or all remaining lanes are yours.
 
 ```sh
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"

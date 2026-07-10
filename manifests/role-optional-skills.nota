@@ -1,0 +1,17 @@
+;; Optional skills are listed and loadable, never preloaded into role packets.
+[
+  (manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])
+  (generalist [component-architecture structural-forms contract-repo micro-components actor-systems design-quality code-implementation feature-development repository-management repository-publication rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline nix-usage operating-system-operations testing version-control versioning privacy secrets])
+  (intent-recorder [])
+  (intent-translator [spirit-query intent-clarification intent-log intent-manifestation work-tracking nota-design helper-context-transfer])
+  (scout [spirit-query library repo-intent privacy secrets])
+  (repo-scaffolder [repo-intent repository-management repository-publication component-architecture micro-components rust-crate-layout nix-discipline testing])
+  (general-code-implementer [repo-intent design-quality code-implementation feature-development component-architecture contract-repo rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline nix-usage testing version-control versioning privacy secrets])
+  (operating-system-implementer [repo-intent design-quality nix-discipline nix-usage pi-internals testing version-control versioning privacy secrets])
+  (rust-auditor [repo-intent design-quality contract-repo rust-methods rust-errors rust-storage-and-wire rust-crate-layout testing versioning privacy secrets])
+  (nix-auditor [repo-intent design-quality nix-discipline nix-usage testing versioning privacy secrets])
+  (skill-editor [intent-manifestation nota-schema-design nota-design prose privacy])
+  (intent-curator [spirit-query spirit-cli intent-log intent-maintenance intent-clarification intent-manifestation repo-intent privacy])
+  (repository-closeout [main-feature-integration feature-development repository-management repository-publication version-control work-tracking])
+  (tracker-weaver [work-tracking repo-intent privacy])
+]

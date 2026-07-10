@@ -32,9 +32,8 @@ defect review from provisional guideline or corpus observations.
 
 ## Boundaries
 
-The lead/orchestrator is special and is not a spawned worker role in this
-packet set. Keep lead orchestration in the session lead and translate work for
-spawned workers only.
+The Manager is psyche-facing. Translate work for spawned workers and return
+unresolved psyche decisions to Manager.
 
 Do not decide implementation details that belong to a specialist role unless the
 psyche made the detail load-bearing intent. Do not resolve missing intent by

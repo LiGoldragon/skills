@@ -13,7 +13,7 @@
   GeneratedFile { OutputPath ByteCount }
   OutputPath Path {| Display AsRef PartialEq |}
   ByteCount Integer {| Display PartialEq PartialOrd |}
-  Manifest { OutputPath OutputKind OutputSurface Frontmatter Modules }
+  Manifest { OutputPath OutputKind OutputSurface Frontmatter OptionalSkills Modules }
   OutputKind [Markdown Nota Toml]
   OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeCommand CodexPrompt CodexCommand ClaudeAgent CodexAgent PiAgent]
   Frontmatter (Vector FrontmatterEntry)
@@ -26,12 +26,27 @@
   ActiveOutput [(Skill ActiveSkill) (Role ActiveRole)]
   ActiveSkill { OutputIdentifier ModuleIdentifier SkillCategory SkillTier SkillDescription TargetSurfaces }
   ActiveRole { OutputIdentifier ModuleIdentifier IncludedModules RoleDescription RoleTargetSurfaces }
-  OutputIdentifier String {| Display AsRef PartialEq |}
+  OutputIdentifier String {| Display AsRef PartialEq Ord |}
   ModuleIdentifier String {| Display AsRef PartialEq Ord |}
   IncludedModules (Vector ModuleIdentifier)
   RoleDescription String {| Display AsRef PartialEq |}
   RoleTargetSurfaces (Vector RoleTargetSurface)
   RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
+  ModelCatalog (Vector ModelCatalogEntry)
+  ModelCatalogEntry [(ChatGpt ChatGptModel) (Claude ClaudeModel)]
+  ChatGptModel { ModelIdentifier PiProvider SupportedEfforts }
+  ClaudeModel { ModelIdentifier SupportedEfforts }
+  ModelIdentifier String {| Display AsRef PartialEq Ord |}
+  PiProvider String {| Display AsRef PartialEq |}
+  SupportedEfforts (Vector EffortLevel)
+  EffortLevel [Medium High Xhigh]
+  RoleModelAssignments (Vector RoleModelAssignment)
+  RoleModelAssignment { OutputIdentifier ChatGptModelAssignment ClaudeModelAssignment }
+  ChatGptModelAssignment { ModelIdentifier EffortLevel }
+  ClaudeModelAssignment { ModelIdentifier EffortLevel }
+  RoleOptionalSkills (Vector RoleOptionalSkill)
+  RoleOptionalSkill { OutputIdentifier OptionalSkills }
+  OptionalSkills (Vector OutputIdentifier)
   ModuleDependencies (Vector ModuleDependency)
   UniversalRoleModules (Vector ModuleIdentifier)
   ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }

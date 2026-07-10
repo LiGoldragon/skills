@@ -1,7 +1,6 @@
-;; Target-specific module insertion index for SkillDoctrineV2 generation.
+;; Target-specific module insertion index.
 ;; Each record is: base module id, output surface, inserted module ids.
-;; Inserted modules append after the base module only for the named generated surface.
 [
-  (orchestration ClaudeSkill [claude-orchestration])
-  (orchestration ClaudeAgent [claude-orchestration])
+  (management ClaudeSkill [claude-management])
+  (management ClaudeAgent [claude-management])
 ]

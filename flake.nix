@@ -236,16 +236,11 @@
             fi
             touch "$out"
           '';
-          stale-orchestration-aliases-removed = pkgs.runCommand "skills-stale-orchestration-aliases-removed" { } ''
-            dash='-'
-            old_prefix='intent-led'
-            old_skill="$old_prefix$dash"'orchestration'
-            generate_wrapper="generate-$old_skill"
-            check_wrapper="check-$old_skill"
-            generate_request="$old_skill-generate"
-            check_request="$old_skill-check"
-            if grep -R -F -e "$old_skill" -e "$generate_wrapper" -e "$check_wrapper" -e "$generate_request" -e "$check_request" ${cleanSource}/apps ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/skills-check.nota ${cleanSource}/skills-generate.nota 2>/dev/null; then
-              echo "obsolete narrow orchestration aliases or requests remain" >&2
+          stale-management-aliases-removed = pkgs.runCommand "skills-stale-management-aliases-removed" { } ''
+            test ! -e ${cleanSource}/modules/orchestration
+            test ! -e ${cleanSource}/modules/claude-orchestration
+            if grep -R -E '\(orchestration |modules/orchestration|claude-orchestration|Role - orchestrator|the orchestrator' ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/roles ${cleanSource}/README.md ${cleanSource}/ARCHITECTURE.md ${cleanSource}/skills.md; then
+              echo "obsolete orchestration skill or orchestrator role aliases remain" >&2
               exit 1
             fi
             touch "$out"
@@ -289,113 +284,62 @@
             done
             touch "$out"
           '';
-          orchestration-doctrine-guardrails = pkgs.runCommand "skills-orchestration-doctrine-guardrails" { } ''
-            orchestration=${cleanSource}/modules/orchestration/full.md
-            claude_orchestration=${cleanSource}/modules/claude-orchestration/full.md
+          management-doctrine-guardrails = pkgs.runCommand "skills-management-doctrine-guardrails" { } ''
+            management=${cleanSource}/modules/management/full.md
+            claude_management=${cleanSource}/modules/claude-management/full.md
+            manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
             target_insertions=${cleanSource}/manifests/target-module-insertions.nota
-            grep -F 'refuses direct task work' "$orchestration" >/dev/null
-            grep -F 'It does not inspect files, command output, links, status, or systems directly.' "$orchestration" >/dev/null
-            grep -F 'read-only Spirit queries' "$orchestration" >/dev/null
-            grep -F 'Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.' "$orchestration" >/dev/null
-            grep -F 'Route candidate durable intent' "$orchestration" >/dev/null
-            if grep -F 'Capture durable intent' "$orchestration"; then
-              echo "orchestration must route candidate durable intent, not say the orchestrator captures it directly" >&2
-              exit 1
-            fi
-            grep -F "Be curious about the psyche's design intent without turning curiosity into permission seeking." "$orchestration" >/dev/null
-            grep -F 'Ask focused clarification questions when the desired end shape, authority boundary, risk, privacy boundary, or acceptance criterion is unclear' "$orchestration" >/dev/null
-            grep -F 'During design, push back by naming contradictions, weaker assumptions, hidden constraints, design tension, and better end shapes.' "$orchestration" >/dev/null
-            grep -F 'Act when the psyche gives a concrete, scoped, authorized next step.' "$orchestration" >/dev/null
-            grep -F 'Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.' "$orchestration" >/dev/null
-            grep -F 'Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, credentialed, substantial implementation, durable doctrine, or genuinely ambiguous actions.' "$orchestration" >/dev/null
-            grep -F 'Questions must be single-focus and unambiguous; avoid bundled yes/no questions where a short answer could be ambiguous.' "$orchestration" >/dev/null
-            grep -F 'Confirm suspected interpretation with the psyche instead of silently assuming.' "$orchestration" >/dev/null
-            grep -F 'Brief by default in interactive turns: state the question, decision, blocker, worker return, or next action that matters now.' "$orchestration" >/dev/null
-            grep -F 'When a worker returns while other relevant workers are still running, emit only an extremely short interim note' "$orchestration" >/dev/null
-            grep -F 'Treat the psyche as authority, bottleneck, and limited attention.' "$orchestration" >/dev/null
-            if grep -F 'Ask at least one before proposing method or dispatching workers' "$orchestration"; then
-              echo "orchestration must not require ritual clarification before clear small actions" >&2
-              exit 1
-            fi
-            if grep -F 'Require two explicit psyche approvals' "$orchestration"; then
-              echo "orchestration must not require fixed two-approval gates" >&2
-              exit 1
-            fi
-            grep -F 'Dispatch one appropriately typed implementation worker for a clear, authorized routine task with a known path.' "$orchestration" >/dev/null
-            grep -F 'Use a weaver only when the work has real non-linear dependencies, durable tracking value, or multiple independently actionable jobs.' "$orchestration" >/dev/null
-            if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$orchestration"; then
-              echo "orchestration must keep operational mechanics in their owning doctrine" >&2
-              exit 1
-            fi
-            grep -F 'Match worker model and thinking level to work intensity' "$orchestration" >/dev/null
-            grep -F 'small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames' "$orchestration" >/dev/null
-            grep -F 'normal implementation workers for ordinary implementation with local tests' "$orchestration" >/dev/null
-            grep -F 'strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions' "$orchestration" >/dev/null
-            grep -F 'Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it.' "$orchestration" >/dev/null
-            if grep -F 'never dispatch a worker on the `fable5` model' "$orchestration" "$claude_orchestration"; then
-              echo "orchestration must not carry a global fable5 worker ban" >&2
-              exit 1
-            fi
-            grep -F 'Use a separate auditor only for substantial or consequence-gated completed work, with strength matched to risk' "$orchestration" >/dev/null
-            grep -F 'Keep context-handover separate and manual-load only' "$orchestration" >/dev/null
-            grep -F '(orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
-            grep -F 'Do not paste fixed commit or push protocols' "$orchestration" >/dev/null
-            grep -F 'generated role packet already embeds the required doctrine' "$orchestration" >/dev/null
-            grep -F '(claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(orchestration ClaudeSkill [claude-orchestration])' "$target_insertions" >/dev/null
-            grep -F '(orchestration ClaudeAgent [claude-orchestration])' "$target_insertions" >/dev/null
-            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_orchestration" >/dev/null
-            if grep -F 'Brief by default in interactive turns' "$claude_orchestration"; then
-              echo "generic reply shape belongs in shared orchestration" >&2
-              exit 1
-            fi
-            if grep -F 'When a worker returns while other relevant workers are still running' "$claude_orchestration"; then
-              echo "generic interim worker return guidance belongs in shared orchestration" >&2
-              exit 1
-            fi
-            if grep -F 'Claude orchestration surfaces' "$claude_orchestration"; then
-              echo "Claude overlay should read naturally in generated surfaces" >&2
-              exit 1
-            fi
-            if grep -F 'multiple-choice, picker, or' "$orchestration"; then
-              echo "Claude UI preference belongs in the Claude target overlay, not shared orchestration" >&2
+            grep -F 'When the request is concrete and doubt is absent, dispatch' "$management" >/dev/null
+            grep -F 'Direct known work goes to one specialist.' "$management" >/dev/null
+            grep -F 'documentation-first' "$management" >/dev/null
+            grep -F 'one accountable Generalist' "$management" >/dev/null
+            grep -F 'peer specialists in parallel' "$management" >/dev/null
+            grep -F 'Do not impose a rigid one-level delegation limit.' "$management" >/dev/null
+            grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
+            grep -F 'load only the optional skills listed in its generated role packet' "$management" >/dev/null
+            grep -F 'Do not repeat ambient' "$management" >/dev/null
+            grep -F 'synthesize in ordinary English' "$management" >/dev/null
+            grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
+            grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
+            grep -F '(Role (manager role-manager [management]' "$manifest" >/dev/null
+            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
+            if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$management"; then
+              echo "management must keep operational mechanics in owning doctrine" >&2
               exit 1
             fi
             touch "$out"
           '';
-          role-composition-spirit-query = pkgs.runCommand "skills-role-composition-spirit-query" { } ''
+          slim-role-composition = pkgs.runCommand "skills-slim-role-composition" { } ''
             manifest=${cleanSource}/manifests/active-outputs.nota
-            index=${cleanSource}/manifests/module-dependencies.nota
-            grep -F '(spirit-query modules/spirit-query/full.md [nota-design] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(Skill (spirit-query spirit-query Meta Topic' "$manifest" >/dev/null
-            for role in intent-translator scout repo-scaffolder general-code-implementer operating-system-implementer rust-auditor nix-auditor skill-editor intent-curator tracker-weaver; do
-              grep -E "\\(Role \\($role [^]]*spirit-query[^]]*nota-design" "$manifest" >/dev/null || {
-                echo "$role role must embed read-only Spirit query and NOTA design doctrine" >&2
-                exit 1
-              }
-            done
-            grep -E "\\(Role \\(repository-closeout [^]]*nota-design" "$manifest" >/dev/null || {
-              echo "repository-closeout role must embed NOTA design doctrine" >&2
-              exit 1
-            }
-            if grep -F '(Role (repository-closeout ' "$manifest" | grep -F 'spirit-query'; then
-              echo "repository-closeout remains the mechanical closeout exemption and must not embed spirit-query" >&2
+            if grep -F '(Role (' "$manifest" | grep -E '\[[^]]*(spirit-query|nota-design)[^]]*\]'; then
+              echo "roles must not preload broad Spirit or NOTA runtime skills" >&2
               exit 1
             fi
+            grep -F '(Role (intent-recorder role-intent-recorder [spirit-submission]' "$manifest" >/dev/null
+            grep -F '[agent-feedback-loop return-to-manager]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
+            touch "$out"
+          '';
+          role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
+            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [High]))' ${cleanSource}/manifests/model-catalog.nota >/dev/null
+            grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' ${cleanSource}/manifests/role-model-assignments.nota >/dev/null
+            grep -F '(intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-4-6 Medium))' ${cleanSource}/manifests/role-model-assignments.nota >/dev/null
+            grep -F '(manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
             touch "$out"
           '';
           active-appellations = pkgs.runCommand "skills-active-appellations" { } ''
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
-            for required in component-architecture design-quality version-control work-tracking intent-curator repository-closeout tracker-weaver; do
+            for required in component-architecture design-quality version-control work-tracking management manager generalist intent-recorder intent-curator repository-closeout tracker-weaver; do
               grep -F "$required" "$manifest" >/dev/null || {
                 echo "$required must be present in active output manifest" >&2
                 exit 1
               }
               grep -F "$required" "$index" >/dev/null || true
             done
-            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' human-interaction intent-maintainer repo-operator weave-operator; do
+            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' human-interaction 'Skill (orchestration ' 'Role (orchestrator ' intent-maintainer repo-operator weave-operator; do
               if grep -F "$retired" "$manifest"; then
                 echo "$retired must not be an active output appellation" >&2
                 exit 1

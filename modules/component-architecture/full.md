@@ -10,7 +10,7 @@ authority boundary.
 
 The runtime crate owns state, logic, daemon process, and thin CLI. Contract
 crates own wire vocabulary, codecs, and method surfaces only. They do not own
-actors, runtime state, daemon startup, Tokio orchestration, or policy decisions.
+actors, runtime state, daemon startup, Tokio coordination, or policy decisions.
 
 Name the public contract `signal-<component>`. Name the owner-policy contract
 `meta-signal-<component>`. Repos may be named canonically; do not teach paths or

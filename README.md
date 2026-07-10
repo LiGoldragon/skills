@@ -27,8 +27,11 @@ SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- skil
 The source-side active output manifest lives at
 `manifests/active-outputs.nota`; module paths, dependencies, and source module
 kind live at `manifests/module-dependencies.nota`; target-specific overlays live
-at `manifests/target-module-insertions.nota`. The CLI consumes that active
-manifest for normal generation. The compatibility roster at
+at `manifests/target-module-insertions.nota`. Canonical model support lives in
+`manifests/model-catalog.nota`; every active role has one profile in
+`manifests/role-model-assignments.nota` and one optional-skill list in
+`manifests/role-optional-skills.nota`. The CLI consumes these inputs for normal
+generation. The compatibility roster at
 `manifests/skills-roster.nota` remains parseable for legacy checks and
 archived/deleted skill modeling.
 
@@ -50,9 +53,12 @@ Role outputs emit harness-native worker packets:
 - Codex: `.codex/agents/<role>.toml`
 - Pi: `.pi/agents/<role>.md`
 
-Generated role packets are the normal runtime doctrine bundle. Each packet
-carries its role source plus curated included modules and dependency-expanded
-modules from the manifest/index model. Primary `skills/*.md` skill bodies are
-not emitted when no consuming harness needs them.
+Generated role packets carry role source plus curated preloaded modules,
+dependency-expanded modules, provider-specific model and effort fields, and a
+validated list of optional skills. Optional skill bodies are loadable but not
+preloaded. Claude receives `model` and `effort`; Pi receives a
+provider-qualified `model` and `thinking`; Codex receives `model` and
+`model_reasoning_effort`. Primary `skills/*.md` skill bodies are not emitted
+when no consuming harness needs them.
 
 `generate-skills` prunes generated skill directories (`.agents/skills`, `.claude/skills`) before writing. Role packet directories are not whole-directory pruned; stale role cleanup uses `skills/generated-role-outputs.nota` so only previously generated role paths are removed. `check-skills` is non-writing and reports stale generated outputs with regeneration guidance.

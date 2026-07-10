@@ -12,6 +12,6 @@ Read-only inspection, byte-for-byte backups for evidence preservation, and isola
 
 Emergency local effective mutation requires explicit psyche authorization for that exact mutation after the worker states the durable source path, rollback owner, preservation needs, and risk.
 
-Preserve active role and action-space restrictions. Do not use Pi internals to bypass orchestration delegation, read-only Spirit boundaries, or repository closeout.
+Preserve active role and action-space restrictions. Do not use Pi internals to bypass management delegation, read-only Spirit boundaries, or repository closeout.
 
 Keep package inputs portable through flake inputs, committed patches, and lock files. Validate the narrow Nix surface that owns the change. Closeout is blocked when Pi behavior depends on uncommitted runtime edits, PATH shims, replaced managed symlinks, or copied installed source.

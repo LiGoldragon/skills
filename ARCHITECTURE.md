@@ -26,6 +26,9 @@ workers do not discover doctrine through a runtime index.
 - `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
 - `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
 - `manifests/universal-role-modules.nota`: modules included in every generated role packet.
+- `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family role models and supported effort levels.
+- `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
+- `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
 - `manifests/skills-roster.nota`: compatibility input for legacy checks and archived/deleted module modeling.
 - `schema/assembly.schema`: schema-authored generator interface source.
 - `src/schema/assembly.rs`: generated Rust interface from `schema/assembly.schema`.
@@ -52,17 +55,17 @@ Derived inventory:
 The active source surface is manifest-owned: one active-outputs manifest lists
 generated `Skill` and `Role` outputs, where presence means active; sidecar
 indexes map module identifiers to source paths, dependencies, target overlays,
-and universal role modules. The active manifest decides what emits; the module
-index decides expansion order and module kind.
+and universal role modules. Role sidecars assign validated model profiles and
+optional skills. The active manifest decides what emits; the module index
+decides expansion order and module kind.
 
 Assembly is ordered concatenation of source modules after manifest expansion.
 For skills, the active skill's module expands through the dependency index and
 the generated output surface's target insertions. For roles, the role body is
-emitted first, followed by universal role modules, per-role included modules,
-their dependencies, and surface-specific insertions. A generated role packet is
-the curated runtime bundle for normal role work; additional doctrine is named
-by the prompt, role packet, dispatch envelope, or local context rather than
-discovered through a generated index.
+emitted first, followed by universal role modules, per-role preloaded modules,
+their dependencies, surface-specific insertions, and a generated list of
+optional skills. Optional skill bodies remain outside the packet until loaded.
+A generated role packet is the curated runtime bundle for normal role work.
 
 Module dependencies are typed by module identifier rather than inferred from
 markdown links or filesystem layout. The dependency index also carries source
@@ -74,13 +77,14 @@ model choice: a base module, output surface, and inserted module list determine
 which overlay appears in a generated harness surface. Universal role modules
 are data, not repeated role prose; the generator includes them in every role
 packet. Generation metadata such as descriptions, tiers, frontmatter, target
-surfaces, and role output identity live in the active manifest or compatibility
-roster.
+surfaces, role output identity, model profiles, and optional skills live in
+manifests or the compatibility roster.
 
 ## Ownership Boundaries
 
 Source markdown owns reusable instruction body. Manifests own generated output
-identity, target surfaces, descriptions, tiers, and harness metadata.
+identity, target surfaces, descriptions, tiers, harness metadata, model
+profiles, and optional-skill lists.
 
 Generated outputs carry the harness-required frontmatter or TOML wrapper, but
 they carry no provenance header. The source repository is the provenance.
@@ -105,7 +109,7 @@ Deleted modules are modeled by compatibility checks and emit no surfaces.
 
 ## Code Map
 
-- `src/assembly.rs`: manifest loading, module expansion, generated output planning, cleanup inventory, and rendering orchestration.
+- `src/assembly.rs`: manifest loading, validation, module expansion, generated output planning, cleanup inventory, and rendering coordination.
 - `src/markdown.rs`: markdown normalization and relative-link rebasing.
 - `src/schema/assembly.rs`: generated Rust schema interface.
 - `tests/generation.rs`: generation, stale cleanup, manifest, dependency, and validation witnesses.

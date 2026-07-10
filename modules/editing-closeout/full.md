@@ -12,6 +12,6 @@ Preserve peer edits. Commit only agent-authored changes when repo doctrine permi
 
 When closeout depends on another repo, branch, package, or generated surface, surface stale dependency pins, unmerged producer branches, and dependencies that have unmerged branches when they affect portability, integration, deployment, repurpose, or closeout.
 
-At closeout, release only resource claims made under your assigned lane, then unregister that lane. Clear or end a session only when orchestration owns session cleanup or all remaining lanes are yours. Do not release generic names or another worker's lane.
+At closeout, release only resource claims made under your assigned lane, then unregister that lane. Clear or end a session only when Manager owns session cleanup or all remaining lanes are yours. Do not release generic names or another worker's lane.
 
 Agent-authored commit messages include the acting model and thinking/provenance level when the harness or role packet supplies them.

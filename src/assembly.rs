@@ -10,22 +10,29 @@ use crate::{
     error::{Error, Result},
     markdown::{MarkdownAssembly, MarkdownFragment},
     schema::assembly::{
-        ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, EntryPoint,
-        EntryPointExtra, ExtraSurface, Frontmatter, FrontmatterEntry, FrontmatterKey,
-        FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode,
-        GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
-        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModuleLifecycle,
-        ModulePath, Modules, Operation, OutputKind, OutputPath, OutputSurface, RoleTargetSurface,
-        SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion, TargetModuleInsertions,
-        TargetSurface, UniversalRoleModules,
+        ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, ChatGptModelAssignment,
+        ClaudeModelAssignment, EffortLevel, EntryPoint, EntryPointExtra, ExtraSurface, Frontmatter,
+        FrontmatterEntry, FrontmatterKey, FrontmatterValue, GeneratedFile, GeneratedFiles,
+        GeneratedRoleOutputs, GenerationMode, GenerationOutcome, GenerationReport,
+        GenerationRequest, Manifest, ManifestPath, ModelCatalog, ModelCatalogEntry,
+        ModelIdentifier, ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind,
+        ModuleLifecycle, ModulePath, Modules, Operation, OptionalSkills, OutputIdentifier,
+        OutputKind, OutputPath, OutputSurface, RoleModelAssignment, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster,
+        TargetModuleInsertion, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
     },
     workspace_path::WorkspacePath,
 };
 
 const CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION: &str = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 const GENERATED_SKILL_BLOCK_BYTE_LIMIT: usize = 32 * 1024;
-const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] =
-    &["Repo Operator", "Weave Operator", "Intent Maintainer"];
+const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] = &[
+    "Repo Operator",
+    "Weave Operator",
+    "Intent Maintainer",
+    "workspace essence",
+    "workspace intent",
+];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandLine {
@@ -202,12 +209,30 @@ impl GenerationSource {
             SourceFile::new(self.source_root.clone(), universal_role_modules_path)
                 .read_optional()?
                 .unwrap_or_else(|| UniversalRoleModules::new(Vec::new()));
-        Ok(GenerationConfiguration::active(
+        let model_catalog_path = manifest_directory.join("model-catalog.nota");
+        let model_catalog: ModelCatalog =
+            SourceFile::new(self.source_root.clone(), model_catalog_path)
+                .read_optional()?
+                .unwrap_or_else(|| ModelCatalog::new(Vec::new()));
+        let role_model_assignments_path = manifest_directory.join("role-model-assignments.nota");
+        let role_model_assignments: RoleModelAssignments =
+            SourceFile::new(self.source_root.clone(), role_model_assignments_path)
+                .read_optional()?
+                .unwrap_or_else(|| RoleModelAssignments::new(Vec::new()));
+        let role_optional_skills_path = manifest_directory.join("role-optional-skills.nota");
+        let role_optional_skills: RoleOptionalSkills =
+            SourceFile::new(self.source_root.clone(), role_optional_skills_path)
+                .read_optional()?
+                .unwrap_or_else(|| RoleOptionalSkills::new(Vec::new()));
+        GenerationConfiguration::active(
             active_outputs,
             module_dependencies,
             target_module_insertions,
             universal_role_modules,
-        ))
+            model_catalog,
+            role_model_assignments,
+            role_optional_skills,
+        )
     }
 
     fn read_legacy_roster(&self) -> Result<GenerationConfiguration> {
@@ -328,11 +353,355 @@ impl GenerationJobs {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleMetadataIndex {
+    entries: BTreeMap<OutputIdentifier, RoleMetadata>,
+}
+
+impl RoleMetadataIndex {
+    fn new(
+        active_outputs: &ActiveOutputs,
+        model_catalog: ModelCatalog,
+        role_model_assignments: RoleModelAssignments,
+        role_optional_skills: RoleOptionalSkills,
+    ) -> Result<Self> {
+        let active_roles: BTreeMap<OutputIdentifier, ActiveRole> = active_outputs
+            .payload()
+            .iter()
+            .filter_map(|output| match output {
+                ActiveOutput::Role(role) => Some((role.output_identifier.clone(), role.clone())),
+                ActiveOutput::Skill(_) => None,
+            })
+            .collect();
+        let active_skills: BTreeMap<OutputIdentifier, ActiveSkill> = active_outputs
+            .payload()
+            .iter()
+            .filter_map(|output| match output {
+                ActiveOutput::Skill(skill) => {
+                    Some((skill.output_identifier.clone(), skill.clone()))
+                }
+                ActiveOutput::Role(_) => None,
+            })
+            .collect();
+        let catalog = ModelCatalogIndex::new(model_catalog)?;
+        let assignments = RoleModelAssignmentIndex::new(role_model_assignments, &active_roles)?;
+        let optional_skills =
+            RoleOptionalSkillIndex::new(role_optional_skills, &active_roles, &active_skills)?;
+        let mut entries = BTreeMap::new();
+        for role_identifier in active_roles.into_keys() {
+            let assignment = assignments.entries.get(&role_identifier).ok_or_else(|| {
+                Error::MissingRoleModelAssignment {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                }
+            })?;
+            let optional = optional_skills
+                .entries
+                .get(&role_identifier)
+                .ok_or_else(|| Error::MissingRoleOptionalSkills {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                })?;
+            let profile = catalog.profile(role_identifier.as_ref(), assignment)?;
+            entries.insert(
+                role_identifier,
+                RoleMetadata {
+                    profile,
+                    optional_skills: optional.clone(),
+                },
+            );
+        }
+        Ok(Self { entries })
+    }
+
+    fn metadata(&self, role_identifier: &OutputIdentifier) -> Result<&RoleMetadata> {
+        self.entries
+            .get(role_identifier)
+            .ok_or_else(|| Error::MissingRoleModelAssignment {
+                role_identifier: role_identifier.as_ref().to_owned(),
+            })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleMetadata {
+    profile: RoleModelProfile,
+    optional_skills: OptionalSkills,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleModelProfile {
+    chat_gpt_model: String,
+    pi_provider: String,
+    chat_gpt_effort: EffortLevel,
+    claude_model: String,
+    claude_effort: EffortLevel,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ModelCatalogIndex {
+    entries: BTreeMap<ModelIdentifier, CatalogModel>,
+}
+
+impl ModelCatalogIndex {
+    fn new(model_catalog: ModelCatalog) -> Result<Self> {
+        let mut entries = BTreeMap::new();
+        for entry in model_catalog.into_payload() {
+            let (identifier, model) = match entry {
+                ModelCatalogEntry::ChatGpt(model) => (
+                    model.model_identifier.clone(),
+                    CatalogModel::ChatGpt {
+                        pi_provider: model.pi_provider.into_payload(),
+                        supported_efforts: model.supported_efforts.into_payload(),
+                    },
+                ),
+                ModelCatalogEntry::Claude(model) => (
+                    model.model_identifier.clone(),
+                    CatalogModel::Claude {
+                        supported_efforts: model.supported_efforts.into_payload(),
+                    },
+                ),
+            };
+            if entries.insert(identifier.clone(), model).is_some() {
+                return Err(Error::DuplicateModelCatalogEntry {
+                    model_identifier: identifier.into_payload(),
+                });
+            }
+        }
+        Ok(Self { entries })
+    }
+
+    fn profile(
+        &self,
+        role_identifier: &str,
+        assignment: &RoleModelAssignment,
+    ) -> Result<RoleModelProfile> {
+        let (chat_gpt_model, pi_provider, chat_gpt_effort) =
+            self.chat_gpt_assignment(role_identifier, &assignment.chat_gpt_model_assignment)?;
+        let (claude_model, claude_effort) =
+            self.claude_assignment(role_identifier, &assignment.claude_model_assignment)?;
+        Ok(RoleModelProfile {
+            chat_gpt_model,
+            pi_provider,
+            chat_gpt_effort,
+            claude_model,
+            claude_effort,
+        })
+    }
+
+    fn chat_gpt_assignment(
+        &self,
+        role_identifier: &str,
+        assignment: &ChatGptModelAssignment,
+    ) -> Result<(String, String, EffortLevel)> {
+        let identifier = assignment.model_identifier.as_ref();
+        let model = self.model(role_identifier, identifier)?;
+        match model {
+            CatalogModel::ChatGpt {
+                pi_provider,
+                supported_efforts,
+            } => {
+                self.validate_effort(
+                    role_identifier,
+                    identifier,
+                    assignment.effort_level,
+                    supported_efforts,
+                )?;
+                Ok((
+                    identifier.to_owned(),
+                    pi_provider.clone(),
+                    assignment.effort_level,
+                ))
+            }
+            CatalogModel::Claude { .. } => Err(Error::RoleModelFamilyMismatch {
+                role_identifier: role_identifier.to_owned(),
+                model_identifier: identifier.to_owned(),
+                expected_family: "ChatGPT".to_owned(),
+                actual_family: "Claude".to_owned(),
+            }),
+        }
+    }
+
+    fn claude_assignment(
+        &self,
+        role_identifier: &str,
+        assignment: &ClaudeModelAssignment,
+    ) -> Result<(String, EffortLevel)> {
+        let identifier = assignment.model_identifier.as_ref();
+        let model = self.model(role_identifier, identifier)?;
+        match model {
+            CatalogModel::Claude { supported_efforts } => {
+                self.validate_effort(
+                    role_identifier,
+                    identifier,
+                    assignment.effort_level,
+                    supported_efforts,
+                )?;
+                Ok((identifier.to_owned(), assignment.effort_level))
+            }
+            CatalogModel::ChatGpt { .. } => Err(Error::RoleModelFamilyMismatch {
+                role_identifier: role_identifier.to_owned(),
+                model_identifier: identifier.to_owned(),
+                expected_family: "Claude".to_owned(),
+                actual_family: "ChatGPT".to_owned(),
+            }),
+        }
+    }
+
+    fn model(&self, role_identifier: &str, model_identifier: &str) -> Result<&CatalogModel> {
+        self.entries
+            .get(&ModelIdentifier::new(model_identifier))
+            .ok_or_else(|| Error::UnsupportedRoleModel {
+                role_identifier: role_identifier.to_owned(),
+                model_identifier: model_identifier.to_owned(),
+            })
+    }
+
+    fn validate_effort(
+        &self,
+        role_identifier: &str,
+        model_identifier: &str,
+        effort: EffortLevel,
+        supported_efforts: &[EffortLevel],
+    ) -> Result<()> {
+        if supported_efforts.contains(&effort) {
+            return Ok(());
+        }
+        Err(Error::UnsupportedRoleModelEffort {
+            role_identifier: role_identifier.to_owned(),
+            model_identifier: model_identifier.to_owned(),
+            effort: effort.as_str().to_owned(),
+        })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum CatalogModel {
+    ChatGpt {
+        pi_provider: String,
+        supported_efforts: Vec<EffortLevel>,
+    },
+    Claude {
+        supported_efforts: Vec<EffortLevel>,
+    },
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleModelAssignmentIndex {
+    entries: BTreeMap<OutputIdentifier, RoleModelAssignment>,
+}
+
+impl RoleModelAssignmentIndex {
+    fn new(
+        assignments: RoleModelAssignments,
+        active_roles: &BTreeMap<OutputIdentifier, ActiveRole>,
+    ) -> Result<Self> {
+        let mut entries = BTreeMap::new();
+        for assignment in assignments.into_payload() {
+            let role_identifier = assignment.output_identifier.clone();
+            if !active_roles.contains_key(&role_identifier) {
+                return Err(Error::StaleRoleModelAssignment {
+                    role_identifier: role_identifier.into_payload(),
+                });
+            }
+            if entries
+                .insert(role_identifier.clone(), assignment)
+                .is_some()
+            {
+                return Err(Error::DuplicateRoleModelAssignment {
+                    role_identifier: role_identifier.into_payload(),
+                });
+            }
+        }
+        Ok(Self { entries })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleOptionalSkillIndex {
+    entries: BTreeMap<OutputIdentifier, OptionalSkills>,
+}
+
+impl RoleOptionalSkillIndex {
+    fn new(
+        role_optional_skills: RoleOptionalSkills,
+        active_roles: &BTreeMap<OutputIdentifier, ActiveRole>,
+        active_skills: &BTreeMap<OutputIdentifier, ActiveSkill>,
+    ) -> Result<Self> {
+        let mut entries = BTreeMap::new();
+        for role_optional_skill in role_optional_skills.into_payload() {
+            let role_identifier = role_optional_skill.output_identifier;
+            let role = active_roles.get(&role_identifier).ok_or_else(|| {
+                Error::StaleRoleOptionalSkills {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                }
+            })?;
+            let mut seen = BTreeSet::new();
+            for skill_identifier in role_optional_skill.optional_skills.payload() {
+                if !seen.insert(skill_identifier.as_ref()) {
+                    return Err(Error::DuplicateOptionalSkill {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        skill_identifier: skill_identifier.as_ref().to_owned(),
+                    });
+                }
+                let skill = active_skills.get(skill_identifier).ok_or_else(|| {
+                    Error::MissingOptionalSkill {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        skill_identifier: skill_identifier.as_ref().to_owned(),
+                    }
+                })?;
+                Self::validate_targets(role, skill)?;
+            }
+            if entries
+                .insert(role_identifier.clone(), role_optional_skill.optional_skills)
+                .is_some()
+            {
+                return Err(Error::DuplicateRoleOptionalSkills {
+                    role_identifier: role_identifier.into_payload(),
+                });
+            }
+        }
+        Ok(Self { entries })
+    }
+
+    fn validate_targets(role: &ActiveRole, skill: &ActiveSkill) -> Result<()> {
+        for role_surface in role.role_target_surfaces.payload() {
+            let required_skill_surface = match role_surface {
+                RoleTargetSurface::ClaudeAgent => TargetSurface::ClaudeSkill,
+                RoleTargetSurface::CodexAgent | RoleTargetSurface::PiAgent => {
+                    TargetSurface::AgentsSkill
+                }
+            };
+            if !skill
+                .target_surfaces
+                .payload()
+                .contains(&required_skill_surface)
+            {
+                return Err(Error::TargetIncompatibleOptionalSkill {
+                    role_identifier: role.output_identifier.as_ref().to_owned(),
+                    skill_identifier: skill.output_identifier.as_ref().to_owned(),
+                    role_surface: format!("{role_surface:?}"),
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+impl EffortLevel {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Xhigh => "xhigh",
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct GenerationConfiguration {
     active_outputs: ActiveOutputs,
     module_dependencies: ModuleDependencies,
     target_module_insertions: TargetModuleInsertions,
     universal_role_modules: UniversalRoleModules,
+    role_metadata: Option<RoleMetadataIndex>,
     compatibility_roster: Option<SkillRoster>,
 }
 
@@ -342,14 +711,24 @@ impl GenerationConfiguration {
         module_dependencies: ModuleDependencies,
         target_module_insertions: TargetModuleInsertions,
         universal_role_modules: UniversalRoleModules,
-    ) -> Self {
-        Self {
+        model_catalog: ModelCatalog,
+        role_model_assignments: RoleModelAssignments,
+        role_optional_skills: RoleOptionalSkills,
+    ) -> Result<Self> {
+        let role_metadata = RoleMetadataIndex::new(
+            &active_outputs,
+            model_catalog,
+            role_model_assignments,
+            role_optional_skills,
+        )?;
+        Ok(Self {
             active_outputs,
             module_dependencies,
             target_module_insertions,
             universal_role_modules,
+            role_metadata: Some(role_metadata),
             compatibility_roster: None,
-        }
+        })
     }
 
     fn legacy(roster: SkillRoster) -> Self {
@@ -358,6 +737,7 @@ impl GenerationConfiguration {
             module_dependencies: roster.module_dependencies(),
             target_module_insertions: TargetModuleInsertions::new(Vec::new()),
             universal_role_modules: UniversalRoleModules::new(Vec::new()),
+            role_metadata: None,
             compatibility_roster: Some(roster),
         }
     }
@@ -413,7 +793,12 @@ impl GenerationConfiguration {
         )?;
         let mut manifests = Vec::new();
         for role in self.active_roles() {
-            for manifest in role.manifests(&module_index, &self.universal_role_modules)? {
+            let role_metadata = self
+                .role_metadata
+                .as_ref()
+                .expect("active role generation has validated metadata");
+            let metadata = role_metadata.metadata(&role.output_identifier)?;
+            for manifest in role.manifests(&module_index, &self.universal_role_modules, metadata)? {
                 manifests.push(manifest);
             }
         }
@@ -530,6 +915,7 @@ impl ActiveSkill {
                 output_kind: OutputKind::Markdown,
                 output_surface,
                 frontmatter: self.frontmatter(),
+                optional_skills: OptionalSkills::new(Vec::new()),
                 modules: modules.clone(),
             });
         }
@@ -551,6 +937,7 @@ impl ActiveRole {
         &self,
         module_index: &ModuleIndex,
         universal_role_modules: &UniversalRoleModules,
+        metadata: &RoleMetadata,
     ) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
         for surface in self.role_target_surfaces.payload() {
@@ -561,7 +948,12 @@ impl ActiveRole {
                 ),
                 output_kind: output_surface.role_output_kind(),
                 output_surface,
-                frontmatter: self.frontmatter(),
+                frontmatter: self.frontmatter(
+                    output_surface,
+                    &metadata.profile,
+                    &metadata.optional_skills,
+                ),
+                optional_skills: metadata.optional_skills.clone(),
                 modules: Modules::new(self.assembled_modules(
                     module_index,
                     universal_role_modules,
@@ -590,8 +982,13 @@ impl ActiveRole {
         Ok(expansion.into_paths())
     }
 
-    fn frontmatter(&self) -> Frontmatter {
-        Frontmatter::new(vec![
+    fn frontmatter(
+        &self,
+        output_surface: OutputSurface,
+        profile: &RoleModelProfile,
+        optional_skills: &OptionalSkills,
+    ) -> Frontmatter {
+        let mut entries = vec![
             FrontmatterEntry {
                 frontmatter_key: FrontmatterKey::new("name"),
                 frontmatter_value: FrontmatterValue::new(self.output_identifier.as_ref()),
@@ -600,7 +997,57 @@ impl ActiveRole {
                 frontmatter_key: FrontmatterKey::new("description"),
                 frontmatter_value: FrontmatterValue::new(self.role_description.as_ref()),
             },
-        ])
+        ];
+        match output_surface {
+            OutputSurface::ClaudeAgent => {
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("model"),
+                    frontmatter_value: FrontmatterValue::new(&profile.claude_model),
+                });
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("effort"),
+                    frontmatter_value: FrontmatterValue::new(profile.claude_effort.as_str()),
+                });
+            }
+            OutputSurface::PiAgent => {
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("model"),
+                    frontmatter_value: FrontmatterValue::new(format!(
+                        "{}/{}",
+                        profile.pi_provider, profile.chat_gpt_model
+                    )),
+                });
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("thinking"),
+                    frontmatter_value: FrontmatterValue::new(profile.chat_gpt_effort.as_str()),
+                });
+                if !optional_skills.payload().is_empty() {
+                    entries.push(FrontmatterEntry {
+                        frontmatter_key: FrontmatterKey::new("skills"),
+                        frontmatter_value: FrontmatterValue::new(
+                            optional_skills
+                                .payload()
+                                .iter()
+                                .map(|skill| skill.as_ref())
+                                .collect::<Vec<_>>()
+                                .join(", "),
+                        ),
+                    });
+                }
+            }
+            OutputSurface::CodexAgent => {
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("model"),
+                    frontmatter_value: FrontmatterValue::new(&profile.chat_gpt_model),
+                });
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("model_reasoning_effort"),
+                    frontmatter_value: FrontmatterValue::new(profile.chat_gpt_effort.as_str()),
+                });
+            }
+            _ => unreachable!("role frontmatter renders only for role surfaces"),
+        }
+        Frontmatter::new(entries)
     }
 
     fn output_paths(&self) -> Vec<OutputPath> {
@@ -945,6 +1392,7 @@ impl EntryPointExtra {
             output_kind: OutputKind::Markdown,
             output_surface,
             frontmatter: Frontmatter::new(Vec::new()),
+            optional_skills: OptionalSkills::new(Vec::new()),
             modules: Modules::new(vec![ModulePath::new(self.extra_module_path.as_ref())]),
         })
     }
@@ -1155,17 +1603,11 @@ impl ManifestAssembler {
     }
 
     fn render_markdown(&self, output_path: &WorkspacePath) -> Result<String> {
-        let mut fragments = Vec::new();
-        for module_path in self.manifest.modules.payload() {
-            fragments.push(MarkdownFragment::read(
-                self.module_workspace_path(module_path)?,
-            )?);
-        }
         let rendered = MarkdownAssembly::new(
             output_path.clone(),
             self.manifest.output_surface,
             self.manifest.frontmatter.payload().to_vec(),
-            fragments,
+            self.markdown_fragments()?,
         )
         .render()?;
         if self.manifest.output_surface.is_skill() {
@@ -1210,6 +1652,26 @@ impl ManifestAssembler {
                 self.module_workspace_path(module_path)?,
             )?);
         }
+        if !self.manifest.optional_skills.payload().is_empty() {
+            let list = self
+                .manifest
+                .optional_skills
+                .payload()
+                .iter()
+                .map(|skill| format!("- `{}`", skill.as_ref()))
+                .collect::<Vec<_>>()
+                .join("\n");
+            let text = format!(
+                "# Module - optional skills\n\nThese skills are available to load when needed and are not preloaded. Load only entries listed here:\n\n{list}\n"
+            );
+            fragments.push(MarkdownFragment::from_text(
+                WorkspacePath::new(
+                    self.source_root.clone(),
+                    PathBuf::from("manifests/role-optional-skills.nota"),
+                )?,
+                text,
+            ));
+        }
         Ok(fragments)
     }
 
@@ -1225,6 +1687,8 @@ impl ManifestAssembler {
 struct RoleToml {
     name: String,
     description: String,
+    model: String,
+    model_reasoning_effort: String,
     developer_instructions: String,
 }
 
@@ -1232,16 +1696,24 @@ impl RoleToml {
     fn new(frontmatter: &Frontmatter, developer_instructions: String) -> Self {
         let mut name = String::new();
         let mut description = String::new();
+        let mut model = String::new();
+        let mut model_reasoning_effort = String::new();
         for entry in frontmatter.payload() {
             match entry.frontmatter_key.as_ref() {
                 "name" => name = entry.frontmatter_value.as_ref().to_owned(),
                 "description" => description = entry.frontmatter_value.as_ref().to_owned(),
+                "model" => model = entry.frontmatter_value.as_ref().to_owned(),
+                "model_reasoning_effort" => {
+                    model_reasoning_effort = entry.frontmatter_value.as_ref().to_owned()
+                }
                 _ => {}
             }
         }
         Self {
             name,
             description,
+            model,
+            model_reasoning_effort,
             developer_instructions,
         }
     }
@@ -1253,6 +1725,12 @@ impl RoleToml {
         output.push('\n');
         output.push_str("description = ");
         output.push_str(&TomlString::new(&self.description).render());
+        output.push('\n');
+        output.push_str("model = ");
+        output.push_str(&TomlString::new(&self.model).render());
+        output.push('\n');
+        output.push_str("model_reasoning_effort = ");
+        output.push_str(&TomlString::new(&self.model_reasoning_effort).render());
         output.push('\n');
         output.push_str("developer_instructions = ");
         output.push_str(&TomlString::new(&self.developer_instructions).render());

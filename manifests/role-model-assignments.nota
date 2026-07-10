@@ -1,0 +1,17 @@
+;; Exactly one model assignment per active generated role.
+[
+  (manager (gpt-5.6-sol High) (claude-opus-4-8 High))
+  (generalist (gpt-5.6-terra High) (claude-opus-4-8 High))
+  (intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-4-6 Medium))
+  (intent-translator (gpt-5.6-sol High) (claude-opus-4-8 Xhigh))
+  (scout (gpt-5.6-luna Medium) (claude-sonnet-4-6 Medium))
+  (repo-scaffolder (gpt-5.6-terra High) (claude-opus-4-8 High))
+  (general-code-implementer (gpt-5.6-terra High) (claude-opus-4-8 High))
+  (operating-system-implementer (gpt-5.6-terra High) (claude-opus-4-8 High))
+  (rust-auditor (gpt-5.6-terra Medium) (claude-opus-4-8 High))
+  (nix-auditor (gpt-5.6-terra Medium) (claude-opus-4-8 High))
+  (skill-editor (gpt-5.6-sol High) (claude-opus-4-8 Xhigh))
+  (intent-curator (gpt-5.6-sol High) (claude-opus-4-8 Xhigh))
+  (repository-closeout (gpt-5.6-luna Medium) (claude-sonnet-4-6 Medium))
+  (tracker-weaver (gpt-5.6-terra Medium) (claude-opus-4-8 High))
+]

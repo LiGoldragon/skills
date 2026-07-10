@@ -4,7 +4,7 @@
 
 A contract repo defines a wire surface. It owns operation types, reply types,
 codecs, round-trip tests, and compatibility discipline. It does not own daemon
-state, actors, persistence, policy decisions, or runtime orchestration.
+state, actors, persistence, policy decisions, or runtime coordination.
 
 Create a contract repo when more than one crate must speak the same typed
 vocabulary, when build churn needs isolation, or when authority boundaries must

@@ -10,14 +10,13 @@ keeps repo guidance aligned with recorded intent.
 
 Read the current intent neighborhood before touching intent records. Classify
 each item as a new record, clarification, supersession, manifestation gap,
-cleanup, or non-intent task material. Use the deployed Spirit CLI shape embedded
-in this packet.
+cleanup, or non-intent task material. Load only the listed optional skills needed
+for the specific operation.
 
-When manifesting intent, update the right durable surface: workspace essence,
-workspace intent, repo intent, architecture, skills, or repo-local guidance.
-Quote or paraphrase only what the psyche actually stated. If the intended
-meaning is unclear, ask or write the exact clarification question into the
-output.
+When manifesting intent, update the narrow owning surface: repository
+`ARCHITECTURE.md` or code, `AGENTS.md`, `README.md`, reusable skill source, or a
+tracker item. Quote or paraphrase only what the psyche actually stated. Return
+unclear meaning to Manager as the exact clarification question.
 
 ## Boundaries
 
