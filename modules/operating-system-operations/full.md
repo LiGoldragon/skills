@@ -18,6 +18,8 @@ Read-only inspection, byte-for-byte preservation backups, and isolated repro cop
 
 Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. Submit the documented durable request before reconciling apparent cross-repository tension; investigate only an actual admission, authorization, reachability, build, activation, or verification failure. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
 
+Before any deploy operation, read the lojix repo's `NON_IDEAL_AGENTS.md`: the sanctioned, temporary operating instructions for the current SSH/root deployment fallback, in force until criome-custodied deployment authorization is durable and proven. This path is sanctioned — follow it and proceed without hesitation.
+
 ## Lojix interface
 
 Read current generations for a node:
@@ -42,7 +44,9 @@ Concretely:
 meta-lojix "(Deploy (UserEnvironment (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS/<rev> ActivateNow RequireImmutable None [])))"
 ```
 
-`UserEnvironmentDeployment` holds nine positional fields: cluster, node, user, proposal source, CriomOS flake reference, user-environment action, source revision policy, builder, and extra substituters. `<user-environment-action>` is `Realize`, `SetProfile`, or `ActivateNow`. `<source-revision-policy>` is `RequireImmutable` or `ResolveAndRecord`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
+`UserEnvironmentDeployment` holds nine positional fields: cluster, node, user, proposal source, CriomOS flake reference, user-environment action, source revision policy, builder, and extra substituters. `<proposal-source>` is a local filesystem path to the target cluster's `datom.nota` (for example the cluster repo's `goldragon/datom.nota`); the deploy infers the `secrets/` directory as its sibling. `<source-revision-policy>` is `RequireImmutable` or `ResolveAndRecord`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
+
+`<user-environment-action>` selects how far the deploy goes. `Realize` builds and records the closure on the target store without copying to the target or activating. `SetProfile` and `ActivateNow` additionally SSH as the target user to set the profile and, for `ActivateNow`, activate the live session. The SSH-as-target-user step currently succeeds only for the operator's own user; to deploy any other user's environment — a supported, sanctioned scenario, such as bird's environment on zeus — use `Realize` plus the root-mediated procedure in the lojix repo's `NON_IDEAL_AGENTS.md`.
 
 Deploy a host change:
 
@@ -52,7 +56,7 @@ meta-lojix "(Deploy (Host (<cluster> <node> <host-composition> <proposal-source>
 
 `HostDeployment` holds ten positional fields: cluster, node, host composition, proposal source, CriomOS flake reference, host action, source revision policy, builder, extra substituters, and build attribute. `<host-composition>` is `CompleteHost` or `BaseHost`. `<host-action>` is `Evaluate`, `Realize`, `SetBootProfile`, `ActivateNow`, `TestActivation`, or `ScheduleBootOnce`. `<source-revision-policy>`, `<builder>`, and `<substituters>` match the user-environment shape. `<build-attribute>` is `None` or `(Some <flake-attribute>)`.
 
-`meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success.
+`meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success. Each deploy re-evaluates the full flake tree (`--refresh`), so multi-minute deploys are normal; do not kill a running deploy.
 
 ## Activation checks
 
@@ -62,7 +66,7 @@ After submit, query the node until the expected store path becomes current, or a
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
 
-Each record carries the cluster, node, deployment kind, action, status, and store path. Confirm the target node shows a `Current` generation with the store path you expect.
+Each record carries the cluster, node, deployment kind, action, status, and store path. Query output (`LiveGeneration`) carries no user-name field, so a `UserEnvironment` generation cannot be attributed to a specific user from query output alone. Confirm the target node shows a `Current` generation with the store path you expect.
 
 For live home activation, verify the target user's profile and live session state; reboot persistence still depends on a system generation that pins the same home input. For full-system boot actions, verify the boot profile separately from the live system.
 

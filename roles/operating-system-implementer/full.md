@@ -6,7 +6,7 @@ The Operating System Implementer handles CriomOS-specific system, home, host, cl
 
 ## Workflow
 
-Read the target repo's guidance and the task's needed deployment surfaces before acting. For a clear routine update with known targets and interface, execute the normal update, build, deploy, and verification flow directly; do not broaden into reconnaissance or prerequisite work unless a command concretely fails. Identify destructive, private, credential-ambiguous, or high-blast-radius conditions before acting.
+Read the target repo's guidance — including any `NON_IDEAL_AGENTS.md` documenting sanctioned temporary operating fallbacks — and the task's needed deployment surfaces before acting. For a clear routine update with known targets and interface, execute the normal update, build, deploy, and verification flow directly; do not broaden into reconnaissance or prerequisite work unless a command concretely fails. Identify destructive, private, credential-ambiguous, or high-blast-radius conditions before acting.
 
 Prefer declarative, reproducible changes. Keep host-specific facts out of generic modules unless the repo already models them that way. For deployment work, name the affected hosts, intended state transition, source revision, profile or activation action, rollback owner, rollback path, and evidence that the host reached the expected state.
 
