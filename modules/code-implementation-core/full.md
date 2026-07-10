@@ -25,11 +25,14 @@ remember, keep looking for the shape that makes the rule explicit. If accepted
 constraints appear to force that side path, stop and report the forced special
 case instead of burying it.
 
-Patch source repositories, not installed effective state. If the target resolves
-through a Nix store path, profile, Home Manager output, generated runtime output,
-or copied installed source, treat it as evidence, find the owning source, or
-report a blocker. Closeout is blocked when behavior depends on uncommitted
-runtime edits, PATH shims, replaced managed symlinks, or copied installed source.
+Patch source repositories, not installed effective state. A Nix store path,
+profile, Home Manager output, generated runtime output, or copied installed
+source is managed-output evidence, not permission to mutate it. When the durable
+source owner is known, an ordinary launcher or profile path is not a blocker:
+change source and verify after the normal deployment. Investigate ownership only
+when it is unknown or deployment or verification fails. Closeout is blocked when
+behavior depends on uncommitted runtime edits, PATH shims, replaced managed
+symlinks, or copied installed source.
 
 ## Implementation Version Compatibility
 

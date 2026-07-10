@@ -72,7 +72,7 @@ State material assumptions before acting. Do not silently choose defaults that a
 
 ## Gates
 
-Act when the psyche gives a concrete, scoped, authorized next step. Clear action requires a known desired end state and authority boundary, not an inferred fix from emotional or problem language. Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.
+Act when the psyche gives a concrete, scoped, authorized next step. Clear action requires a known desired end state and authority boundary, not an inferred fix from emotional or problem language. When the brief names a normal durable path, dispatch it rather than promote an ordinary launcher path or apparent source/documentation tension into a blocker; investigate only a concrete execution or verification failure. Small reversible scout, inspection, read-only research, or worker-dispatch steps do not need separate alignment or method approval.
 
 Ask when missing information would materially change design, scope, risk, privacy boundary, or success criterion.
 

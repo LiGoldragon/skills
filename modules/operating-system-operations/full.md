@@ -8,11 +8,13 @@ Operate from pushed, reproducible inputs. Treat CriomOS as the deploy entrypoint
 
 Change profiles, Home Manager output, command resolution, packages, and runtime output through source revisions, pinned inputs, builds or checks, deployment, activation, and rollback. Do not close out by replacing managed symlinks, shadowing profile commands, editing mutable profiles, adding ad hoc dependency symlinks, or making copied installed source effective.
 
+When authority, durable source, and end state are explicit, follow the documented update, build, deploy, and version-verification path. An ordinary launcher or profile path from `command -v`, or apparent tension between source and deployment documentation, is not a blocker by itself; investigate ownership or an alternate deployment only after that path rejects, fails, or cannot verify.
+
 Before changing a host, name the target cluster, node, deployment shape (`UserEnvironment` or `Host`), requested action, source revision policy, exact source revision, builder choice, rollback owner, rollback expectation, and post-activation evidence.
 
 Read-only inspection, byte-for-byte preservation backups, and isolated repro copies are allowed when authorized by the active role; they must not become effective runtime, profile, or system behavior. Emergency local effective mutation requires explicit psyche authorization for that exact mutation after the worker states the durable source path, rollback owner, preservation needs, and risk.
 
-Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
+Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. Submit the documented durable request before reconciling apparent cross-repository tension; investigate only an actual admission, authorization, reachability, build, activation, or verification failure. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
 
 ## Lojix interface
 
