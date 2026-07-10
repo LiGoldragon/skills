@@ -41,12 +41,12 @@ meta-lojix "(Deploy (UserEnvironment (<cluster> <node> <user> <proposal-source> 
 Concretely:
 
 ```sh
-meta-lojix "(Deploy (UserEnvironment (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS/<rev> ActivateNow RequireImmutable None [])))"
+meta-lojix "(Deploy (UserEnvironment (goldragon ouranos li <proposal-source> github:LiGoldragon/CriomOS?rev=<40-hex-rev> ActivateNow RequireImmutable None [])))"
 ```
 
-`UserEnvironmentDeployment` holds nine positional fields: cluster, node, user, proposal source, CriomOS flake reference, user-environment action, source revision policy, builder, and extra substituters. `<proposal-source>` is a local filesystem path to the target cluster's `datom.nota` (for example the cluster repo's `goldragon/datom.nota`); the deploy infers the `secrets/` directory as its sibling. `<source-revision-policy>` is `RequireImmutable` or `ResolveAndRecord`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
+`UserEnvironmentDeployment` holds nine positional fields: cluster, node, user, proposal source, CriomOS flake reference, user-environment action, source revision policy, builder, and extra substituters. `<proposal-source>` is a local filesystem path to the target cluster's `datom.nota` (for example the cluster repo's `goldragon/datom.nota`); the deploy infers the `secrets/` directory as its sibling. `<source-revision-policy>` is `RequireImmutable` or `ResolveAndRecord`. Under `RequireImmutable`, `<criomos-flake-ref>` must carry its immutable identity in the query string — `github:LiGoldragon/CriomOS?rev=<40-hex>` or `?narHash=sha256-...`; the path-suffix form `github:LiGoldragon/CriomOS/<rev>` is rejected as `FlakeReferenceMalformed`. `<builder>` is `None` or `(Some <builder-node>)`. `<substituters>` is a typed list, `[]` when none.
 
-`<user-environment-action>` selects how far the deploy goes. `Realize` builds and records the closure on the target store without copying to the target or activating. `SetProfile` and `ActivateNow` additionally SSH as the target user to set the profile and, for `ActivateNow`, activate the live session. The SSH-as-target-user step currently succeeds only for the operator's own user; to deploy any other user's environment — a supported, sanctioned scenario, such as bird's environment on zeus — use `Realize` plus the root-mediated procedure in the lojix repo's `NON_IDEAL_AGENTS.md`.
+`<user-environment-action>` selects how far the deploy goes. `Realize` builds and records the closure on the target store without copying or activating. `SetProfile` sets the target user's profile; `ActivateNow` additionally activates the live session. Both connect over the root deploy identity and drop privilege through a login (`runuser --login <user>`, lojix ≥ 0.4.5), rebuilding the target account's own environment, so activation works for any account on the node with no per-user SSH key. Deploying a different user on a different host — such as `bird` on `zeus` — is an ordinary supported deploy, not a workaround; the lojix repo's `NON_IDEAL_AGENTS.md` holds the SSH/root fallback context.
 
 Deploy a host change:
 
@@ -65,6 +65,8 @@ After submit, query the node until the expected store path becomes current, or a
 ```sh
 lojix "(Query (ByNode (<cluster> <node> None)))"
 ```
+
+Keep this wait inside the turn: poll the harness-visible status in the foreground until the expected generation is current or a failure shows. A deploy runs tens of minutes; do not end the turn with an owned deploy still in flight expecting a background waiter to wake you — the waiter dies with the turn and the lane parks silently until someone notices.
 
 Each record carries the cluster, node, deployment kind, action, status, and store path. Query output (`LiveGeneration`) carries no user-name field, so a `UserEnvironment` generation cannot be attributed to a specific user from query output alone. Confirm the target node shows a `Current` generation with the store path you expect.
 
