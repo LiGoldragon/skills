@@ -7,7 +7,7 @@
   (scout [spirit-query library repo-intent privacy secrets])
   (repo-scaffolder [repo-intent repository-management repository-publication component-architecture micro-components rust-crate-layout nix-discipline testing])
   (general-code-implementer [repo-intent design-quality code-implementation feature-development component-architecture contract-repo rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline nix-usage testing version-control versioning privacy secrets])
-  (operating-system-implementer [repo-intent design-quality nix-discipline nix-usage pi-internals testing version-control versioning privacy secrets])
+  (operating-system-implementer [repo-intent design-quality nix-discipline nix-usage pi-internals disk-hygiene testing version-control versioning privacy secrets])
   (rust-auditor [repo-intent design-quality contract-repo rust-methods rust-errors rust-storage-and-wire rust-crate-layout testing versioning privacy secrets])
   (nix-auditor [repo-intent design-quality nix-discipline nix-usage testing versioning privacy secrets])
   (skill-editor [intent-manifestation nota-schema-design nota-design prose privacy])

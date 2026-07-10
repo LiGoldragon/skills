@@ -55,6 +55,7 @@
   (mermaid modules/mermaid/full.md [] RuntimeSkill)
   (session-lanes modules/session-lanes/full.md [] RuntimeSkill)
   (session-archive-garbage-collection modules/session-archive-garbage-collection/full.md [] RuntimeSkill)
+  (disk-hygiene modules/disk-hygiene/full.md [] RuntimeSkill)
   (architecture-editor modules/architecture-editor/full.md [] RuntimeSkill)
   (nota-schema-docs modules/nota-schema-docs/full.md [] RuntimeSkill)
   (nota-shape-checklist modules/nota-shape-checklist/full.md [] RuntimeSkill)
