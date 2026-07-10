@@ -4,6 +4,10 @@
 
 Use `jj` for version control. Raw `git` is only an escape hatch named in this skill. Every description-taking command uses an inline message or equivalent headless flag; never let a command open an editor.
 
+## Target the repository explicitly
+
+When scripting jj against any repository other than the lane's own verified working directory — especially throwaway, demo, or freshly cloned repos — pass an explicit `-R <path>`/`--repository <path>` on every command, or guard the `cd` so its failure hard-stops the script (`cd <path> || exit`). Agent bash resets cwd to the primary workspace each call, so a silently failed `cd` lets cwd fallback aim a mutating command at primary. Never let cwd fallback decide which repository a mutating command hits.
+
 ## Primary workspace stays on main
 
 In primary, work directly on `main`. Do not create branches. Commit the complete working copy, then move `main` to the committed parent and push.
