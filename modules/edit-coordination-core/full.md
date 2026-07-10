@@ -8,6 +8,8 @@ If the task needs editing and no session name, lane name, or Fresh/Recovery mode
 
 Lane registration is the atomic check. Do not pre-observe before registration. Treat Fresh duplicate registration as a conflict/blocker. Treat manager-declared Recovery duplicate as inherited only when the active lane clearly matches this recovery context.
 
+Keep an owned long-running operation's wait in the foreground within the turn. Never end a turn with the operation still in flight expecting a background waiter to resume it; the waiter dies with the turn and the lane parks silently.
+
 Do not edit projected lock files by hand.
 
 ```sh
