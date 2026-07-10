@@ -21,6 +21,7 @@ use crate::{
         RoleOptionalSkills, RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster,
         TargetModuleInsertion, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
     },
+    trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
 };
 
@@ -47,10 +48,11 @@ impl CommandLine {
     }
 
     pub fn run(&self) -> Result<GenerationOutcome> {
-        let request = RequestArgument::new(self.arguments.clone())
+        let operation = RequestArgument::new(self.arguments.clone())
             .read()?
             .parse()?;
-        request.execute()
+        operation.guard_source()?;
+        operation.execute()
     }
 }
 
@@ -117,6 +119,12 @@ impl RequestText {
 }
 
 impl Operation {
+    fn guard_source(&self) -> Result<()> {
+        match self {
+            Self::Generate(request) => request.guard_source(),
+        }
+    }
+
     pub fn execute(self) -> Result<GenerationOutcome> {
         match self {
             Self::Generate(request) => request.generate().map(GenerationOutcome::Generated),
@@ -125,6 +133,11 @@ impl Operation {
 }
 
 impl GenerationRequest {
+    fn guard_source(&self) -> Result<()> {
+        let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
+        TrunkDescendantGuard::new(source_root).verify()
+    }
+
     pub fn generate(&self) -> Result<GenerationReport> {
         let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
         let workspace_root = RootPath::new(self.workspace_root.as_ref()).to_path_buf()?;

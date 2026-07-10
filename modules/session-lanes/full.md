@@ -39,6 +39,8 @@ Large passive timeout or age is evidence for judgment only; do not invent a hear
 
 Before editing shared files or running write commands, register the assigned lane, then make ordinary Orchestrate claims under that lane.
 
+Keep an owned long-running operation's wait in the foreground within the turn. Never end a turn with an owned operation still in flight expecting a background waiter to resume it; the waiter dies with the turn and the lane parks silently until someone notices.
+
 At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when Manager owns session cleanup or all remaining lanes are yours.
 
 ```sh

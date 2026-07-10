@@ -178,6 +178,25 @@ pub enum Error {
         "stale generated archived/deleted skill output remains: {path}. Update the locked `skills` input, run `nix run github:LiGoldragon/skills#generate-skills -- <workspace-root>`, then rerun `nix run github:LiGoldragon/skills#check-skills -- <workspace-root>`."
     )]
     StaleGeneratedOutput { path: PathBuf },
+
+    #[error(
+        "skills source checkout {source_root} is not a descendant of the fetched remote trunk; regenerating from it would silently revert corrections already landed on trunk. Rebase your checkout onto the latest trunk first (jj: `jj git fetch`, then rebase your work onto `trunk()`), then retry."
+    )]
+    SourceNotDescendantOfTrunk { source_root: PathBuf },
+
+    #[error("verify source trunk descent in {source_root}: run `jj {command}`: {source}")]
+    TrunkGuardCommand {
+        command: String,
+        source_root: PathBuf,
+        source: io::Error,
+    },
+
+    #[error("verify source trunk descent in {source_root}: `jj {command}` failed: {stderr}")]
+    TrunkGuardCommandFailed {
+        command: String,
+        source_root: PathBuf,
+        stderr: String,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

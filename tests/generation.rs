@@ -13,6 +13,7 @@ use skills::{
         RoleOptionalSkills, RoleTargetSurface, SkillRoster, SourceRoot, TargetModuleInsertions,
         TargetSurface, UniversalRoleModules, WorkspaceRoot,
     },
+    trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
 use tempfile::TempDir;
 
@@ -1664,6 +1665,35 @@ fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
     let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
     assert!(!inventory.contains("old-worker"));
     assert!(inventory.contains("new-worker"));
+}
+
+#[test]
+fn trunk_guard_passes_source_without_jujutsu_working_copy() {
+    let source = TempDir::new().expect("source tempdir");
+
+    TrunkDescendantGuard::new(source.path())
+        .verify()
+        .expect("an immutable source with no Jujutsu working copy is inherently safe");
+}
+
+#[test]
+fn trunk_divergence_permits_regeneration_when_no_trunk_commits_are_unreached() {
+    let divergence = TrunkDivergence::from_revset_output("\n  \n");
+
+    assert!(
+        !divergence.requires_refusal(),
+        "a descendant working copy leaves no trunk commit unreached"
+    );
+}
+
+#[test]
+fn trunk_divergence_refuses_regeneration_when_trunk_has_unreached_commits() {
+    let divergence = TrunkDivergence::from_revset_output("oxxluyzymxmv\nrlkyomtvabcd\n");
+
+    assert!(
+        divergence.requires_refusal(),
+        "a sibling or behind working copy leaves trunk commits unreached and must refuse"
+    );
 }
 
 struct Fixture {
