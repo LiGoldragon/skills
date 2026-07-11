@@ -2,7 +2,7 @@
 
 ## Rules
 
-A Session is a first-class cognitive grouping named by the Manager in CamelCase. It groups related lanes and is not an edit lock.
+A Session is a first-class cognitive grouping named by the Manager in PascalCase alphanumeric. It groups related lanes and is not an edit lock.
 
 A Lane belongs to one Session and names one worker's live task. The Manager assigns each editing worker a meaningful lane name. Do not use a role, discipline, or generic agent type as the lane name.
 
@@ -20,6 +20,8 @@ Lane registration is the atomic check. Do not pre-observe before registration.
 meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-string>) Fresh))"
 meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structural) <detail-string>) Recovery))"
 ```
+
+Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter, then letters and digits only (`OsDeploymentDoctrine`, `SkillDriftReview`). The daemon strictly enforces this for the session name; its error text calls it `CamelCase alphanumeric`. Until bead `primary-jf0n` ships the typed rejection, the deployed daemon reports a non-conforming name as an opaque `transport frame error: failed to fill whole buffer`, not a named error.
 
 Use exactly one NOTA string object in each detail slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
