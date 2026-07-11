@@ -56,7 +56,7 @@ meta-lojix "(Deploy (Host (<cluster> <node> <host-composition> <proposal-source>
 
 `HostDeployment` holds ten positional fields: cluster, node, host composition, proposal source, CriomOS flake reference, host action, source revision policy, builder, extra substituters, and build attribute. `<host-composition>` is `CompleteHost` or `BaseHost`. `<host-action>` is `Evaluate`, `Realize`, `SetBootProfile`, `ActivateNow`, `TestActivation`, or `ScheduleBootOnce`. `<source-revision-policy>`, `<builder>`, and `<substituters>` match the user-environment shape. `<build-attribute>` is `None` or `(Some <flake-attribute>)`.
 
-`meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success. Each deploy re-evaluates the full flake tree (`--refresh`), so multi-minute deploys are normal; do not kill a running deploy.
+`meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success. A `RequireImmutable` deploy whose flake reference carries its immutable identity (`?rev=`/`?narHash=`) omits `--refresh` and trusts Nix's per-flake evaluation cache, so re-evaluating an already-built pin returns in seconds. A mutable reference or `ResolveAndRecord` keeps `--refresh`, so its eval re-fetches the whole flake tree and takes minutes. A first build of a new closure also takes minutes. Do not kill a running deploy during a build phase or a mutable-ref eval.
 
 ## Activation checks
 
