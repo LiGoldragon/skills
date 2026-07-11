@@ -19,7 +19,7 @@ orchestrate "(Release <LaneName>)"
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
 ```
 
-Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter, then letters and digits only (`OsDeploymentDoctrine`, `SkillDriftReview`). The daemon strictly enforces this for the session name; its error text calls it `CamelCase alphanumeric`. Until bead `primary-jf0n` ships the typed rejection, the deployed daemon reports a non-conforming name as an opaque `transport frame error: failed to fill whole buffer`, not a named error.
+Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter, then letters and digits only (`OsDeploymentDoctrine`, `SkillDriftReview`). The daemon strictly enforces this for the session name; its error text calls it `CamelCase alphanumeric`.
 
 Use exactly one NOTA string object in each detail or reason slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[refresh coordination docs]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
