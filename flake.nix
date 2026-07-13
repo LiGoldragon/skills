@@ -305,6 +305,14 @@
             grep -F 'Never use a foreground agent call or wait synchronously' "$management" >/dev/null
             grep -F 'defer its dispatch until completion' "$management" >/dev/null
             grep -F 'keeping psyche chat available for redirection.' "$management" >/dev/null
+            grep -F 'Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or' "$management" >/dev/null
+            grep -F 'hypothetical runaway risk do not justify limits.' "$management" >/dev/null
+            grep -F 'concrete external constraint requires it,' "$management" >/dev/null
+            grep -F 'disclose that constraint before dispatch.' "$management" >/dev/null
+            grep -F 'Do not interrupt or terminate a worker for turn count or silence' "$management" >/dev/null
+            grep -F 'Inspect concrete evidence of blockage first.' "$management" >/dev/null
+            grep -F 'do not fail a read-only Scout for lacking' "$management" >/dev/null
+            grep -F 'changed-file evidence.' "$management" >/dev/null
             grep -F 'While workers remain active, report only' "$management" >/dev/null
             grep -F 'Never spawn a blocking agent.' "$manager_role" >/dev/null
             grep -F 'Run every dispatched agent in the background;' "$manager_role" >/dev/null

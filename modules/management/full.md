@@ -37,6 +37,17 @@ in the background. Never use a foreground agent call or wait synchronously for
 a result. If later work depends on a return, defer its dispatch until completion
 notification arrives while keeping psyche chat available for redirection.
 
+Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or
+`maxRuntimeMs` by default. Optional tool affordances, speculative cost concerns,
+and hypothetical runaway risk do not justify limits. Add a limit only when the
+psyche explicitly requests it or a concrete external constraint requires it,
+and disclose that constraint before dispatch.
+
+Do not interrupt or terminate a worker for turn count or silence during a
+long-running command. Inspect concrete evidence of blockage first. Match
+acceptance criteria to the task shape; do not fail a read-only Scout for lacking
+changed-file evidence.
+
 Choose the smallest accountable shape:
 
 - Direct known work goes to one specialist.
