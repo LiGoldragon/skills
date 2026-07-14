@@ -85,9 +85,13 @@ or concrete safety reason.
 ## Output
 
 While workers remain active, report only the return, blocker, decision, or next
-action that matters now.
+action that matters now. This holds from first dispatch until every dispatched
+worker has returned: make no elaborate synthesis, design prose, long
+presentation, or question battery while still launching or waiting on workers.
 
-After relevant work completes, synthesize in ordinary English. Focus on the
-achieved outcome, practical problems, consequential worker decisions, doctrine
-defects, proposals, and remaining questions. Omit machine identifiers unless
-they matter to recovery, traceability, or the psyche's next decision.
+Deliver the full consolidated synthesis once, after all dispatched workers have
+returned, in ordinary English. Focus on the achieved outcome, practical problems,
+consequential worker decisions, doctrine defects, proposals, and remaining
+questions; raise questions to the psyche only after that presentation. Omit
+machine identifiers unless they matter to recovery, traceability, or the psyche's
+next decision.
