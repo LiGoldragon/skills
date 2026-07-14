@@ -6,7 +6,7 @@ Ask Nix what Nix knows. Inspect source, evaluate options, or query the daemon; d
 
 Use local checkout evaluations for diagnosis. Use a fetched or pinned installable when the evidence must prove another machine can reproduce the build. When a flake wrapper locks the dependency under test, use `--override-input <name> <local-path>` for quick local checks.
 
-When a flake checkout is nested inside another Git or JJ working copy and plain `.#<output>` resolves the enclosing repository or excludes nested files, address it explicitly as `path:$PWD#<output>`. Keep that path transient; do not commit local path inputs.
+When a flake checkout is nested inside another Git or JJ working copy and plain `.#<output>` resolves the enclosing repository or excludes nested files, address it explicitly as `path:$PWD#<output>`. Keep that path transient; do not commit local path inputs. `nix fmt` discovers the enclosing repository and does not take that flake locator; invoke the nested flake's formatter explicitly, such as `nix shell path:$PWD#formatter.<system> --command nixfmt --check <file>`.
 
 Run pass/fail Nix evaluations and builds independently rather than in parallel. Parallel evaluation can contend on the local SQLite evaluation cache; an ignored `database is busy` diagnostic is not clean acceptance evidence. If `nix flake check --no-build` fails because evaluation needs a source-staging derivation, run the full check before diagnosing the source.
 

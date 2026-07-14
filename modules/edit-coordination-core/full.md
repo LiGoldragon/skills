@@ -2,11 +2,11 @@
 
 ## Edit Coordination
 
-Before editing shared files or running a command that writes them, register the assigned Session/Lane with `meta-orchestrate`, then claim the exact path or repository with ordinary Orchestrate under that lane. The ordinary claim field is role-shaped, but it carries the lane identity. Resolve repository aliases after registration and verify the absolute claim path exists; claim acceptance does not prove that the path names a real checkout.
+Before editing shared files or running a command that writes them, register the assigned Session/Lane with `meta-orchestrate`, then claim the exact path or repository with ordinary Orchestrate under that lane. The ordinary claim field is role-shaped, but it carries the lane identity. Resolve repository aliases after registration and verify the claimed checkout or existing path; for a new file, verify its parent exists. Claim acceptance does not prove that a path names a real checkout.
 
 If the task needs editing and no session name, lane name, or Fresh/Recovery mode is assigned, pause and report the missing coordination identity. Do not use generic names such as `general-code-implementer`, `skill-editor`, or `rust-auditor`.
 
-Lane registration is the atomic check. Do not pre-observe before registration. Treat Fresh duplicate registration as a conflict/blocker. Treat manager-declared Recovery duplicate as inherited only when the active lane clearly matches this recovery context.
+Lane registration is the atomic check. Do not pre-observe before registration. Treat Fresh duplicate registration as a conflict/blocker. Treat manager-declared Recovery duplicate as inherited only when the active lane clearly matches this recovery context. If Recovery reports `RecoveryInherited` but the lane remains Released or a claim says the lane is not registered, do not mutate the released lane. Return the contradiction to the Manager; use a distinct Fresh follow-up identity only with explicit approval.
 
 Keep an owned long-running operation's wait in the foreground within the turn. Never end a turn with the operation still in flight expecting a background waiter to resume it; the waiter dies with the turn and the lane parks silently.
 

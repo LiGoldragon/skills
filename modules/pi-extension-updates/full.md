@@ -26,7 +26,7 @@ Do not collapse several patches into one rationale. Do not infer rationale from 
 
 ## Classify and Decide
 
-Compare the target against every ledger entry. Read upstream source, release notes, linked issues, tests, and commits; a matching feature name is not proof. Exercise the witness on the unmodified target when possible.
+Compare the target against every ledger entry. Read upstream source, release notes, linked issues, tests, and commits; a matching feature name is not proof. When a registry or release artifact omits tests or history, use its recorded source revision, such as npm `gitHead`, to materialize the immutable upstream repository tree. Exercise the witness on the unmodified target when possible.
 
 Choose per delta, so one package update may drop, rebase, and reimplement different deltas:
 

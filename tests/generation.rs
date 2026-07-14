@@ -689,6 +689,7 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
         "**Drop**",
         "**Escalate**",
         "A reversed-patch warning is absorption evidence",
+        "npm `gitHead`",
         "Never point a consumer at an unpushed fork revision",
         "maintenance, security, privacy, and user-visible consequences",
     ] {
@@ -700,21 +701,65 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 
     let fixture = include_str!("fixtures/pi-subagents-0.31.0-to-0.34.0.md");
     for required in [
-        "npm `0.31.0`",
-        "npm `0.34.0`",
-        "agent-chain-clarify-opt-in.patch",
-        "slim-parent-skill.patch",
-        "detached-runner-peer-isolation.patch",
-        "async-runner-stderr.patch",
-        "full-child-extension-bridge.patch",
-        "acceptance-read-only-evidence.patch",
-        "No psyche escalation is warranted",
+        "## Canonical ledger",
+        "CriomOS-home/packages/pi-subagents/fork-delta-ledger.md",
+        "## Immutable candidate",
+        "e4f06282d0c95856b36b7ec2893f4fd294ebfefe",
+        "8a6c5b154f7df63b65c6027ba41ea7c6496d60db",
+        "12a157d2a70b2f4cbc004c020c5f9213b6d8eea8",
+        "## Applicability evidence",
+        "patch --dry-run --forward --batch --verbose",
+        "Reversed notices were not counted as application.",
+        "## Rationale provenance",
+        "## Evidence gates",
+        "108 passed, 0 failed",
+        "981 total, 978 passed, 3 upstream test-double failures",
+        "985 total, 982 passed, the same 3 upstream failures",
+        "Nix candidate package build",
+        "Package-content verification",
+        "Pi RPC extension load",
+        "## Decision status",
+        "not called complete",
+        "not a psyche authority, privacy, or value decision",
     ] {
         assert!(
             fixture.contains(required),
-            "dry-run fixture missing: {required}"
+            "fixture missing evidence semantic: {required}"
         );
     }
+
+    let patch_rows: Vec<_> = fixture
+        .lines()
+        .filter(|line| line.starts_with("| `") && line.contains(".patch` |"))
+        .collect();
+    assert_eq!(
+        patch_rows.len(),
+        6,
+        "fixture keeps exactly one applicability row per local delta"
+    );
+    for row in patch_rows {
+        assert!(
+            row.contains("exit 0") || row.contains("exit 1"),
+            "delta row records exact applicability exit: {row}"
+        );
+        assert!(
+            ["fully absorbed", "partially absorbed", "still absent"]
+                .iter()
+                .any(|status| row.contains(status)),
+            "delta row records an upstream status: {row}"
+        );
+        assert!(
+            row.contains("provisional") || row.contains("supported, not package-landed"),
+            "delta row records decision state instead of implying completion: {row}"
+        );
+    }
+
+    assert_eq!(
+        fixture.matches("target-native remainder work").count(),
+        1,
+        "mixed-decision summary has one unambiguous four-delta statement"
+    );
+    assert!(fixture.contains("the four originally identified remainder-analysis deltas"));
 }
 
 #[test]

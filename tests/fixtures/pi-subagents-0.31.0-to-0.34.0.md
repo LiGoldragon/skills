@@ -1,26 +1,49 @@
 # Pi extension update reconciliation fixture
 
-## Candidate
+## Canonical ledger
 
-- Canonical upstream: npm `pi-subagents`, repository `nicobailon/pi-subagents`.
-- Packaged source: npm `0.31.0`, locked by the CriomOS-home flake input `pi-subagents-src` with NAR identity `sha256-EmDqAPVqJ6hxuA3Yj8SikM2kA/oI6D1QEe/gPvJbIVw=`.
-- Target: npm `0.34.0`, registry integrity `sha512-JGgSYaieZ/2QtsW6BwSV1SX6zMz+YpV0JXUjSTtgphpk+z5OOJVJ4D/tWnCxIURXKcgsam+1vQkQgQ5fhrasFA==`.
-- Consumer: `packages/pi-subagents/default.nix`, exposed by the Pi Home Manager profile.
-- Local maintenance: six package patches discovered by tracing the derivation. A canonical-name npm input therefore still has fork deltas.
+The owning ledger is `CriomOS-home/packages/pi-subagents/fork-delta-ledger.md`. Its executable target snapshot is `CriomOS-home/packages/pi-subagents/reconciliation/0.31.0-to-0.34.0.patch`, built by sibling `0.34.0.nix`. This fixture snapshots the acceptance semantics that the skills generator test guards.
 
-Both tarballs were unpacked and compared. All six patches applied to `0.31.0`. Each patch was then checked forward-only against an untouched `0.34.0` tree and its target source was inspected; reversed-patch notices were not counted as successful applications.
+## Immutable candidate
 
-## Delta Ledger Dry Run
+- Canonical upstream: `nicobailon/pi-subagents`.
+- Packaged base: npm 0.31.0, Git `e4f06282d0c95856b36b7ec2893f4fd294ebfefe`.
+- Local package snapshot: CriomOS-home `8a6c5b154f7df63b65c6027ba41ea7c6496d60db`, `packages/pi-subagents/default.nix` and six sibling patches.
+- Update target: npm 0.34.0, Git `12a157d2a70b2f4cbc004c020c5f9213b6d8eea8`.
+- Retained reconciliation patch: SHA-256 `ce23d291df868b87e84e342e3a9a3909677bc97ec60e2ef5a3d00ae7a5979ec4`.
+- No package version or activation changed in this evidence pass.
 
-| Delta | Purpose and witness | Target status | Technical path |
-|---|---|---|---|
-| `agent-chain-clarify-opt-in.patch` | Chains clarify only when explicitly requested; chain execution branch and packaged skill text witness it. | Partially absorbed: target uses `clarify === true`, while the local schema wording is not upstream. | Drop the absorbed code hunk; decide technically whether the schema wording still needs a target-native edit. |
-| `slim-parent-skill.patch` | Keep the parent skill concise and preserve local parent/child operating rules; packaged line-count and phrase checks witness it. | Still absent: target still carries the long upstream skill and the old whole-file patch no longer fits. | Reimplement the maintained concise skill against target documentation. |
-| `detached-runner-peer-isolation.patch` | Avoid loading a peer coding-agent module in the detached runner; config-directory resolution witnesses it. | Fully absorbed and extended: target has no eager peer import and resolves package metadata explicitly. | Drop after the target tests and detached-runner package witness pass. |
-| `async-runner-stderr.patch` | Preserve bounded detached-runner diagnostics; package and async failure witnesses cover the log. | Partially absorbed: target records stdout/stderr and exposes a diagnostic tail, but the local bounded-file behavior is not identical. | Reimplement only any still-required bound, or drop that remainder if upstream tailing satisfies the established purpose. |
-| `full-child-extension-bridge.patch` | Preserve required child extensions and supervisor tools; the packaged bridge diagnostic witnesses it. | Partially absorbed: target natively injects supervisor tools and removes the bridge sandbox gate, but still uses `--no-extensions` for an explicit extension list. | Drop absorbed bridge code and reimplement only extension inheritance still required by the witness. |
-| `acceptance-read-only-evidence.patch` | Accept explicit empty change/test arrays for read-only work while rejecting missing fields; its added unit tests witness it. | Still absent; the source and test patch applies forward to the target. | Rebase and run the acceptance tests. |
+## Applicability evidence
 
-## Result
+All probes used `patch --dry-run --forward --batch --verbose` on a pristine target. Reversed notices were not counted as application.
 
-This is a mixed technical reconciliation: two absorbed portions can drop, one patch can rebase, and three deltas need target-native remainder decisions or reimplementation. The update must not be represented as a clean version bump. No psyche escalation is warranted by this dry run because the unresolved work is source and witness analysis, not an authority or value choice.
+| Delta | Exact target applicability | Target status | Candidate action | Decision state |
+|---|---|---|---|---|
+| `agent-chain-clarify-opt-in.patch` | schema hunk succeeded at 275 with offset 29; chain hunk reversed and ignored at 504; exit 1 | partially absorbed | drop absorbed code; reimplement schema wording | provisional |
+| `slim-parent-skill.patch` | whole-skill hunk failed at 10; exit 1 | still absent | reimplement compact parent skill | provisional |
+| `detached-runner-peer-isolation.patch` | both hunks reversed and ignored at 5 and 16; exit 1 | fully absorbed | drop | supported, not package-landed |
+| `async-runner-stderr.patch` | helper hunk succeeded at 277 with fuzz 1 and offset 62; spawn hunk failed at 266; exit 1 | partially absorbed | reimplement only the 64 KiB bound | provisional |
+| `full-child-extension-bridge.patch` | two intercom hunks reversed and ignored; `pi-args` hunk succeeded at 141 with offset 16; exit 1 | partially absorbed | drop intercom hunks; reimplement extension inheritance | provisional |
+| `acceptance-read-only-evidence.patch` | source and new-test hunks applied; exit 0, but unchanged replay regressed writer evidence | still absent | target-native read-only gate with negative writer test | provisional |
+
+## Rationale provenance
+
+The ledger ties each delta to immutable CriomOS-home commits and exact paths/hunks: clarify `1dd3f033b8b322c31609e1c56c4da4b99a62bc25`; compact skill `23665920be8e76c9029a546d1841654d68e39e54` plus `60ed02dfbbd34bddef417abc2c75e5270b652959`; peer isolation `6bf5e7ec700a00f33b19fe0c24d63e93f9ea61ce`; stderr `60528d041c0ad784ba069781c17035ba9cafc5bc` plus `f3fcf3e89b9448a5b99236415fe04fc207ddecd6`; bridge `bff854e76bf17457a201f643622ae3dc0334e2fe`; acceptance `df85cb32f687bb4dde1401d5cdfc6e75076c01f2`.
+
+## Evidence gates
+
+| Gate | Result |
+|---|---|
+| Per-delta pristine/reconciled witnesses | expected pristine failures; every retained reconciled witness passed |
+| Focused acceptance, async, Pi-argument, and chain tests | 108 passed, 0 failed |
+| Pristine `npm run test:all` | 981 total, 978 passed, 3 upstream test-double failures |
+| Reconciled `npm run test:all` | 985 total, 982 passed, the same 3 upstream failures |
+| Nix candidate package build | passed with npm dependency identity `sha256-IJJ3hceNvHUr5QFIa/+0tnxNiEPh7jifE9dvPHrLE58=` |
+| Package-content verification | passed for metadata, dependencies, compact skill, clarify, stderr, bridge, and acceptance witnesses |
+| Pi RPC extension load | exited 0; no load error; response had `command:"get_commands"` and `success:true` |
+
+## Decision status
+
+This is a mixed six-delta reconciliation: one upstream-owned delta supports drop; the four originally identified remainder-analysis deltas require target-native remainder work; and the cleanly applicable acceptance patch separately requires target-native reimplementation because unchanged replay regresses writer evidence.
+
+The candidate is not called complete because both pristine and reconciled full suites retain three upstream failures. No gate is represented as passed when it was not executed or remained red. The remaining issue is technical test-fixture work, not a psyche authority, privacy, or value decision.
