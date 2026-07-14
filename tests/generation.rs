@@ -707,19 +707,19 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
         "e4f06282d0c95856b36b7ec2893f4fd294ebfefe",
         "8a6c5b154f7df63b65c6027ba41ea7c6496d60db",
         "12a157d2a70b2f4cbc004c020c5f9213b6d8eea8",
+        "## Delta records",
         "## Applicability evidence",
         "patch --dry-run --forward --batch --verbose",
-        "Reversed notices were not counted as application.",
-        "## Rationale provenance",
+        "Reversed notices are never counted as application.",
         "## Evidence gates",
         "108 passed, 0 failed",
-        "981 total, 978 passed, 3 upstream test-double failures",
-        "985 total, 982 passed, the same 3 upstream failures",
+        "981 total, 978 passed, 3 failed",
+        "985 total, 982 passed, same 3 failed",
         "Nix candidate package build",
-        "Package-content verification",
-        "Pi RPC extension load",
+        "Nix package-content witness",
+        "Nix Pi RPC extension-load witness",
         "## Decision status",
-        "not called complete",
+        "No decision is final.",
         "not a psyche authority, privacy, or value decision",
     ] {
         assert!(
@@ -728,38 +728,106 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
         );
     }
 
-    let patch_rows: Vec<_> = fixture
+    let ledger_digest = fixture
+        .lines()
+        .find_map(|line| line.strip_prefix("- SHA-256: `")?.strip_suffix("`."))
+        .expect("fixture carries canonical ledger digest");
+    assert_eq!(ledger_digest.len(), 64);
+    assert!(
+        ledger_digest
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    );
+    assert_eq!(
+        ledger_digest, "4b04ab7982ac18b1eacdd0fff268b4ad58663b9cb266c1dd8b8164d875731083",
+        "canonical ledger edits require a deliberate fixture digest update"
+    );
+
+    let expected_deltas = [
+        "acceptance-read-only-evidence.patch",
+        "agent-chain-clarify-opt-in.patch",
+        "async-runner-stderr.patch",
+        "detached-runner-peer-isolation.patch",
+        "full-child-extension-bridge.patch",
+        "slim-parent-skill.patch",
+    ];
+    let mut observed_deltas = BTreeSet::new();
+    for row in fixture
         .lines()
         .filter(|line| line.starts_with("| `") && line.contains(".patch` |"))
-        .collect();
-    assert_eq!(
-        patch_rows.len(),
-        6,
-        "fixture keeps exactly one applicability row per local delta"
-    );
-    for row in patch_rows {
+    {
+        let columns: Vec<_> = row.trim_matches('|').split('|').map(str::trim).collect();
+        assert_eq!(
+            columns.len(),
+            9,
+            "delta row keeps the required nine fields: {row}"
+        );
+        let delta = columns[0].trim_matches('`');
         assert!(
-            row.contains("exit 0") || row.contains("exit 1"),
-            "delta row records exact applicability exit: {row}"
+            expected_deltas.contains(&delta),
+            "unexpected delta row: {delta}"
         );
         assert!(
-            ["fully absorbed", "partially absorbed", "still absent"]
-                .iter()
-                .any(|status| row.contains(status)),
-            "delta row records an upstream status: {row}"
+            observed_deltas.insert(delta),
+            "duplicate delta row: {delta}"
+        );
+
+        let rationale = columns[1].trim_matches('`');
+        assert_eq!(
+            rationale.len(),
+            40,
+            "delta rationale uses an immutable commit: {row}"
         );
         assert!(
-            row.contains("provisional") || row.contains("supported, not package-landed"),
-            "delta row records decision state instead of implying completion: {row}"
+            rationale
+                .chars()
+                .all(|character| character.is_ascii_hexdigit())
+        );
+        assert!(
+            !columns[2].is_empty(),
+            "delta records implementation location: {row}"
+        );
+        assert!(
+            [
+                "fully absorbed",
+                "partially absorbed",
+                "still absent",
+                "deliberately divergent",
+                "unknown",
+            ]
+            .contains(&columns[3]),
+            "delta status uses the protocol enum: {row}"
+        );
+        assert!(
+            ["rebase", "reimplement", "drop", "escalate"].contains(&columns[4]),
+            "delta decision uses the protocol enum: {row}"
+        );
+        assert!(columns[5].contains("verify-0.34.0.sh witness"));
+        assert!(
+            columns[6].contains("command 0"),
+            "pristine command result retained: {row}"
+        );
+        assert!(
+            columns[7].contains("command 0"),
+            "reconciled command result retained: {row}"
+        );
+        assert_eq!(
+            columns[8], "provisional",
+            "failing full-suite gate keeps every decision provisional"
+        );
+    }
+    assert_eq!(observed_deltas.len(), expected_deltas.len());
+    for expected in expected_deltas {
+        assert!(
+            observed_deltas.contains(expected),
+            "missing delta record: {expected}"
         );
     }
 
-    assert_eq!(
-        fixture.matches("target-native remainder work").count(),
-        1,
-        "mixed-decision summary has one unambiguous four-delta statement"
-    );
     assert!(fixture.contains("the four originally identified remainder-analysis deltas"));
+    assert!(fixture.contains("baseline-equivalent failures remain failing gates"));
+    assert!(fixture.contains("best-effort post-close compaction"));
+    assert!(!fixture.contains("live 64 KiB bound is proven"));
 }
 
 #[test]

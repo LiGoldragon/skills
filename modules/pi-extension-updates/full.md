@@ -20,6 +20,9 @@ Keep one durable ledger entry per independently removable local delta beside the
 - rationale evidence such as a reproducer, issue, commit, test, or user-visible contract;
 - local implementation paths and commits or patch hunks;
 - upstream counterpart and one status: `fully absorbed`, `partially absorbed`, `still absent`, `deliberately divergent`, or `unknown`;
+- selected decision: `rebase`, `reimplement`, `drop`, or `escalate`;
+- the exact witness command and its pristine-target and reconciled-target output or exit status;
+- decision state `final` or `provisional`, with every unexecuted or failing gate named;
 - a validation witness that can distinguish the desired behavior from regression.
 
 Do not collapse several patches into one rationale. Do not infer rationale from the diff when history or a witness can establish it. Missing rationale or witness makes the delta `unknown` and blocks deletion.
@@ -41,7 +44,9 @@ Choose per delta, so one package update may drop, rebase, and reimplement differ
 
 Work against an isolated target tree while the current package remains reproducible. Establish the rollback pointers before changing sources. Update a fork producer first, commit and push its immutable revision, then update the consumer lock and package metadata. Keep local patch changes and their consumer update in one coherent consumer change. Never point a consumer at an unpushed fork revision; follow the owning repository's required push-before-build or build-before-push order.
 
-For each delta, retain comparison evidence from the unmodified target and the reconciled target. Run upstream tests that cover changed areas, each ledger witness, patch application checks, the package build, package-content checks, and the Pi harness or runtime flow that loads the extension. Verify the declared package version or revision and locked source. When Pi wrapper behavior depends on `PI_PACKAGE_DIR`, give standalone checks a representative package directory; use the activated profile only when deployment acceptance is actually requested.
+For each delta, retain comparison evidence from the unmodified target and the reconciled target. Run upstream tests that cover changed areas, each ledger witness, patch application checks, the package build, package-content checks, and the Pi harness or runtime flow that loads the extension. Record the exact command, raw exit status, and concise output for every gate. An unexecuted or failing gate makes every dependent decision provisional; a reconciled failure remains a failing gate even when the pristine baseline fails identically. Mark a decision final only when all required gates pass.
+
+Verify the declared package version or revision and locked source. When Pi wrapper behavior depends on `PI_PACKAGE_DIR`, give standalone checks a representative package directory; use the activated profile only when deployment acceptance is actually requested.
 
 Do not activate a failed candidate. Recover by restoring the prior consumer input and lock, the prior patch set or fork revision, and the last passing package result, then rerun the narrow load witness. Preserve the failed target and comparison notes long enough to explain the failure without making them effective runtime state.
 

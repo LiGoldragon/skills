@@ -2,7 +2,13 @@
 
 ## Canonical ledger
 
-The owning ledger is `CriomOS-home/packages/pi-subagents/fork-delta-ledger.md`. Its executable target snapshot is `CriomOS-home/packages/pi-subagents/reconciliation/0.31.0-to-0.34.0.patch`, built by sibling `0.34.0.nix`. This fixture snapshots the acceptance semantics that the skills generator test guards.
+- Path: `CriomOS-home/packages/pi-subagents/fork-delta-ledger.md`.
+- SHA-256: `4b04ab7982ac18b1eacdd0fff268b4ad58663b9cb266c1dd8b8164d875731083`.
+- Executable evidence: `CriomOS-home/packages/pi-subagents/reconciliation/verify-0.34.0.sh`.
+- Candidate patch: `CriomOS-home/packages/pi-subagents/reconciliation/0.31.0-to-0.34.0.patch`, SHA-256 `0427ab1331dc35cfb2af82ecf489e55c406a7b8f05b8a2090e4413e0fc414291`.
+- Nix witnesses: sibling `0.34.0.nix` and `0.34.0-check.nix`.
+
+This fixture snapshots the ledger semantics for isolated skills-repository tests. A canonical-ledger edit requires updating its digest and this snapshot.
 
 ## Immutable candidate
 
@@ -10,40 +16,40 @@ The owning ledger is `CriomOS-home/packages/pi-subagents/fork-delta-ledger.md`. 
 - Packaged base: npm 0.31.0, Git `e4f06282d0c95856b36b7ec2893f4fd294ebfefe`.
 - Local package snapshot: CriomOS-home `8a6c5b154f7df63b65c6027ba41ea7c6496d60db`, `packages/pi-subagents/default.nix` and six sibling patches.
 - Update target: npm 0.34.0, Git `12a157d2a70b2f4cbc004c020c5f9213b6d8eea8`.
-- Retained reconciliation patch: SHA-256 `ce23d291df868b87e84e342e3a9a3909677bc97ec60e2ef5a3d00ae7a5979ec4`.
 - No package version or activation changed in this evidence pass.
+
+## Delta records
+
+All exact witness commands below exit 0 only when the recorded pristine or reconciled component exits match. Status enum is `fully absorbed | partially absorbed | still absent | deliberately divergent | unknown`. Decision enum is `rebase | reimplement | drop | escalate`. State enum is `final | provisional`.
+
+| Delta | Rationale commit | Local implementation | Status | Decision | Exact witness command stem | Pristine result | Reconciled result | State |
+|---|---|---|---|---|---|---|---|---|
+| `agent-chain-clarify-opt-in.patch` | `1dd3f033b8b322c31609e1c56c4da4b99a62bc25` | `schemas.ts @@ -246`; `chain-execution.ts @@ -504` | partially absorbed | reimplement | `verify-0.34.0.sh witness clarify` | command 0; code 0, schema 1 | command 0; code 0, schema 0 | provisional |
+| `slim-parent-skill.patch` | `23665920be8e76c9029a546d1841654d68e39e54` | `skills/pi-subagents/SKILL.md @@ -10` | still absent | reimplement | `verify-0.34.0.sh witness compact-skill` | command 0; predicate 1, 918 lines | command 0; predicate 0, 136 lines | provisional |
+| `detached-runner-peer-isolation.patch` | `6bf5e7ec700a00f33b19fe0c24d63e93f9ea61ce` | `src/shared/utils.ts @@ -5, @@ -16` | fully absorbed | drop | `verify-0.34.0.sh witness peer-isolation` | command 0; predicate 0 | command 0; predicate 0 | provisional |
+| `async-runner-stderr.patch` | `60528d041c0ad784ba069781c17035ba9cafc5bc` | `async-execution.ts`, old lines 215 and 238 | partially absorbed | reimplement | `verify-0.34.0.sh witness stderr-compaction` | command 0; capture 0, post-close compaction 1 | command 0; capture 0, post-close compaction 0 | provisional |
+| `full-child-extension-bridge.patch` | `bff854e76bf17457a201f643622ae3dc0334e2fe` | `intercom-bridge.ts`, old 238/365; `pi-args.ts`, old 125 | partially absorbed | reimplement | `verify-0.34.0.sh witness child-extension` | command 0; inheritance 1 | command 0; inheritance 0 | provisional |
+| `acceptance-read-only-evidence.patch` | `df85cb32f687bb4dde1401d5cdfc6e75076c01f2` | `acceptance.ts`, old 631; new acceptance test | still absent | reimplement | `verify-0.34.0.sh witness read-only-evidence` | command 0; predicate 1 | command 0; predicate 0; negative writer test passes | provisional |
 
 ## Applicability evidence
 
-All probes used `patch --dry-run --forward --batch --verbose` on a pristine target. Reversed notices were not counted as application.
-
-| Delta | Exact target applicability | Target status | Candidate action | Decision state |
-|---|---|---|---|---|
-| `agent-chain-clarify-opt-in.patch` | schema hunk succeeded at 275 with offset 29; chain hunk reversed and ignored at 504; exit 1 | partially absorbed | drop absorbed code; reimplement schema wording | provisional |
-| `slim-parent-skill.patch` | whole-skill hunk failed at 10; exit 1 | still absent | reimplement compact parent skill | provisional |
-| `detached-runner-peer-isolation.patch` | both hunks reversed and ignored at 5 and 16; exit 1 | fully absorbed | drop | supported, not package-landed |
-| `async-runner-stderr.patch` | helper hunk succeeded at 277 with fuzz 1 and offset 62; spawn hunk failed at 266; exit 1 | partially absorbed | reimplement only the 64 KiB bound | provisional |
-| `full-child-extension-bridge.patch` | two intercom hunks reversed and ignored; `pi-args` hunk succeeded at 141 with offset 16; exit 1 | partially absorbed | drop intercom hunks; reimplement extension inheritance | provisional |
-| `acceptance-read-only-evidence.patch` | source and new-test hunks applied; exit 0, but unchanged replay regressed writer evidence | still absent | target-native read-only gate with negative writer test | provisional |
-
-## Rationale provenance
-
-The ledger ties each delta to immutable CriomOS-home commits and exact paths/hunks: clarify `1dd3f033b8b322c31609e1c56c4da4b99a62bc25`; compact skill `23665920be8e76c9029a546d1841654d68e39e54` plus `60ed02dfbbd34bddef417abc2c75e5270b652959`; peer isolation `6bf5e7ec700a00f33b19fe0c24d63e93f9ea61ce`; stderr `60528d041c0ad784ba069781c17035ba9cafc5bc` plus `f3fcf3e89b9448a5b99236415fe04fc207ddecd6`; bridge `bff854e76bf17457a201f643622ae3dc0334e2fe`; acceptance `df85cb32f687bb4dde1401d5cdfc6e75076c01f2`.
+`verify-0.34.0.sh applicability` runs `patch --dry-run --forward --batch --verbose`; its retained summary is `0.34.0-applicability.txt`. It records one exit-0 patch, five exit-1 patches, reversed hunks for clarify, peer isolation, and bridge, and failed hunks for compact skill and stderr. Reversed notices are never counted as application.
 
 ## Evidence gates
 
-| Gate | Result |
-|---|---|
-| Per-delta pristine/reconciled witnesses | expected pristine failures; every retained reconciled witness passed |
-| Focused acceptance, async, Pi-argument, and chain tests | 108 passed, 0 failed |
-| Pristine `npm run test:all` | 981 total, 978 passed, 3 upstream test-double failures |
-| Reconciled `npm run test:all` | 985 total, 982 passed, the same 3 upstream failures |
-| Nix candidate package build | passed with npm dependency identity `sha256-IJJ3hceNvHUr5QFIa/+0tnxNiEPh7jifE9dvPHrLE58=` |
-| Package-content verification | passed for metadata, dependencies, compact skill, clarify, stderr, bridge, and acceptance witnesses |
-| Pi RPC extension load | exited 0; no load error; response had `command:"get_commands"` and `success:true` |
+| Gate | Raw result | Acceptance result |
+|---|---|---|
+| Six pristine/reconciled witness pairs | every command exit 0 with expected component exits | passed |
+| Focused acceptance, async, Pi-argument, and chain tests | exit 0; 108 passed, 0 failed | passed |
+| Pristine `npm run test:all` | exit 1; 981 total, 978 passed, 3 failed | failing gate; decisions provisional |
+| Reconciled `npm run test:all` | exit 1; 985 total, 982 passed, same 3 failed | failing gate; decisions provisional despite baseline equivalence |
+| Nix candidate package build | exit 0 | passed |
+| Nix package-content witness | exit 0 | passed |
+| Nix Pi RPC extension-load witness | exit 0; no load error; successful `get_commands` response | passed |
+| Complete `verify-0.34.0.sh all` | exit 0 after verifying all expected raw statuses | evidence runner passed; decision state remains provisional |
 
 ## Decision status
 
-This is a mixed six-delta reconciliation: one upstream-owned delta supports drop; the four originally identified remainder-analysis deltas require target-native remainder work; and the cleanly applicable acceptance patch separately requires target-native reimplementation because unchanged replay regresses writer evidence.
+This is a mixed six-delta reconciliation: one delta selects `drop`; the four originally identified remainder-analysis deltas select `reimplement`; and the cleanly applicable acceptance patch separately selects `reimplement` because unchanged replay regresses writer evidence.
 
-The candidate is not called complete because both pristine and reconciled full suites retain three upstream failures. No gate is represented as passed when it was not executed or remained red. The remaining issue is technical test-fixture work, not a psyche authority, privacy, or value decision.
+No decision is final. Both pristine and reconciled full suites have raw exit 1, and baseline-equivalent failures remain failing gates. The stderr candidate is only best-effort post-close compaction; it does not claim a live 64 KiB bound or guaranteed callback execution after parent exit. The remaining work is technical, not a psyche authority, privacy, or value decision.
