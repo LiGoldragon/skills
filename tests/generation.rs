@@ -130,7 +130,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 75);
+    assert_eq!(roster.skill_modules.payload().len(), 76);
 
     let active_first_class_modules: Vec<_> = roster
         .skill_modules
@@ -141,7 +141,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 61);
+    assert_eq!(active_first_class_modules.len(), 62);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -260,7 +260,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 62);
+    assert_eq!(skill_count, 63);
     assert_eq!(role_count, 14);
     assert_eq!(model_catalog.payload().len(), 5);
     assert_eq!(role_model_assignments.payload().len(), role_count);
@@ -296,6 +296,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "version-control",
         "work-tracking",
         "repository-publication",
+        "pi-extension-updates",
         "nota-shape-checklist",
         "management",
     ] {
@@ -670,6 +671,50 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
     assert!(skill_source_core.contains("source modules"));
     assert!(skill_source_core.contains("role source modules"));
     assert!(skill_source_core.contains("generated runtime targets"));
+}
+
+#[test]
+fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
+    let protocol = include_str!("../modules/pi-extension-updates/full.md");
+    for required in [
+        "canonical upstream package and source repository",
+        "package-wiring scan and the source comparison",
+        "fully absorbed",
+        "partially absorbed",
+        "still absent",
+        "deliberately divergent",
+        "unknown",
+        "**Rebase**",
+        "**Reimplement**",
+        "**Drop**",
+        "**Escalate**",
+        "A reversed-patch warning is absorption evidence",
+        "Never point a consumer at an unpushed fork revision",
+        "maintenance, security, privacy, and user-visible consequences",
+    ] {
+        assert!(
+            protocol.contains(required),
+            "missing Pi extension update rule: {required}"
+        );
+    }
+
+    let fixture = include_str!("fixtures/pi-subagents-0.31.0-to-0.34.0.md");
+    for required in [
+        "npm `0.31.0`",
+        "npm `0.34.0`",
+        "agent-chain-clarify-opt-in.patch",
+        "slim-parent-skill.patch",
+        "detached-runner-peer-isolation.patch",
+        "async-runner-stderr.patch",
+        "full-child-extension-bridge.patch",
+        "acceptance-read-only-evidence.patch",
+        "No psyche escalation is warranted",
+    ] {
+        assert!(
+            fixture.contains(required),
+            "dry-run fixture missing: {required}"
+        );
+    }
 }
 
 #[test]

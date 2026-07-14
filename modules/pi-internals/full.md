@@ -14,4 +14,4 @@ Emergency local effective mutation requires explicit psyche authorization for th
 
 Preserve active role and action-space restrictions. Do not use Pi internals to bypass management delegation, read-only Spirit boundaries, or repository closeout.
 
-Keep package inputs portable through flake inputs, committed patches, and lock files. Validate the narrow Nix surface that owns the change. Closeout is blocked when Pi behavior depends on uncommitted runtime edits, PATH shims, replaced managed symlinks, or copied installed source.
+Keep package inputs portable through flake inputs, committed patches, and lock files. Validate the narrow Nix surface that owns the change. Pi's wrapper can derive version and package behavior from `PI_PACKAGE_DIR`; give standalone derivation checks a representative package directory, and use the activated profile for deployment acceptance. Closeout is blocked when Pi behavior depends on uncommitted runtime edits, PATH shims, replaced managed symlinks, or copied installed source.

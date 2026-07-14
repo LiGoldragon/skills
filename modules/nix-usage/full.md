@@ -6,6 +6,10 @@ Ask Nix what Nix knows. Inspect source, evaluate options, or query the daemon; d
 
 Use local checkout evaluations for diagnosis. Use a fetched or pinned installable when the evidence must prove another machine can reproduce the build. When a flake wrapper locks the dependency under test, use `--override-input <name> <local-path>` for quick local checks.
 
+When a flake checkout is nested inside another Git or JJ working copy and plain `.#<output>` resolves the enclosing repository or excludes nested files, address it explicitly as `path:$PWD#<output>`. Keep that path transient; do not commit local path inputs.
+
+Run pass/fail Nix evaluations and builds independently rather than in parallel. Parallel evaluation can contend on the local SQLite evaluation cache; an ignored `database is busy` diagnostic is not clean acceptance evidence.
+
 Keep store paths in variables. Do not paste raw store paths into chat, commits, skills, or docs; hashes drift and freeze stale state into prose.
 
 When a command resolves through the Nix store, a profile, Home Manager output, or generated runtime output, use that as evidence and trace the owning source. Do not patch the effective command by replacing managed links, adding PATH shims, editing copied installed source, or adding ad hoc dependency symlinks.

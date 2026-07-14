@@ -2,7 +2,7 @@
 
 ## Edit Coordination
 
-Before editing shared files or running a command that writes them, register the assigned Session/Lane with `meta-orchestrate`, then claim the exact path or repository with ordinary Orchestrate under that lane. The ordinary claim field is role-shaped, but it carries the lane identity.
+Before editing shared files or running a command that writes them, register the assigned Session/Lane with `meta-orchestrate`, then claim the exact path or repository with ordinary Orchestrate under that lane. The ordinary claim field is role-shaped, but it carries the lane identity. Resolve repository aliases after registration and verify the absolute claim path exists; claim acceptance does not prove that the path names a real checkout.
 
 If the task needs editing and no session name, lane name, or Fresh/Recovery mode is assigned, pause and report the missing coordination identity. Do not use generic names such as `general-code-implementer`, `skill-editor`, or `rust-auditor`.
 
@@ -17,6 +17,12 @@ meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structu
 orchestrate "(Claim (<LaneName> [(Path /absolute/path)] <reason-string>))"
 orchestrate "(Release <LaneName>)"
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
+```
+
+`Fresh` follows the closed lane record. This concrete registration is valid:
+
+```sh
+meta-orchestrate "(Register ((ToolchainRefresh RefreshPi ([Generalist] Structural) [refresh toolchain]) Fresh))"
 ```
 
 Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter, then letters and digits only (`OsDeploymentDoctrine`, `SkillDriftReview`). The daemon strictly enforces this for the session name; its error text calls it `CamelCase alphanumeric`.
@@ -39,7 +45,7 @@ If the local repository or worktree is already claimed or visibly in use, do not
 bd create "Track <branch> worktree" -t task -p 2 --description "<repo>; <branch>; <worktree>; disposition needed" --labels feature-branch,worktree
 ```
 
-For Git worktrees managed by beads, create from a clean `main` checkout with `bd worktree create <worktree> --branch <branch>`. In JJ workspaces, create from `main` with `jj workspace add --revision main --message '<branch>' <worktree>` and move the feature bookmark to the completed commit with `jj bookmark set <branch> -r @-`.
+For Git worktrees managed by beads, create from a clean `main` checkout with `bd worktree create <worktree> --branch <branch>`. `bd worktree create` does not create a JJ workspace; for JJ, file the disposition bead separately, then use `jj workspace add --revision main --message '<branch>' <worktree>` and move the feature bookmark to the completed commit with `jj bookmark set <branch> -r @-`.
 
 When daemon worktree inventory is needed, the meta API shape is:
 
