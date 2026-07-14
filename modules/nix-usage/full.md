@@ -8,7 +8,7 @@ Use local checkout evaluations for diagnosis. Use a fetched or pinned installabl
 
 When a flake checkout is nested inside another Git or JJ working copy and plain `.#<output>` resolves the enclosing repository or excludes nested files, address it explicitly as `path:$PWD#<output>`. Keep that path transient; do not commit local path inputs.
 
-Run pass/fail Nix evaluations and builds independently rather than in parallel. Parallel evaluation can contend on the local SQLite evaluation cache; an ignored `database is busy` diagnostic is not clean acceptance evidence.
+Run pass/fail Nix evaluations and builds independently rather than in parallel. Parallel evaluation can contend on the local SQLite evaluation cache; an ignored `database is busy` diagnostic is not clean acceptance evidence. If `nix flake check --no-build` fails because evaluation needs a source-staging derivation, run the full check before diagnosing the source.
 
 Keep store paths in variables. Do not paste raw store paths into chat, commits, skills, or docs; hashes drift and freeze stale state into prose.
 
