@@ -1,7 +1,8 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs,
-    path::Path,
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
 };
 
 use nota::NotaSource;
@@ -673,6 +674,271 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
     assert!(skill_source_core.contains("generated runtime targets"));
 }
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ForkStatus {
+    FullyAbsorbed,
+    PartiallyAbsorbed,
+    StillAbsent,
+    DeliberatelyDivergent,
+    Unknown,
+}
+
+impl ForkStatus {
+    fn parse(value: &str) -> Self {
+        match value {
+            "fully absorbed" => Self::FullyAbsorbed,
+            "partially absorbed" => Self::PartiallyAbsorbed,
+            "still absent" => Self::StillAbsent,
+            "deliberately divergent" => Self::DeliberatelyDivergent,
+            "unknown" => Self::Unknown,
+            _ => panic!("unknown fork status: {value}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ForkDecision {
+    Rebase,
+    Reimplement,
+    Drop,
+    Escalate,
+}
+
+impl ForkDecision {
+    fn parse(value: &str) -> Self {
+        match value {
+            "rebase" => Self::Rebase,
+            "reimplement" => Self::Reimplement,
+            "drop" => Self::Drop,
+            "escalate" => Self::Escalate,
+            _ => panic!("unknown fork decision: {value}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ForkDecisionState {
+    Final,
+    Provisional,
+}
+
+impl ForkDecisionState {
+    fn parse(value: &str) -> Self {
+        match value {
+            "final" => Self::Final,
+            "provisional" => Self::Provisional,
+            _ => panic!("unknown fork decision state: {value}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WitnessTree {
+    Pristine,
+    Reconciled,
+}
+
+impl WitnessTree {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Pristine => "pristine",
+            Self::Reconciled => "reconciled",
+        }
+    }
+}
+
+#[derive(Debug)]
+struct ParsedWitness {
+    name: String,
+    result: BTreeMap<String, String>,
+}
+
+#[derive(Debug)]
+struct ForkDeltaRecord {
+    delta: String,
+    status: ForkStatus,
+    decision: ForkDecision,
+    pristine: ParsedWitness,
+    reconciled: ParsedWitness,
+    state: ForkDecisionState,
+}
+
+impl ForkDeltaRecord {
+    fn parse(row: &str) -> Self {
+        let columns: Vec<_> = row.trim_matches('|').split('|').map(str::trim).collect();
+        assert_eq!(
+            columns.len(),
+            10,
+            "delta row keeps the required ten fields: {row}"
+        );
+
+        let delta = inline_code(columns[0]).to_owned();
+        let rationale = inline_code(columns[1]);
+        assert_eq!(
+            rationale.len(),
+            40,
+            "delta rationale uses an immutable commit: {row}"
+        );
+        assert!(
+            rationale
+                .chars()
+                .all(|character| character.is_ascii_hexdigit()),
+            "delta rationale is hexadecimal: {row}"
+        );
+        assert!(
+            !columns[2].is_empty(),
+            "delta records implementation location: {row}"
+        );
+
+        let status = ForkStatus::parse(columns[3]);
+        let decision = ForkDecision::parse(columns[4]);
+        let pristine = parse_witness(columns[5], columns[6], WitnessTree::Pristine);
+        let reconciled = parse_witness(columns[7], columns[8], WitnessTree::Reconciled);
+        assert_eq!(
+            pristine.name, reconciled.name,
+            "witness pair must name the same delta gate: {row}"
+        );
+        match decision {
+            ForkDecision::Drop => assert_eq!(
+                pristine.result, reconciled.result,
+                "a dropped absorbed delta remains unchanged: {row}"
+            ),
+            ForkDecision::Reimplement => assert_ne!(
+                pristine.result, reconciled.result,
+                "a reimplemented delta must record changed results: {row}"
+            ),
+            ForkDecision::Rebase | ForkDecision::Escalate => {}
+        }
+
+        Self {
+            delta,
+            status,
+            decision,
+            pristine,
+            reconciled,
+            state: ForkDecisionState::parse(columns[9]),
+        }
+    }
+}
+
+fn inline_code(value: &str) -> &str {
+    value
+        .strip_prefix('`')
+        .and_then(|value| value.strip_suffix('`'))
+        .filter(|value| !value.is_empty() && !value.contains('`'))
+        .unwrap_or_else(|| panic!("expected one non-empty inline-code value: {value}"))
+}
+
+fn parse_witness(command_cell: &str, result_cell: &str, tree: WitnessTree) -> ParsedWitness {
+    const SCRIPT: &str = "packages/pi-subagents/reconciliation/verify-0.34.0.sh";
+
+    let command = inline_code(command_cell);
+    let tokens: Vec<_> = command.split_whitespace().collect();
+    assert_eq!(
+        tokens.len(),
+        4,
+        "witness command has exactly script, subcommand, witness, and tree: {command}"
+    );
+    assert_eq!(tokens[0], SCRIPT, "witness uses the retained executable");
+    assert_eq!(tokens[1], "witness", "witness uses the witness subcommand");
+    assert!(
+        !tokens[2].is_empty()
+            && tokens[2]
+                .chars()
+                .all(|character| character.is_ascii_lowercase() || character == '-'),
+        "witness name is a canonical command argument: {command}"
+    );
+    assert_eq!(
+        tokens[3],
+        tree.as_str(),
+        "witness command carries the explicit tree argument"
+    );
+
+    let mut result = BTreeMap::new();
+    for component in inline_code(result_cell).split("; ") {
+        let (key, value) = component
+            .split_once('=')
+            .unwrap_or_else(|| panic!("witness result component must be key=value: {component}"));
+        assert!(
+            !key.is_empty()
+                && key
+                    .chars()
+                    .all(|character| character.is_ascii_lowercase() || character == '-'),
+            "witness result key is canonical: {key}"
+        );
+        assert!(
+            !value.is_empty()
+                && (value.chars().all(|character| character.is_ascii_digit()) || value == "pass"),
+            "witness result value is an exit/count or pass token: {value}"
+        );
+        assert!(
+            result.insert(key.to_owned(), value.to_owned()).is_none(),
+            "witness result key appears once: {key}"
+        );
+    }
+    assert_eq!(
+        result.get("exit").map(String::as_str),
+        Some("0"),
+        "retained witness command itself exits successfully"
+    );
+    assert!(
+        result.len() >= 2,
+        "witness records command exit plus at least one component result"
+    );
+
+    ParsedWitness {
+        name: tokens[2].to_owned(),
+        result,
+    }
+}
+
+fn canonical_ledger_path() -> (PathBuf, bool) {
+    const LEDGER_RELATIVE_PATH: &str = "packages/pi-subagents/fork-delta-ledger.md";
+
+    if let Some(path) = env::var_os("PI_SUBAGENTS_CANONICAL_LEDGER") {
+        let path = PathBuf::from(path);
+        assert!(
+            path.ends_with(LEDGER_RELATIVE_PATH),
+            "PI_SUBAGENTS_CANONICAL_LEDGER must name the owning package ledger"
+        );
+        return (path, true);
+    }
+
+    let sibling = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("skills checkout has a parent")
+        .join("CriomOS-home")
+        .join(LEDGER_RELATIVE_PATH);
+    if sibling.is_file() {
+        return (sibling, true);
+    }
+
+    (
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/pi-subagents-canonical-ledger.md"),
+        false,
+    )
+}
+
+fn sha256_file(path: &Path) -> String {
+    let output = Command::new("sha256sum")
+        .arg(path)
+        .output()
+        .unwrap_or_else(|error| panic!("failed to run sha256sum for {}: {error}", path.display()));
+    assert!(
+        output.status.success(),
+        "sha256sum failed for {}: {}",
+        path.display(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout)
+        .expect("sha256sum output is UTF-8")
+        .split_whitespace()
+        .next()
+        .expect("sha256sum emits a digest")
+        .to_owned()
+}
+
 #[test]
 fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
     let protocol = include_str!("../modules/pi-extension-updates/full.md");
@@ -738,91 +1004,113 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
             .chars()
             .all(|character| character.is_ascii_hexdigit())
     );
-    assert_eq!(
-        ledger_digest, "4b04ab7982ac18b1eacdd0fff268b4ad58663b9cb266c1dd8b8164d875731083",
-        "canonical ledger edits require a deliberate fixture digest update"
-    );
 
-    let expected_deltas = [
-        "acceptance-read-only-evidence.patch",
-        "agent-chain-clarify-opt-in.patch",
-        "async-runner-stderr.patch",
-        "detached-runner-peer-isolation.patch",
-        "full-child-extension-bridge.patch",
-        "slim-parent-skill.patch",
-    ];
-    let mut observed_deltas = BTreeSet::new();
-    for row in fixture
+    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/pi-subagents-canonical-ledger.md");
+    assert_eq!(
+        sha256_file(&snapshot_path),
+        ledger_digest,
+        "retained canonical snapshot drift requires a deliberate fixture digest update"
+    );
+    let (canonical_path, uses_owning_checkout) = canonical_ledger_path();
+    assert_eq!(
+        sha256_file(&canonical_path),
+        ledger_digest,
+        "canonical ledger drift requires a deliberate fixture and snapshot update"
+    );
+    if uses_owning_checkout {
+        let repository_root = canonical_path
+            .parent()
+            .and_then(Path::parent)
+            .and_then(Path::parent)
+            .expect("canonical ledger has packages/pi-subagents ancestry");
+        let verifier =
+            repository_root.join("packages/pi-subagents/reconciliation/verify-0.34.0.sh");
+        assert!(verifier.is_file(), "canonical witness executable exists");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_ne!(
+                fs::metadata(&verifier)
+                    .expect("canonical witness metadata is readable")
+                    .permissions()
+                    .mode()
+                    & 0o111,
+                0,
+                "canonical witness is executable"
+            );
+        }
+    }
+
+    let expected_deltas = BTreeMap::from([
+        ("acceptance-read-only-evidence.patch", "read-only-evidence"),
+        ("agent-chain-clarify-opt-in.patch", "clarify"),
+        ("async-runner-stderr.patch", "stderr-compaction"),
+        ("detached-runner-peer-isolation.patch", "peer-isolation"),
+        ("full-child-extension-bridge.patch", "child-extension"),
+        ("slim-parent-skill.patch", "compact-skill"),
+    ]);
+    let records: Vec<_> = fixture
         .lines()
         .filter(|line| line.starts_with("| `") && line.contains(".patch` |"))
-    {
-        let columns: Vec<_> = row.trim_matches('|').split('|').map(str::trim).collect();
-        assert_eq!(
-            columns.len(),
-            9,
-            "delta row keeps the required nine fields: {row}"
-        );
-        let delta = columns[0].trim_matches('`');
-        assert!(
-            expected_deltas.contains(&delta),
-            "unexpected delta row: {delta}"
-        );
-        assert!(
-            observed_deltas.insert(delta),
-            "duplicate delta row: {delta}"
-        );
+        .map(ForkDeltaRecord::parse)
+        .collect();
+    assert_eq!(records.len(), expected_deltas.len());
 
-        let rationale = columns[1].trim_matches('`');
-        assert_eq!(
-            rationale.len(),
-            40,
-            "delta rationale uses an immutable commit: {row}"
+    let mut observed_deltas = BTreeSet::new();
+    let mut commands = BTreeSet::new();
+    let mut status_counts = BTreeMap::new();
+    let mut decision_counts = BTreeMap::new();
+    let mut state_counts = BTreeMap::new();
+    for record in &records {
+        let expected_witness = expected_deltas
+            .get(record.delta.as_str())
+            .unwrap_or_else(|| panic!("unexpected delta row: {}", record.delta));
+        assert!(
+            observed_deltas.insert(record.delta.as_str()),
+            "duplicate delta row: {}",
+            record.delta
+        );
+        assert_eq!(&record.pristine.name, expected_witness);
+        assert_eq!(&record.reconciled.name, expected_witness);
+        assert!(
+            commands.insert((
+                record.pristine.name.as_str(),
+                WitnessTree::Pristine.as_str()
+            )),
+            "duplicate pristine witness: {}",
+            record.pristine.name
         );
         assert!(
-            rationale
-                .chars()
-                .all(|character| character.is_ascii_hexdigit())
+            commands.insert((
+                record.reconciled.name.as_str(),
+                WitnessTree::Reconciled.as_str()
+            )),
+            "duplicate reconciled witness: {}",
+            record.reconciled.name
         );
-        assert!(
-            !columns[2].is_empty(),
-            "delta records implementation location: {row}"
-        );
-        assert!(
-            [
-                "fully absorbed",
-                "partially absorbed",
-                "still absent",
-                "deliberately divergent",
-                "unknown",
-            ]
-            .contains(&columns[3]),
-            "delta status uses the protocol enum: {row}"
-        );
-        assert!(
-            ["rebase", "reimplement", "drop", "escalate"].contains(&columns[4]),
-            "delta decision uses the protocol enum: {row}"
-        );
-        assert!(columns[5].contains("verify-0.34.0.sh witness"));
-        assert!(
-            columns[6].contains("command 0"),
-            "pristine command result retained: {row}"
-        );
-        assert!(
-            columns[7].contains("command 0"),
-            "reconciled command result retained: {row}"
-        );
-        assert_eq!(
-            columns[8], "provisional",
-            "failing full-suite gate keeps every decision provisional"
-        );
+        *status_counts.entry(record.status).or_insert(0) += 1;
+        *decision_counts.entry(record.decision).or_insert(0) += 1;
+        *state_counts.entry(record.state).or_insert(0) += 1;
     }
     assert_eq!(observed_deltas.len(), expected_deltas.len());
-    for expected in expected_deltas {
-        assert!(
-            observed_deltas.contains(expected),
-            "missing delta record: {expected}"
-        );
-    }
+    assert_eq!(commands.len(), expected_deltas.len() * 2);
+    assert_eq!(
+        status_counts,
+        BTreeMap::from([
+            (ForkStatus::PartiallyAbsorbed, 3),
+            (ForkStatus::StillAbsent, 2),
+            (ForkStatus::FullyAbsorbed, 1),
+        ])
+    );
+    assert_eq!(
+        decision_counts,
+        BTreeMap::from([(ForkDecision::Reimplement, 5), (ForkDecision::Drop, 1)])
+    );
+    assert_eq!(
+        state_counts,
+        BTreeMap::from([(ForkDecisionState::Provisional, 6)])
+    );
 
     assert!(fixture.contains("the four originally identified remainder-analysis deltas"));
     assert!(fixture.contains("baseline-equivalent failures remain failing gates"));
