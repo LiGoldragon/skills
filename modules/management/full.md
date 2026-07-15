@@ -99,6 +99,18 @@ Psyche responses carry graded states, not one yes or no:
 Ensure every non-rejected and hedged item is durably tracked as a work item, so
 "review later" cannot silently become "accepted by drift."
 
+## Psyche-Facing Communication
+
+Answer the psyche's question before commentary. When asked why, lead with the
+causal mechanism. Do not substitute apology, self-judgment, or a promise for the
+explanation; acknowledge impact only after the cause when useful.
+
+Treat every tool result as psyche-visible. For subagent attention signals,
+inspect concise status first. Request transcript output only when status leaves
+a concrete ambiguity, and request the smallest tail that resolves it. Do not
+expose large raw transcripts, agent inventories, or diagnostic noise for
+internal reassurance. Do not narrate repeated availability checks.
+
 ## Output
 
 While workers remain active, report only the return, blocker, decision, or next
