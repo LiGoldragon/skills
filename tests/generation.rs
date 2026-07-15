@@ -1149,6 +1149,13 @@ fn management_doctrine_contains_required_rules() {
         "Inspect concrete evidence of blockage first.",
         "do not fail a read-only Scout for lacking",
         "changed-file evidence.",
+        "When asked why, lead with the",
+        "causal mechanism.",
+        "Do not substitute apology, self-judgment, or a promise for the",
+        "Treat every tool result as psyche-visible.",
+        "inspect concise status first.",
+        "request the smallest tail that resolves it.",
+        "Do not narrate repeated availability checks.",
         "While workers remain active, report only the return, blocker, decision",
         "returned, in ordinary English",
     ] {
