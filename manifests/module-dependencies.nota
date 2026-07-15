@@ -67,6 +67,7 @@
   (version-control modules/version-control/full.md [] RuntimeSkill)
   (testing modules/testing/full.md [] RuntimeSkill)
   (feature-development modules/feature-development/full.md [] RuntimeSkill)
+  (release-train-development modules/release-train-development/full.md [feature-development version-control nix-discipline testing] RuntimeSkill)
   (work-tracking modules/work-tracking/full.md [] RuntimeSkill)
   (bead-weaver modules/bead-weaver/full.md [] RoleComposition)
   (repository-publication modules/repository-publication/full.md [] RuntimeSkill)

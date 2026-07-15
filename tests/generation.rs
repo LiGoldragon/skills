@@ -261,7 +261,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 63);
+    assert_eq!(skill_count, 64);
     assert_eq!(role_count, 14);
     assert_eq!(model_catalog.payload().len(), 5);
     assert_eq!(role_model_assignments.payload().len(), role_count);
