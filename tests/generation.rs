@@ -1253,31 +1253,83 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
-fn pi_manager_dispatch_roster_is_derived_from_active_pi_roles() {
+fn pi_manager_dispatch_roster_equals_generated_pi_agents_without_manager_or_non_pi_roles() {
     let fixture = Fixture::new();
+    let children = [
+        "generalist",
+        "intent-recorder",
+        "intent-translator",
+        "scout",
+        "repo-scaffolder",
+        "general-code-implementer",
+        "operating-system-implementer",
+        "rust-auditor",
+        "nix-auditor",
+        "skill-editor",
+        "intent-curator",
+        "repository-closeout",
+        "tracker-weaver",
+    ];
+    let mut active_outputs =
+        vec!["(Role (manager manager [] [Manager root.] [PiAgent]))".to_owned()];
+    active_outputs.extend(
+        children
+            .iter()
+            .map(|role| format!("(Role ({role} {role} [] [Role {role}.] [PiAgent]))")),
+    );
+    active_outputs
+        .push("(Role (claude-only claude-only [] [Non Pi witness.] [ClaudeAgent]))".to_owned());
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (manager manager [] [Manager root.] [PiAgent])) (Role (generalist generalist [] [General delivery.] [PiAgent])) (Role (scout scout [] [Local evidence.] [PiAgent]))]\n",
+        &format!("[{}]\n", active_outputs.join(" ")),
     );
-    fixture.write_source_file(
-        "manifests/module-dependencies.nota",
-        "[(manager roles/manager/full.md [] RoleSource) (generalist roles/generalist/full.md [] RoleSource) (scout roles/scout/full.md [] RoleSource)]\n",
-    );
-    for role in ["manager", "generalist", "scout"] {
+
+    let mut dependencies = Vec::new();
+    for role in children.iter().chain(["manager", "claude-only"].iter()) {
+        dependencies.push(format!("({role} roles/{role}/full.md [] RoleSource)"));
         fixture.write_source_file(
             &format!("roles/{role}/full.md"),
             &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
         );
     }
-    fixture.write_role_metadata(&["manager", "generalist", "scout"]);
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        &format!("[{}]\n", dependencies.join(" ")),
+    );
+    let metadata_roles = children
+        .iter()
+        .chain(["manager", "claude-only"].iter())
+        .copied()
+        .collect::<Vec<_>>();
+    fixture.write_role_metadata(&metadata_roles);
 
-    fixture.generate(GenerationMode::Write).expect("generation succeeds");
-
+    let report = fixture
+        .generate(GenerationMode::Write)
+        .expect("generation succeeds");
     let manager = fixture.read_workspace_file(".pi/agents/manager.md");
-    assert!(manager.contains("## Project dispatch roster"));
-    assert!(manager.contains("`generalist` — General delivery."));
-    assert!(manager.contains("`scout` — Local evidence."));
-    assert!(!manager.contains("`manager` — Manager root."));
+    let roster = manager
+        .lines()
+        .filter_map(|line| {
+            line.strip_prefix("- `")
+                .and_then(|line| line.split('`').next())
+        })
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let generated_pi_agents = report
+        .payload()
+        .payload()
+        .iter()
+        .filter_map(|file| file.output_path.as_ref().strip_prefix(".pi/agents/"))
+        .filter_map(|path| path.strip_suffix(".md"))
+        .filter(|role| *role != "manager")
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+
+    assert_eq!(roster, generated_pi_agents);
+    assert_eq!(roster, children);
+    assert_eq!(roster.len(), 13);
+    assert!(!roster.contains(&"manager".to_owned()));
+    assert!(!roster.contains(&"claude-only".to_owned()));
     assert!(manager.contains("runtime validation handles unknown or disabled names"));
 }
 

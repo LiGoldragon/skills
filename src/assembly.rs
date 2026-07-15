@@ -826,13 +826,23 @@ impl GenerationConfiguration {
     }
 
     fn pi_dispatch_roster(&self) -> String {
-        let entries = self.active_roles()
+        let entries = self
+            .active_roles()
             .into_iter()
             .filter(|role| {
                 role.output_identifier.as_ref() != "manager"
-                    && role.role_target_surfaces.payload().contains(&RoleTargetSurface::PiAgent)
+                    && role
+                        .role_target_surfaces
+                        .payload()
+                        .contains(&RoleTargetSurface::PiAgent)
             })
-            .map(|role| format!("- `{}` — {}", role.output_identifier.as_ref(), role.role_description.as_ref()))
+            .map(|role| {
+                format!(
+                    "- `{}` — {}",
+                    role.output_identifier.as_ref(),
+                    role.role_description.as_ref()
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n");
         format!(
