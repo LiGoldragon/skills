@@ -6,6 +6,8 @@ Use this when a code or engine repository lacks a remote, needs a public remote,
 
 Code and engine repositories are public by default. Use a private repository only for secrets, credentials, personal data, unpublished third-party code, or an explicit confidentiality constraint.
 
+Creating a public repository under the psyche's GitHub owner for a new code or engine repository is standing pre-authorized policy. Proceed without asking and never stall for approval. Content stays governed by the privacy discipline: keep private, personal, or secret material out of any public repository.
+
 Create the public GitHub repository from the local source when the repository does not already exist:
 
 ```sh
