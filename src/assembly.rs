@@ -335,12 +335,19 @@ impl GenerationJobs {
                 manifest,
             )));
         }
+        let pi_dispatch_roster = self.configuration.pi_dispatch_roster();
         for manifest in self.configuration.role_manifests()? {
-            jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
+            let assembler = ManifestAssembler::new(
                 self.source_root.clone(),
                 self.workspace_root.clone(),
                 manifest,
-            )));
+            );
+            let assembler = if assembler.is_pi_manager_agent() {
+                assembler.with_generated_fragment(pi_dispatch_roster.clone())
+            } else {
+                assembler
+            };
+            jobs.push(GenerationJob::Manifest(assembler));
         }
         if self.configuration.uses_active_manifest() {
             jobs.push(GenerationJob::Rendered(RenderedOutput::new(
@@ -816,6 +823,21 @@ impl GenerationConfiguration {
             }
         }
         Ok(manifests)
+    }
+
+    fn pi_dispatch_roster(&self) -> String {
+        let entries = self.active_roles()
+            .into_iter()
+            .filter(|role| {
+                role.output_identifier.as_ref() != "manager"
+                    && role.role_target_surfaces.payload().contains(&RoleTargetSurface::PiAgent)
+            })
+            .map(|role| format!("- `{}` — {}", role.output_identifier.as_ref(), role.role_description.as_ref()))
+            .collect::<Vec<_>>()
+            .join("\n");
+        format!(
+            "# Module - generated Pi dispatch roster\n\n## Project dispatch roster\n\nDispatch a known role directly; runtime validation handles unknown or disabled names. `list` is optional recovery or diagnostics. Use `generalist` when no specialist fits.\n\n{entries}\n"
+        )
     }
 
     fn role_output_inventory(&self) -> RoleOutputInventory {
@@ -1580,6 +1602,7 @@ struct ManifestAssembler {
     source_root: PathBuf,
     workspace_root: PathBuf,
     manifest: Manifest,
+    generated_fragments: Vec<String>,
 }
 
 impl ManifestAssembler {
@@ -1588,7 +1611,18 @@ impl ManifestAssembler {
             source_root,
             workspace_root,
             manifest,
+            generated_fragments: Vec::new(),
         }
+    }
+
+    fn is_pi_manager_agent(&self) -> bool {
+        self.manifest.output_surface == OutputSurface::PiAgent
+            && self.manifest.output_path.as_ref() == ".pi/agents/manager.md"
+    }
+
+    fn with_generated_fragment(mut self, fragment: String) -> Self {
+        self.generated_fragments.push(fragment);
+        self
     }
 
     fn generate(&self, mode: GenerationMode) -> Result<GeneratedFile> {
@@ -1664,6 +1698,15 @@ impl ManifestAssembler {
             fragments.push(MarkdownFragment::read(
                 self.module_workspace_path(module_path)?,
             )?);
+        }
+        for text in &self.generated_fragments {
+            fragments.push(MarkdownFragment::from_text(
+                WorkspacePath::new(
+                    self.source_root.clone(),
+                    PathBuf::from("manifests/active-outputs.nota"),
+                )?,
+                text,
+            ));
         }
         if !self.manifest.optional_skills.payload().is_empty() {
             let list = self

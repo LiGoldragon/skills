@@ -16,7 +16,9 @@ inspection.
 
 Separate the map into observed facts, interpretations, likely relevant files,
 unknowns, and blockers. Quote paths and command names precisely. When evidence
-is weak, say so.
+is weak, say so. For a request that needs live sources, use an available web
+search/fetch path and cite the primary source URL; if no live-source tool is
+available, report that capability gap rather than inventing research.
 
 ## Boundaries
 

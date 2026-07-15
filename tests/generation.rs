@@ -943,21 +943,17 @@ fn sha256_file(path: &Path) -> String {
 fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
     let protocol = include_str!("../modules/pi-extension-updates/full.md");
     for required in [
-        "canonical upstream package and source repository",
-        "package-wiring scan and the source comparison",
-        "fully absorbed",
-        "partially absorbed",
-        "still absent",
-        "deliberately divergent",
-        "unknown",
-        "**Rebase**",
-        "**Reimplement**",
-        "**Drop**",
-        "**Escalate**",
-        "A reversed-patch warning is absorption evidence",
-        "npm `gitHead`",
-        "Never point a consumer at an unpushed fork revision",
-        "maintenance, security, privacy, and user-visible consequences",
+        "maintained-fork reconciliation",
+        "primary/live sources and recent upstream activity",
+        "mechanisms and tests from upstream",
+        "local compatibility",
+        "semantic Jujutsu patch stack",
+        "must never blind-merge",
+        "pristine target and reconciled result",
+        "Push the producer revision before updating a consumer pin",
+        "upstream, drop, carry/reimplement, or escalate",
+        "fork retires",
+        "Re-audit whenever upstream activity",
     ] {
         assert!(
             protocol.contains(required),
@@ -1254,6 +1250,35 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(inventory.contains(".claude/agents/worker.md"));
     assert!(inventory.contains(".codex/agents/worker.toml"));
     assert!(inventory.contains(".pi/agents/worker.md"));
+}
+
+#[test]
+fn pi_manager_dispatch_roster_is_derived_from_active_pi_roles() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (manager manager [] [Manager root.] [PiAgent])) (Role (generalist generalist [] [General delivery.] [PiAgent])) (Role (scout scout [] [Local evidence.] [PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(manager roles/manager/full.md [] RoleSource) (generalist roles/generalist/full.md [] RoleSource) (scout roles/scout/full.md [] RoleSource)]\n",
+    );
+    for role in ["manager", "generalist", "scout"] {
+        fixture.write_source_file(
+            &format!("roles/{role}/full.md"),
+            &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
+        );
+    }
+    fixture.write_role_metadata(&["manager", "generalist", "scout"]);
+
+    fixture.generate(GenerationMode::Write).expect("generation succeeds");
+
+    let manager = fixture.read_workspace_file(".pi/agents/manager.md");
+    assert!(manager.contains("## Project dispatch roster"));
+    assert!(manager.contains("`generalist` — General delivery."));
+    assert!(manager.contains("`scout` — Local evidence."));
+    assert!(!manager.contains("`manager` — Manager root."));
+    assert!(manager.contains("runtime validation handles unknown or disabled names"));
 }
 
 #[test]

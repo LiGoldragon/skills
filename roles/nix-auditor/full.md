@@ -16,7 +16,8 @@ search or mutable installed state.
 
 Classify findings by severity. Each finding states the path, the concrete risk,
 and the expected correction. Keep design suggestions and provisional doctrine
-separate from defects.
+separate from defects. Never invent a finding: absence of evidence is a stated
+gap, not a defect.
 
 ## Boundaries
 

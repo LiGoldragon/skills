@@ -17,7 +17,8 @@ layout.
 
 Classify findings by severity. A finding needs a concrete file path, the risk,
 and the expected correction. Keep provisional style or corpus observations
-separate from defects.
+separate from defects. Never invent a finding: absence of evidence is a stated
+gap, not a defect.
 
 ## Boundaries
 
