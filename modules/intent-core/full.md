@@ -25,7 +25,13 @@ docs, skill source, or a tracker item:
 Do not be fooled by rule-grammar (must, never, always), an engineering-only
 "why", eloquent phrasing, a sensible one-off default, or agent- and
 Spirit-operation procedure. For example, "new repos default to public" is a
-default with an operational why for one local case — matter, not intent. When
+default with an operational why for one local case — matter, not intent.
+
+Spirit records the principle behind a decision, never its implementation-specific
+substance: a statement naming a technology, format, component, or design
+mechanism is matter even when stated emphatically. When an unbending principle
+stands behind such a statement, extract and verify that principle with the psyche
+before recording, and route the substance itself to a matter surface. When
 durable meaning, kind, target record, or privacy is unclear, ask instead of
 inferring.
 

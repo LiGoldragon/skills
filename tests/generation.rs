@@ -1150,7 +1150,7 @@ fn management_doctrine_contains_required_rules() {
         "do not fail a read-only Scout for lacking",
         "changed-file evidence.",
         "While workers remain active, report only the return, blocker, decision",
-        "synthesize in ordinary English",
+        "returned, in ordinary English",
     ] {
         assert!(
             management.contains(required),

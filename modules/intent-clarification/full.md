@@ -43,14 +43,23 @@ minutes. Never ask without options.
 3. **State your lean** if you have one — accepting it is faster than
    the psyche generating from scratch.
 
+When several decisions are ready at once, batch them as a numbered
+slate the psyche can answer item by item, and record the graded state
+each lands in: accepted, non-rejection (explicitly not acceptance —
+track for later psyche review), rejection, or hedged lean (preserve
+the hedge verbatim). See `skills/management.md`.
+
 ## After the psyche answers
 
 The psyche just gave a new statement. Classify it before capturing:
 only the rare, unbending orienting will that passes the intent test
 in `skills/intent-log.md` is intent; matter — defaults, mechanisms,
 single-component or architectural decisions, Spirit-operation — goes
-to its owning surface, not Spirit. When it is intent, record it per
-`skills/intent-log.md`. If it supersedes prior intent, follow the
+to its owning surface, not Spirit. When a statement names
+implementation-specific substance (a technology, format, component,
+or mechanism), extract and verify the universal principle behind it
+before recording, and route the substance itself to its owning
+surface. When it is intent, record it per `skills/intent-log.md`. If it supersedes prior intent, follow the
 supersession protocol in `skills/intent-maintenance.md`; if it
 merely extends, record under a new sub-topic. Reflect
 project-specific statements into the relevant repo's

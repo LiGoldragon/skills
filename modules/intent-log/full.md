@@ -32,6 +32,10 @@ Matter never enters the intent log. Single-component instructions, architecture 
 
 Worked example: "new repos default to public" fails gate 1 (a default), gate 2 (convenience), gate 3 (one local case), and gate 4 (an operational why). It is matter — it belongs in repo, docs, or skill source, not in Spirit.
 
+## Principle, not substance
+
+Spirit records the universal essence — the principle behind a decision — never its implementation-specific substance. A statement that names a technology, format, component, or design mechanism is substance, and stays substance even when the psyche states it emphatically. When such a statement carries an unbending principle, extract that principle, verify the extraction with the psyche, and record only the principle; otherwise record nothing. The substance itself goes to a matter surface — code, docs, design records, or skill source.
+
 ## Classification
 
 Use the deployed intent kinds:
