@@ -58,6 +58,22 @@ meta-lojix "(Deploy (Host (<cluster> <node> <host-composition> <proposal-source>
 
 `meta-lojix` returns when the daemon admits a request. Admission is not proof of build, copy, activation, or profile success. A `RequireImmutable` deploy whose flake reference carries its immutable identity (`?rev=`/`?narHash=`) omits `--refresh` and trusts Nix's per-flake evaluation cache, so re-evaluating an already-built pin returns in seconds. A mutable reference or `ResolveAndRecord` keeps `--refresh`, so its eval re-fetches the whole flake tree and takes minutes. A first build of a new closure also takes minutes. Do not kill a running deploy during a build phase or a mutable-ref eval.
 
+## Post-activation ledger
+
+Use Lojix's read-only ledger after every user-environment activation that changes a managed service. It joins the daemon's current-generation evidence with root-mediated target observations and exits nonzero when the target is unhealthy or the user-profile-to-generation link is not directly provable:
+
+```sh
+lojix-post-activation-ledger <cluster> <node> <user> <root-host> <managed-unit>...
+```
+
+Read its three evidence classes separately:
+
+- **Expected** is the immutable source/provenance and current-generation evidence recorded by Lojix, including the CriomOS source and its pinned `criomos-home` revision when Nix can read that source lock.
+- **Observed** is the active system/profile/Home Manager closure, Home Manager result, complete target-user failed-unit list, and configured managed-service health collected on the target.
+- **Unknown** is never green: current `LiveGeneration` records have no user field, so a matching home closure still cannot attribute that generation to a user without an additional direct link.
+
+A nonzero ledger is evidence to investigate; do not suppress failed units or treat an un-attributed profile as successful activation. Target identities and managed-unit lists belong in the deploy invocation, not this reusable doctrine.
+
 ## Activation checks
 
 After submit, query the node until the expected store path becomes current, or a rejection or failure is visible:
