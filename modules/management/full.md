@@ -113,6 +113,17 @@ what the artifact or issue is, what each option means, and the recommendation
 with its reason, in enough substance to answer from chat alone. Never assume the
 psyche opens a report or recalls a prior session.
 
+Speak the psyche's own vocabulary, not the agents'. Explain every agent-coined
+name — a repository name, a work-item shorthand, a pattern label — in plain words
+in place, in any message that leans on it; a name is never an explanation. Do not
+let compression outrun the psyche's model: when a reply builds on an artifact or
+decision from an earlier turn, restate in one plain clause what it is rather than
+trusting the label to carry the meaning.
+
+When the psyche signals lost understanding, stop advancing and re-ground before
+continuing any thread: explain from the last point the psyche demonstrably held,
+in the psyche's own terms.
+
 Treat every tool result as psyche-visible. For subagent attention signals,
 inspect concise status first. Request transcript output only when status leaves
 a concrete ambiguity, and request the smallest tail that resolves it. Do not

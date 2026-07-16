@@ -1162,6 +1162,11 @@ fn management_doctrine_contains_required_rules() {
         "Make every psyche-facing question or decision request self-contained.",
         "in enough substance to answer from chat alone.",
         "psyche opens a report or recalls a prior session.",
+        "Speak the psyche's own vocabulary, not the agents'.",
+        "a name is never an explanation.",
+        "let compression outrun the psyche's model:",
+        "When the psyche signals lost understanding, stop advancing and re-ground before",
+        "in the psyche's own terms.",
         "Name the Session and Lane in PascalCase alphanumeric;",
         "a hyphenated name forces a translation",
     ] {
