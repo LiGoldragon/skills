@@ -30,8 +30,9 @@ kind live at `manifests/module-dependencies.nota`; target-specific overlays live
 at `manifests/target-module-insertions.nota`. Canonical model support lives in
 `manifests/model-catalog.nota`; every active role has one profile in
 `manifests/role-model-assignments.nota` and one optional-skill list in
-`manifests/role-optional-skills.nota`. The CLI consumes these inputs for normal
-generation. The compatibility roster at
+`manifests/role-optional-skills.nota`. Typed nested-role minimum models and
+exclusive leaf-role edges live in `manifests/nested-role-relations.nota`. The
+CLI consumes these inputs for normal generation. The compatibility roster at
 `manifests/skills-roster.nota` remains parseable for legacy checks and
 archived/deleted skill modeling.
 
@@ -55,8 +56,11 @@ Role outputs emit harness-native worker packets:
 
 Generated role packets carry role source plus curated preloaded modules,
 dependency-expanded modules, provider-specific model and effort fields, and a
-validated list of optional skills. Optional skill bodies are loadable but not
-preloaded. Claude receives `model` and `effort`; Pi receives a
+validated list of optional skills. Manager packets receive target-relative
+Manager rosters; nested-role packets receive only their exclusive allowed leaf
+roles. Pi packets also carry the extension contract fields
+`projectRoleIdentity`, `projectRoleDispatchKind`, and, for nested roles,
+`allowedChildRoleNames`. Optional skill bodies are loadable but not preloaded. Claude receives `model` and `effort`; Pi receives a
 provider-qualified `model` and `thinking`; Codex receives `model` and
 `model_reasoning_effort`. Primary `skills/*.md` skill bodies are not emitted
 when no consuming harness needs them.

@@ -363,10 +363,12 @@ impl<'a> FrontmatterKey<'a> {
     }
 
     fn validate(&self) -> Result<()> {
-        if self
-            .text
-            .chars()
-            .all(|character| character.is_ascii_lowercase() || character == '-')
+        let mut characters = self.text.chars();
+        let starts_lowercase = characters
+            .next()
+            .is_some_and(|character| character.is_ascii_lowercase());
+        if starts_lowercase
+            && characters.all(|character| character.is_ascii_alphanumeric() || character == '-')
         {
             Ok(())
         } else {

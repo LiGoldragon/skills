@@ -1,0 +1,19 @@
+;; Nested roles and their exclusive target-compatible leaf-role delegation.
+;; Each minimum is target-relative. Ordinary role assignment wins an equal-strength tie.
+[
+  (generalist
+    [(ClaudeAgent fable-5 Medium) (CodexAgent gpt-5.6-sol Medium) (PiAgent gpt-5.6-sol Medium)]
+    [scout repo-scaffolder general-code-implementer rust-auditor nix-auditor repository-closeout tracker-weaver])
+  (crucial-greenfield-developer-for-chatgpt
+    [(CodexAgent gpt-5.6-sol Medium) (PiAgent gpt-5.6-sol Medium)]
+    [scout repo-scaffolder general-code-implementer rust-auditor nix-auditor repository-closeout])
+  (crucial-greenfield-developer-for-claude
+    [(ClaudeAgent fable-5 Medium)]
+    [scout repo-scaffolder general-code-implementer rust-auditor nix-auditor repository-closeout])
+  (operating-system-implementer
+    [(ClaudeAgent fable-5 Medium) (CodexAgent gpt-5.6-sol Medium) (PiAgent gpt-5.6-sol Medium)]
+    [scout general-code-implementer rust-auditor nix-auditor repository-closeout])
+  (skill-editor
+    [(ClaudeAgent fable-5 Medium) (CodexAgent gpt-5.6-sol Medium) (PiAgent gpt-5.6-sol Medium)]
+    [scout general-code-implementer rust-auditor repository-closeout])
+]

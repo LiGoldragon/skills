@@ -92,6 +92,7 @@
 
   (role-manager roles/manager/full.md [] RoleSource)
   (role-generalist roles/generalist/full.md [] RoleSource)
+  (role-crucial-greenfield-developer roles/crucial-greenfield-developer/full.md [] RoleSource)
   (role-intent-recorder roles/intent-recorder/full.md [] RoleSource)
   (role-intent-translator roles/intent-translator/full.md [] RoleSource)
   (role-scout roles/scout/full.md [] RoleSource)

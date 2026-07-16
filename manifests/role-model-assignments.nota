@@ -2,6 +2,8 @@
 [
   (manager (gpt-5.6-sol High) (claude-opus-4-8 High))
   (generalist (gpt-5.6-terra High) (claude-opus-4-8 High))
+  (crucial-greenfield-developer-for-chatgpt (gpt-5.6-sol High) (fable-5 High))
+  (crucial-greenfield-developer-for-claude (gpt-5.6-sol High) (fable-5 High))
   (intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))
   (intent-translator (gpt-5.6-sol High) (claude-opus-4-8 Xhigh))
   (scout (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))

@@ -2,6 +2,8 @@
 [
   (manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])
   (generalist [component-architecture structural-forms contract-repo micro-components actor-systems design-quality code-implementation feature-development repository-management repository-publication rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline nix-usage operating-system-operations pi-extension-updates testing version-control versioning privacy secrets])
+  (crucial-greenfield-developer-for-chatgpt [repo-intent design-quality component-architecture structural-forms contract-repo micro-components actor-systems code-implementation feature-development repository-management repository-publication rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline testing version-control versioning main-feature-integration privacy secrets])
+  (crucial-greenfield-developer-for-claude [repo-intent design-quality component-architecture structural-forms contract-repo micro-components actor-systems code-implementation feature-development repository-management repository-publication rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline testing version-control versioning main-feature-integration privacy secrets])
   (intent-recorder [])
   (intent-translator [spirit-query intent-clarification intent-log intent-manifestation work-tracking nota-design helper-context-transfer])
   (scout [spirit-query library repo-intent privacy secrets])

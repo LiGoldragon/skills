@@ -406,7 +406,7 @@ pub enum ModelCatalogEntry {
 pub struct ChatGptModel {
     pub model_identifier: ModelIdentifier,
     pub pi_provider: PiProvider,
-    pub supported_efforts: SupportedEfforts,
+    pub model_effort_strengths: ModelEffortStrengths,
 }
 
 #[rustfmt::skip]
@@ -417,7 +417,7 @@ pub struct ChatGptModel {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaudeModel {
     pub model_identifier: ModelIdentifier,
-    pub supported_efforts: SupportedEfforts,
+    pub model_effort_strengths: ModelEffortStrengths,
 }
 
 #[rustfmt::skip]
@@ -453,7 +453,26 @@ pub struct PiProvider(String);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SupportedEfforts(Vec<EffortLevel>);
+pub struct ModelEffortStrengths(Vec<ModelEffortStrength>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelEffortStrength {
+    pub effort_level: EffortLevel,
+    pub model_strength: ModelStrength,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelStrength(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -544,6 +563,54 @@ pub struct RoleOptionalSkill {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OptionalSkills(Vec<OutputIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleRelations(Vec<NestedRoleRelation>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleRelation {
+    pub output_identifier: OutputIdentifier,
+    pub nested_role_minimum_models: NestedRoleMinimumModels,
+    pub allowed_leaf_roles: AllowedLeafRoles,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleMinimumModels(Vec<NestedRoleMinimumModel>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleMinimumModel {
+    pub role_target_surface: RoleTargetSurface,
+    pub model_identifier: ModelIdentifier,
+    pub effort_level: EffortLevel,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AllowedLeafRoles(Vec<OutputIdentifier>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -1282,20 +1349,39 @@ impl From<String> for PiProvider {
 }
 
 #[rustfmt::skip]
-impl SupportedEfforts {
-    pub fn new(payload: Vec<EffortLevel>) -> Self {
+impl ModelEffortStrengths {
+    pub fn new(payload: Vec<ModelEffortStrength>) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &Vec<EffortLevel> {
+    pub fn payload(&self) -> &Vec<ModelEffortStrength> {
         &self.0
     }
-    pub fn into_payload(self) -> Vec<EffortLevel> {
+    pub fn into_payload(self) -> Vec<ModelEffortStrength> {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<Vec<EffortLevel>> for SupportedEfforts {
-    fn from(payload: Vec<EffortLevel>) -> Self {
+impl From<Vec<ModelEffortStrength>> for ModelEffortStrengths {
+    fn from(payload: Vec<ModelEffortStrength>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModelStrength {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for ModelStrength {
+    fn from(payload: Integer) -> Self {
         Self::new(payload)
     }
 }
@@ -1352,6 +1438,63 @@ impl OptionalSkills {
 }
 #[rustfmt::skip]
 impl From<Vec<OutputIdentifier>> for OptionalSkills {
+    fn from(payload: Vec<OutputIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl NestedRoleRelations {
+    pub fn new(payload: Vec<NestedRoleRelation>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<NestedRoleRelation> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<NestedRoleRelation> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<NestedRoleRelation>> for NestedRoleRelations {
+    fn from(payload: Vec<NestedRoleRelation>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl NestedRoleMinimumModels {
+    pub fn new(payload: Vec<NestedRoleMinimumModel>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<NestedRoleMinimumModel> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<NestedRoleMinimumModel> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<NestedRoleMinimumModel>> for NestedRoleMinimumModels {
+    fn from(payload: Vec<NestedRoleMinimumModel>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl AllowedLeafRoles {
+    pub fn new(payload: Vec<OutputIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OutputIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OutputIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OutputIdentifier>> for AllowedLeafRoles {
     fn from(payload: Vec<OutputIdentifier>) -> Self {
         Self::new(payload)
     }
@@ -1893,6 +2036,27 @@ impl AsRef<str> for PiProvider {
 impl PartialEq<&str> for PiProvider {
     fn eq(&self, other: &&str) -> bool {
         self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl std::fmt::Display for ModelStrength {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<u64> for ModelStrength {
+    fn eq(&self, other: &u64) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl PartialOrd<u64> for ModelStrength {
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        self.payload().partial_cmp(other)
     }
 }
 
