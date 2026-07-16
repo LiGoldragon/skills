@@ -58,9 +58,9 @@ Generated role packets carry role source plus curated preloaded modules,
 dependency-expanded modules, provider-specific model and effort fields, and a
 validated list of optional skills. Manager packets receive target-relative
 Manager rosters; nested-role packets receive only their exclusive allowed leaf
-roles. Pi packets also carry machine-readable delegation classification and
-allowed-child identifiers. Optional skill bodies are loadable but not
-preloaded. Claude receives `model` and `effort`; Pi receives a
+roles. Pi packets also carry the extension contract fields
+`projectRoleIdentity`, `projectRoleDispatchKind`, and, for nested roles,
+`allowedChildRoleNames`. Optional skill bodies are loadable but not preloaded. Claude receives `model` and `effort`; Pi receives a
 provider-qualified `model` and `thinking`; Codex receives `model` and
 `model_reasoning_effort`. Primary `skills/*.md` skill bodies are not emitted
 when no consuming harness needs them.

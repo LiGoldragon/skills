@@ -343,9 +343,11 @@
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
             model_catalog=${cleanSource}/manifests/model-catalog.nota
             role_assignments=${cleanSource}/manifests/role-model-assignments.nota
-            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [Medium High]))' "$model_catalog" >/dev/null
-            grep -F '(Claude (fable-5 [Medium High]))' "$model_catalog" >/dev/null
-            grep -F '(Claude (claude-sonnet-5 [Medium]))' "$model_catalog" >/dev/null
+            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))' "$model_catalog" >/dev/null
+            grep -F '(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (fable-5 [(Medium 50) (High 60)]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (claude-sonnet-5 [(Medium 10)]))' "$model_catalog" >/dev/null
             grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
             grep -F '(crucial-greenfield-developer-for-chatgpt (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null
             grep -F '(crucial-greenfield-developer-for-claude (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null

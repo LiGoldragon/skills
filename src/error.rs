@@ -50,6 +50,12 @@ pub enum Error {
     #[error("model `{model_identifier}` is listed more than once in the model catalog")]
     DuplicateModelCatalogEntry { model_identifier: String },
 
+    #[error("model `{model_identifier}` lists effort `{effort}` more than once")]
+    DuplicateModelCatalogEffort {
+        model_identifier: String,
+        effort: String,
+    },
+
     #[error("active role `{role_identifier}` has no model assignment")]
     MissingRoleModelAssignment { role_identifier: String },
 

@@ -34,11 +34,13 @@
   RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
   ModelCatalog (Vector ModelCatalogEntry)
   ModelCatalogEntry [(ChatGpt ChatGptModel) (Claude ClaudeModel)]
-  ChatGptModel { ModelIdentifier PiProvider SupportedEfforts }
-  ClaudeModel { ModelIdentifier SupportedEfforts }
+  ChatGptModel { ModelIdentifier PiProvider ModelEffortStrengths }
+  ClaudeModel { ModelIdentifier ModelEffortStrengths }
   ModelIdentifier String {| Display AsRef PartialEq Ord |}
   PiProvider String {| Display AsRef PartialEq |}
-  SupportedEfforts (Vector EffortLevel)
+  ModelEffortStrengths (Vector ModelEffortStrength)
+  ModelEffortStrength { EffortLevel ModelStrength }
+  ModelStrength Integer {| Display PartialEq PartialOrd |}
   EffortLevel [Medium High Xhigh]
   RoleModelAssignments (Vector RoleModelAssignment)
   RoleModelAssignment { OutputIdentifier ChatGptModelAssignment ClaudeModelAssignment }

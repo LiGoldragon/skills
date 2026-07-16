@@ -19,6 +19,85 @@ use skills::{
 };
 use tempfile::TempDir;
 
+#[derive(Debug, Eq, PartialEq)]
+struct ParsedProjectRoleContract {
+    project_role_identity: String,
+    project_role_dispatch_kind: String,
+    allowed_child_role_names: Vec<String>,
+}
+
+fn flat_frontmatter(packet: &str) -> BTreeMap<String, String> {
+    let block = packet
+        .strip_prefix("---\n")
+        .and_then(|packet| packet.split_once("\n---\n"))
+        .map(|(frontmatter, _)| frontmatter)
+        .expect("packet has frontmatter");
+    block
+        .lines()
+        .map(|line| {
+            let (key, value) = line.split_once(':').expect("flat frontmatter field");
+            let value = value.trim();
+            let value = value
+                .strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+                .or_else(|| {
+                    value
+                        .strip_prefix('"')
+                        .and_then(|value| value.strip_suffix('"'))
+                })
+                .unwrap_or(value);
+            (key.to_owned(), value.to_owned())
+        })
+        .collect()
+}
+
+fn project_role_contract(packet: &str, runtime_role_name: &str) -> ParsedProjectRoleContract {
+    let frontmatter = flat_frontmatter(packet);
+    let identity = frontmatter
+        .get("projectRoleIdentity")
+        .expect("projectRoleIdentity exists");
+    assert_eq!(identity, runtime_role_name);
+    let dispatch_kind = frontmatter
+        .get("projectRoleDispatchKind")
+        .expect("projectRoleDispatchKind exists");
+    assert!(matches!(
+        dispatch_kind.as_str(),
+        "manager" | "nested" | "leaf"
+    ));
+    let allowed_child_role_names = frontmatter
+        .get("allowedChildRoleNames")
+        .map(|value| {
+            value
+                .split(',')
+                .map(str::trim)
+                .filter(|name| !name.is_empty())
+                .map(str::to_owned)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    if dispatch_kind == "nested" {
+        assert!(frontmatter.contains_key("allowedChildRoleNames"));
+    } else {
+        assert!(!frontmatter.contains_key("allowedChildRoleNames"));
+    }
+    for incompatible_key in [
+        "delegation-role-classification",
+        "allowed-child-role-identifiers",
+    ] {
+        assert!(!frontmatter.contains_key(incompatible_key));
+    }
+    ParsedProjectRoleContract {
+        project_role_identity: identity.clone(),
+        project_role_dispatch_kind: dispatch_kind.clone(),
+        allowed_child_role_names,
+    }
+}
+
+fn frontmatter_block(packet: &str) -> &str {
+    let end = packet.find("\n---\n").expect("frontmatter closes") + "\n---\n".len();
+    &packet[..end]
+}
+
 #[test]
 fn generation_writes_derived_skill_surfaces_with_roster_frontmatter() {
     let fixture = Fixture::new();
@@ -275,7 +354,17 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
     let model_catalog_source = include_str!("../manifests/model-catalog.nota");
     let role_model_assignments_source = include_str!("../manifests/role-model-assignments.nota");
-    assert!(model_catalog_source.contains("(Claude (claude-sonnet-5 [Medium]))"));
+    assert!(model_catalog_source.contains("(Claude (claude-sonnet-5 [(Medium 10)]))"));
+    assert!(
+        model_catalog_source
+            .contains("(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))")
+    );
+    assert!(
+        model_catalog_source
+            .contains("(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))")
+    );
+    assert!(model_catalog_source.contains("(Claude (fable-5 [(Medium 50) (High 60)]))"));
+    assert!(model_catalog_source.contains("(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))"));
     for sonnet_role in ["intent-recorder", "scout", "repository-closeout"] {
         assert!(
             role_model_assignments_source.contains(&format!(
@@ -1290,7 +1379,7 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\nmodel: 'openai-codex/gpt-test'\nthinking: high\ndelegation-role-classification: LeafRole\nallowed-child-role-identifiers: None\n---\n\n"));
+    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\nmodel: 'openai-codex/gpt-test'\nthinking: high\nprojectRoleIdentity: worker\nprojectRoleDispatchKind: leaf\n---\n\n"));
     assert!(!pi.contains("Skill-read de-duplication"));
 
     let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
@@ -1337,13 +1426,49 @@ fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
     assert_eq!(roster(&pi), ["shared", "pi-only"]);
     assert_eq!(roster(&claude), ["shared", "claude-only"]);
     assert_eq!(roster(&codex), ["shared", "codex-only"]);
-    assert!(pi.contains("delegation-role-classification: Manager"));
-    assert!(pi.contains("allowed-child-role-identifiers: 'shared, pi-only'"));
+    assert!(pi.contains("projectRoleIdentity: manager"));
+    assert!(pi.contains("projectRoleDispatchKind: manager"));
+    assert!(!pi.contains("allowedChildRoleNames:"));
     for packet in [&pi, &claude, &codex] {
         assert!(packet.contains("Manager dispatch roster"));
         assert!(!packet.contains("`list`"));
         assert!(!packet.contains("Orchestrator"));
         assert!(!roster(packet).contains(&"manager".to_owned()));
+    }
+}
+
+#[test]
+fn pi_project_role_frontmatter_matches_extension_parser_contract_fixture() {
+    let fixture = Fixture::new();
+    fixture.write_project_role_contract_sources();
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("project-role contract fixture generates");
+
+    let generated = fixture.read_workspace_file(".pi/agents/planner.md");
+    let contract_fixture = include_str!("fixtures/pi-project-role-frontmatter-contract.md");
+    assert_eq!(
+        frontmatter_block(&generated),
+        frontmatter_block(contract_fixture)
+    );
+    assert_eq!(
+        project_role_contract(&generated, "planner"),
+        ParsedProjectRoleContract {
+            project_role_identity: "planner".to_owned(),
+            project_role_dispatch_kind: "nested".to_owned(),
+            allowed_child_role_names: vec!["reader".to_owned(), "writer".to_owned()],
+        }
+    );
+    for leaf in ["reader", "writer"] {
+        let packet = fixture.read_workspace_file(&format!(".pi/agents/{leaf}.md"));
+        assert_eq!(
+            project_role_contract(&packet, leaf),
+            ParsedProjectRoleContract {
+                project_role_identity: leaf.to_owned(),
+                project_role_dispatch_kind: "leaf".to_owned(),
+                allowed_child_role_names: Vec::new(),
+            }
+        );
     }
 }
 
@@ -1598,8 +1723,14 @@ fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests(
     let manager_pi = fixture.read_workspace_file(".pi/agents/manager.md");
     let manager_claude = roster(".claude/agents/manager.md");
     let manager_codex = roster(".codex/agents/manager.toml");
-    assert!(manager_pi.contains("delegation-role-classification: Manager"));
-    assert!(!manager_pi.contains("delegation-role-classification: NestedRole"));
+    assert_eq!(
+        project_role_contract(&manager_pi, "manager"),
+        ParsedProjectRoleContract {
+            project_role_identity: "manager".to_owned(),
+            project_role_dispatch_kind: "manager".to_owned(),
+            allowed_child_role_names: Vec::new(),
+        }
+    );
     assert!(
         roster(".pi/agents/manager.md")
             .contains(&"crucial-greenfield-developer-for-chatgpt".to_owned())
@@ -1613,11 +1744,51 @@ fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests(
     assert!(manager_claude.contains(&"crucial-greenfield-developer-for-claude".to_owned()));
     assert!(!manager_claude.contains(&"crucial-greenfield-developer-for-chatgpt".to_owned()));
 
+    for path in [
+        ".pi/agents/generalist.md",
+        ".pi/agents/operating-system-implementer.md",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: medium")
+        );
+    }
+    for path in [
+        ".claude/agents/generalist.md",
+        ".claude/agents/operating-system-implementer.md",
+        ".claude/agents/skill-editor.md",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .contains("model: fable-5\neffort: medium")
+        );
+    }
+    assert!(
+        fixture
+            .read_workspace_file(".pi/agents/skill-editor.md")
+            .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high")
+    );
+
     let chatgpt_peer =
         fixture.read_workspace_file(".pi/agents/crucial-greenfield-developer-for-chatgpt.md");
     assert!(chatgpt_peer.contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high"));
-    assert!(chatgpt_peer.contains("delegation-role-classification: NestedRole"));
-    assert!(chatgpt_peer.contains("allowed-child-role-identifiers: 'scout, repo-scaffolder, general-code-implementer, rust-auditor, nix-auditor, repository-closeout'"));
+    assert_eq!(
+        project_role_contract(&chatgpt_peer, "crucial-greenfield-developer-for-chatgpt"),
+        ParsedProjectRoleContract {
+            project_role_identity: "crucial-greenfield-developer-for-chatgpt".to_owned(),
+            project_role_dispatch_kind: "nested".to_owned(),
+            allowed_child_role_names: vec![
+                "scout".to_owned(),
+                "repo-scaffolder".to_owned(),
+                "general-code-implementer".to_owned(),
+                "rust-auditor".to_owned(),
+                "nix-auditor".to_owned(),
+                "repository-closeout".to_owned(),
+            ],
+        }
+    );
     let claude_peer =
         fixture.read_workspace_file(".claude/agents/crucial-greenfield-developer-for-claude.md");
     assert!(claude_peer.contains("model: fable-5\neffort: high"));
@@ -1659,6 +1830,31 @@ fn nested_model_resolution_uses_strongest_assignment_and_ordinary_wins_ties() {
         stronger_floor
             .read_workspace_file(".claude/agents/parent.md")
             .contains("model: fable-5\neffort: high")
+    );
+}
+
+#[test]
+fn nested_model_resolution_uses_typed_cross_model_strength_not_effort_rank() {
+    let fixture = Fixture::new();
+    fixture.write_cross_model_floor_sources();
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("cross-model floors generate");
+
+    assert!(
+        fixture
+            .read_workspace_file(".pi/agents/parent.md")
+            .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: medium")
+    );
+    assert!(
+        fixture
+            .read_workspace_file(".codex/agents/parent.toml")
+            .contains("model = \"gpt-5.6-sol\"\nmodel_reasoning_effort = \"medium\"")
+    );
+    assert!(
+        fixture
+            .read_workspace_file(".claude/agents/parent.md")
+            .contains("model: fable-5\neffort: medium")
     );
 }
 
@@ -1791,7 +1987,7 @@ fn role_profiles_and_optional_skills_render_without_preloading_skill_bodies() {
     assert!(!claude.contains("This body must not be preloaded."));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi.contains("model: 'openai-codex/gpt-test'\nthinking: high\ndelegation-role-classification: LeafRole\nallowed-child-role-identifiers: None\nskills: example"));
+    assert!(pi.contains("model: 'openai-codex/gpt-test'\nthinking: high\nprojectRoleIdentity: worker\nprojectRoleDispatchKind: leaf\nskills: example"));
     assert!(pi.contains("## optional skills"));
     assert!(!pi.contains("This body must not be preloaded."));
 
@@ -1847,13 +2043,27 @@ fn role_model_assignments_reject_missing_duplicate_stale_and_duplicate_catalog_e
     duplicate_catalog.write_role_generation_sources();
     duplicate_catalog.write_source_file(
         "manifests/model-catalog.nota",
-        "[(ChatGpt (gpt-test openai-codex [High])) (ChatGpt (gpt-test openai-codex [High])) (Claude (claude-test [High]))]\n",
+        "[(ChatGpt (gpt-test openai-codex [(High 30)])) (ChatGpt (gpt-test openai-codex [(High 30)])) (Claude (claude-test [(High 30)]))]\n",
     );
     let error = duplicate_catalog
         .generate(GenerationMode::Write)
         .expect_err("duplicate catalog entry fails");
     assert!(
         matches!(error, Error::DuplicateModelCatalogEntry { .. }),
+        "{error:?}"
+    );
+
+    let duplicate_effort = Fixture::new();
+    duplicate_effort.write_role_generation_sources();
+    duplicate_effort.write_source_file(
+        "manifests/model-catalog.nota",
+        "[(ChatGpt (gpt-test openai-codex [(High 30) (High 40)])) (Claude (claude-test [(High 30)]))]\n",
+    );
+    let error = duplicate_effort
+        .generate(GenerationMode::Write)
+        .expect_err("duplicate model effort fails");
+    assert!(
+        matches!(error, Error::DuplicateModelCatalogEffort { .. }),
         "{error:?}"
     );
 }
@@ -2704,6 +2914,32 @@ impl Fixture {
         self.write_role_metadata(&["worker"]);
     }
 
+    fn write_project_role_contract_sources(&self) {
+        self.write_source_file(
+            "manifests/active-outputs.nota",
+            "[(Role (planner planner [] [Planner role.] [PiAgent])) (Role (reader reader [] [Reader role.] [PiAgent])) (Role (writer writer [] [Writer role.] [PiAgent]))]\n",
+        );
+        self.write_source_file(
+            "manifests/module-dependencies.nota",
+            "[(planner roles/planner/full.md [] RoleSource) (reader roles/reader/full.md [] RoleSource) (writer roles/writer/full.md [] RoleSource)]\n",
+        );
+        self.write_role_metadata(&["planner", "reader", "writer"]);
+        self.write_source_file(
+            "manifests/nested-role-relations.nota",
+            "[(planner [(PiAgent gpt-test Medium)] [reader writer])]\n",
+        );
+        self.write_source_file(
+            "roles/planner/full.md",
+            "# Role - planner\n\n## Contract\n\nPlan work.\n",
+        );
+        for role in ["reader", "writer"] {
+            self.write_source_file(
+                &format!("roles/{role}/full.md"),
+                &format!("# Role - {role}\n\n## Contract\n\n{role} work.\n"),
+            );
+        }
+    }
+
     fn write_nested_validation_sources(&self, relations: &str) {
         self.write_source_file(
             "manifests/active-outputs.nota",
@@ -2717,6 +2953,39 @@ impl Fixture {
         self.write_source_file("manifests/nested-role-relations.nota", relations);
     }
 
+    fn write_cross_model_floor_sources(&self) {
+        self.write_source_file(
+            "manifests/active-outputs.nota",
+            "[(Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        );
+        self.write_source_file(
+            "manifests/module-dependencies.nota",
+            "[(parent roles/parent/full.md [] RoleSource) (child roles/child/full.md [] RoleSource)]\n",
+        );
+        self.write_source_file(
+            "manifests/model-catalog.nota",
+            "[(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50)])) (ChatGpt (gpt-5.6-terra openai-codex [(High 30)])) (Claude (fable-5 [(Medium 50)])) (Claude (claude-opus-4-8 [(Xhigh 40)]))]\n",
+        );
+        self.write_source_file(
+            "manifests/role-model-assignments.nota",
+            "[(parent (gpt-5.6-terra High) (claude-opus-4-8 Xhigh)) (child (gpt-5.6-terra High) (claude-opus-4-8 Xhigh))]\n",
+        );
+        self.write_source_file(
+            "manifests/role-optional-skills.nota",
+            "[(parent []) (child [])]\n",
+        );
+        self.write_source_file(
+            "manifests/nested-role-relations.nota",
+            "[(parent [(ClaudeAgent fable-5 Medium) (CodexAgent gpt-5.6-sol Medium) (PiAgent gpt-5.6-sol Medium)] [child])]\n",
+        );
+        for role in ["parent", "child"] {
+            self.write_source_file(
+                &format!("roles/{role}/full.md"),
+                &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
+            );
+        }
+    }
+
     fn write_model_resolution_sources(&self, minimum_effort: &str) {
         self.write_source_file(
             "manifests/active-outputs.nota",
@@ -2728,7 +2997,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/model-catalog.nota",
-            "[(ChatGpt (gpt-ordinary ordinary-provider [Medium])) (ChatGpt (gpt-5.6-sol openai-codex [Medium High])) (Claude (claude-ordinary [Medium])) (Claude (fable-5 [Medium High]))]\n",
+            "[(ChatGpt (gpt-ordinary ordinary-provider [(Medium 50)])) (ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)])) (Claude (claude-ordinary [(Medium 50)])) (Claude (fable-5 [(Medium 50) (High 60)]))]\n",
         );
         self.write_source_file(
             "manifests/role-model-assignments.nota",
@@ -2755,7 +3024,7 @@ impl Fixture {
     fn write_role_metadata(&self, role_identifiers: &[&str]) {
         self.write_source_file(
             "manifests/model-catalog.nota",
-            "[(ChatGpt (gpt-test openai-codex [Medium High])) (Claude (claude-test [Medium High]))]\n",
+            "[(ChatGpt (gpt-test openai-codex [(Medium 20) (High 30)])) (Claude (claude-test [(Medium 20) (High 30)]))]\n",
         );
         let assignments = role_identifiers
             .iter()

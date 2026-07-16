@@ -26,7 +26,7 @@ workers do not discover doctrine through a runtime index.
 - `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
 - `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
 - `manifests/universal-role-modules.nota`: modules included in every generated role packet.
-- `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family role models and supported effort levels.
+- `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family model+effort profiles with explicit total-order strengths.
 - `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
 - `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
 - `manifests/nested-role-relations.nota`: typed nested roles, target-relative minimum models, and exclusive allowed leaf-role edges.
@@ -68,9 +68,10 @@ the generated output surface's target insertions. For roles, the role body is
 emitted first, followed by universal role modules, per-role preloaded modules,
 their dependencies, surface-specific insertions, a generated target-relative
 Manager or nested-role roster when applicable, and a generated list of optional
-skills. Optional skill bodies remain outside the packet until loaded. Ordinary
-model assignment wins an equal-strength minimum-model tie; a stronger nested
-minimum prevents downgrade. A generated role packet is the curated runtime
+skills. Optional skill bodies remain outside the packet until loaded. The
+catalog's typed model+effort strength determines the strongest assignment;
+ordinary assignment wins an equal-strength minimum-model tie, and a stronger
+nested minimum prevents downgrade. A generated role packet is the curated runtime
 bundle for normal role work.
 
 Module dependencies are typed by module identifier rather than inferred from
