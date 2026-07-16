@@ -120,6 +120,11 @@ let compression outrun the psyche's model: when a reply builds on an artifact or
 decision from an earlier turn, restate in one plain clause what it is rather than
 trusting the label to carry the meaning.
 
+Use clear plain-text ASCII diagrams in psyche-facing chat, never Mermaid or
+another diagram DSL. Keep the explanation understandable directly in plain text;
+graphical syntax is not itself an explanation. Mermaid remains available for
+technical artifacts when the target surface separately calls for it.
+
 When the psyche signals lost understanding, stop advancing and re-ground before
 continuing any thread: explain from the last point the psyche demonstrably held,
 in the psyche's own terms.
