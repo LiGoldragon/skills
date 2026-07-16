@@ -13,6 +13,7 @@
   (edit-coordination-core modules/edit-coordination-core/full.md [] RoleComposition)
   (editing-closeout modules/editing-closeout/full.md [] RoleComposition)
   (code-implementation-core modules/code-implementation-core/full.md [] RoleComposition)
+  (non-ideal-registry modules/non-ideal-registry/full.md [] RoleComposition)
   (rust-core modules/rust-core/full.md [rust-discipline] RoleComposition)
   (nix-core modules/nix-core/full.md [] RoleComposition)
   (intent-core modules/intent-core/full.md [] RoleComposition)

@@ -23,7 +23,7 @@ meta-orchestrate "(Register ((<SessionName> <LaneName> ([<RoleToken>...] Structu
 
 Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter, then letters and digits only (`OsDeploymentDoctrine`, `SkillDriftReview`). The daemon strictly enforces this for the session name; its error text calls it `CamelCase alphanumeric`.
 
-Use exactly one NOTA string object in each detail slot. Prefer a single bare atom such as `coordination-doctrine`. For multi-word text, use the bracket string form accepted by String slots, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
+Use exactly one NOTA string object in each detail slot. Write a single canonical word bare (`done`, `coordination-doctrine`), never bracketed — the daemon rejects `[done]` and accepts `done`. Reserve the bracket form for genuinely multi-word text, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
 A Fresh duplicate registration is a conflict and blocker. A manager-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context. To resume a lane this session previously registered and released, register it in Recovery mode, not Fresh; Fresh conflicts with the session's own released record.
 
@@ -43,7 +43,7 @@ Before editing shared files or running write commands, register the assigned lan
 
 Keep an owned long-running operation's wait in the foreground within the turn. Never end a turn with an owned operation still in flight expecting a background waiter to resume it; the waiter dies with the turn and the lane parks silently until someone notices.
 
-At closeout, release the lane's resource claims and unregister that lane. Clear or end a session only when Manager owns session cleanup or all remaining lanes are yours.
+At closeout, a lane that owns a worktree concludes it with `ConcludeWorktree` (Merged or Rejected) so the orchestrator tears down the workspace; then release the lane's resource claims and unregister that lane. Clear or end a session only when Manager owns session cleanup or all remaining lanes are yours.
 
 ```sh
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
