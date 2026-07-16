@@ -9,11 +9,11 @@ use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
-        ActiveOutputs, EffortLevel, EmissionPolicy, GenerationMode, GenerationRequest,
-        ManifestPath, ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle,
-        NestedRoleRelations, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
-        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
-        WorkspaceRoot,
+        ActiveOutputs, CapabilityTier, EffortLevel, EmissionPolicy, GenerationMode,
+        GenerationRequest, ManifestPath, ModelCatalog, ModelCatalogEntry, ModuleDependencies,
+        ModuleKind, ModuleLifecycle, NestedRoleRelations, RoleCurricula, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SkillRoster, SourceRoot, TargetModuleInsertions,
+        TargetSurface, UniversalRoleModules, WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
@@ -26,17 +26,24 @@ struct ParsedProjectRoleContract {
     allowed_child_role_names: Vec<String>,
 }
 
-fn flat_frontmatter(packet: &str) -> BTreeMap<String, String> {
-    let block = packet
+fn frontmatter_text(packet: &str) -> &str {
+    packet
         .strip_prefix("---\n")
         .and_then(|packet| packet.split_once("\n---\n"))
         .map(|(frontmatter, _)| frontmatter)
-        .expect("packet has frontmatter");
-    block
+        .expect("packet has frontmatter")
+}
+
+fn flat_frontmatter(packet: &str) -> BTreeMap<String, String> {
+    frontmatter_text(packet)
         .lines()
-        .map(|line| {
-            let (key, value) = line.split_once(':').expect("flat frontmatter field");
+        .filter(|line| !line.starts_with("  - "))
+        .filter_map(|line| {
+            let (key, value) = line.split_once(':')?;
             let value = value.trim();
+            if value.is_empty() {
+                return None;
+            }
             let value = value
                 .strip_prefix('\'')
                 .and_then(|value| value.strip_suffix('\''))
@@ -46,9 +53,24 @@ fn flat_frontmatter(packet: &str) -> BTreeMap<String, String> {
                         .and_then(|value| value.strip_suffix('"'))
                 })
                 .unwrap_or(value);
-            (key.to_owned(), value.to_owned())
+            Some((key.to_owned(), value.to_owned()))
         })
         .collect()
+}
+
+fn frontmatter_sequence(packet: &str, requested_key: &str) -> Option<Vec<String>> {
+    let mut lines = frontmatter_text(packet).lines().peekable();
+    while let Some(line) = lines.next() {
+        if line == format!("{requested_key}:") {
+            let mut values = Vec::new();
+            while let Some(value) = lines.peek().and_then(|line| line.strip_prefix("  - ")) {
+                values.push(value.to_owned());
+                lines.next();
+            }
+            return Some(values);
+        }
+    }
+    None
 }
 
 fn project_role_contract(packet: &str, runtime_role_name: &str) -> ParsedProjectRoleContract {
@@ -64,21 +86,12 @@ fn project_role_contract(packet: &str, runtime_role_name: &str) -> ParsedProject
         dispatch_kind.as_str(),
         "manager" | "nested" | "leaf"
     ));
-    let allowed_child_role_names = frontmatter
-        .get("allowedChildRoleNames")
-        .map(|value| {
-            value
-                .split(',')
-                .map(str::trim)
-                .filter(|name| !name.is_empty())
-                .map(str::to_owned)
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+    let allowed_child_role_names =
+        frontmatter_sequence(packet, "allowedChildRoleNames").unwrap_or_default();
     if dispatch_kind == "nested" {
-        assert!(frontmatter.contains_key("allowedChildRoleNames"));
+        assert!(frontmatter_sequence(packet, "allowedChildRoleNames").is_some());
     } else {
-        assert!(!frontmatter.contains_key("allowedChildRoleNames"));
+        assert!(frontmatter_sequence(packet, "allowedChildRoleNames").is_none());
     }
     for incompatible_key in [
         "delegation-role-classification",
@@ -331,6 +344,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/nested-role-relations.nota"))
             .parse::<NestedRoleRelations>()
             .expect("nested role relations parse");
+    let role_curricula = NotaSource::new(include_str!("../manifests/role-curricula.nota"))
+        .parse::<RoleCurricula>()
+        .expect("role curricula parse");
 
     // These hardcoded generation expectations intentionally catch membership drift.
     // Update them when module membership, role includes, or universal role modules change.
@@ -350,21 +366,28 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     assert_eq!(model_catalog.payload().len(), 6);
     assert_eq!(nested_role_relations.payload().len(), 5);
     assert_eq!(role_model_assignments.payload().len(), role_count);
-    assert_eq!(role_optional_skills.payload().len(), role_count);
+    assert_eq!(
+        role_optional_skills.payload().len()
+            + role_curricula
+                .payload()
+                .iter()
+                .map(|curriculum| curriculum.assigned_roles.payload().len())
+                .sum::<usize>(),
+        role_count
+    );
 
     let model_catalog_source = include_str!("../manifests/model-catalog.nota");
     let role_model_assignments_source = include_str!("../manifests/role-model-assignments.nota");
-    assert!(model_catalog_source.contains("(Claude (claude-sonnet-5 [(Medium 10)]))"));
+    assert!(model_catalog_source.contains("(Claude (claude-sonnet-5 Standard [Medium]))"));
     assert!(
-        model_catalog_source
-            .contains("(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))")
+        model_catalog_source.contains("(ChatGpt (gpt-5.6-sol openai-codex Premier [Medium High]))")
     );
     assert!(
         model_catalog_source
-            .contains("(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))")
+            .contains("(ChatGpt (gpt-5.6-terra openai-codex Advanced [Medium High]))")
     );
-    assert!(model_catalog_source.contains("(Claude (fable-5 [(Medium 50) (High 60)]))"));
-    assert!(model_catalog_source.contains("(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))"));
+    assert!(model_catalog_source.contains("(Claude (fable-5 Premier [Medium High]))"));
+    assert!(model_catalog_source.contains("(Claude (claude-opus-4-8 Advanced [High Xhigh]))"));
     for sonnet_role in ["intent-recorder", "scout", "repository-closeout"] {
         assert!(
             role_model_assignments_source.contains(&format!(
@@ -432,7 +455,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         })
         .collect();
     let role_composition_modules = [
-        "agent-output-protocol",
         "agent-feedback-loop",
         "edit-coordination-core",
         "editing-closeout",
@@ -575,24 +597,12 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "crucial-greenfield-developer-for-chatgpt",
             "role-crucial-greenfield-developer",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "repo-scaffold-core",
-                "code-implementation-core",
-                "architectural-truth-tests",
-            ],
+            &[],
         ),
         (
             "crucial-greenfield-developer-for-claude",
             "role-crucial-greenfield-developer",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "repo-scaffold-core",
-                "code-implementation-core",
-                "architectural-truth-tests",
-            ],
+            &[],
         ),
         (
             "intent-recorder",
@@ -604,7 +614,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "role-intent-translator",
             &["edit-coordination-core", "bead-weaver"],
         ),
-        ("scout", "role-scout", &["edit-coordination-core"]),
+        ("scout", "role-scout", &[]),
         (
             "repo-scaffolder",
             "role-repo-scaffolder",
@@ -634,33 +644,15 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "editing-closeout",
                 "code-implementation-core",
                 "nix-core",
-                "operating-system-operations",
-                "nixos-vm-testing",
                 "non-ideal-registry",
             ],
         ),
         (
             "rust-auditor",
             "role-rust-auditor",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "rust-core",
-                "architectural-truth-tests",
-                "non-ideal-registry",
-            ],
+            &["rust-core", "architectural-truth-tests"],
         ),
-        (
-            "nix-auditor",
-            "role-nix-auditor",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "nix-core",
-                "nixos-vm-testing",
-                "non-ideal-registry",
-            ],
-        ),
+        ("nix-auditor", "role-nix-auditor", &["nix-core"]),
         (
             "skill-editor",
             "role-skill-editor",
@@ -1293,98 +1285,57 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 }
 
 #[test]
-fn management_doctrine_contains_required_rules() {
+fn management_doctrine_preserves_portable_authority_without_harness_api_fields() {
     let management = include_str!("../modules/management/full.md");
     let manager_role = include_str!("../roles/manager/full.md");
     for required in [
-        "doubt about intent, authority, safety, or privacy",
-        "reflection and confirmation are not ritual gates.",
-        "Direct known work goes to one specialist.",
-        "Unfamiliar non-trivial work goes first to a fast, cheap",
-        "Tightly coupled cross-specialty work goes to one accountable Generalist.",
-        "Independent work goes to peer specialists in parallel.",
-        "A Generalist may use subagents when useful",
-        "Do not impose a rigid one-level delegation limit.",
+        "unresolved intent, authority, safety, or privacy",
         "does not inspect repositories, commands, links, or systems",
-        "It never records or mutates Spirit.",
-        "load only the optional skills listed in its generated role packet",
-        "return or feedback protocols already present in role packets.",
-        "The manager never spawns a blocking agent.",
-        "Every manager-dispatched agent runs",
-        "in the background. Never use a foreground agent call",
-        "Never use a foreground agent call or wait synchronously for",
-        "defer its dispatch until completion",
-        "notification arrives while keeping psyche chat available for redirection.",
-        "Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or",
-        "hypothetical runaway risk do not justify limits.",
-        "concrete external constraint requires it,",
-        "disclose that constraint before dispatch.",
-        "Do not interrupt or terminate a worker for turn count or silence",
-        "Inspect concrete evidence of blockage first.",
-        "do not fail a read-only Scout for lacking",
-        "changed-file evidence.",
-        "When asked why, lead with the",
-        "causal mechanism.",
-        "Do not substitute apology, self-judgment, or a promise for the",
-        "Treat every tool result as psyche-visible.",
-        "inspect concise status first.",
-        "request the smallest tail that resolves it.",
-        "Do not narrate repeated availability checks.",
-        "The synthesis gate binds from first dispatch until the outstanding-worker set is",
-        "Follow-up dispatches, lane extensions, and resumed workers re-close the",
-        "an interim return earns at most a brief factual note",
-        "never a synthesis installment, a",
-        "the manager does not volunteer elaboration early.",
-        "Deliver the full consolidated synthesis exactly once, after the final worker",
-        "returns, in ordinary English",
-        "Make every psyche-facing question or decision request self-contained.",
-        "in enough substance to answer from chat alone.",
-        "psyche opens a report or recalls a prior session.",
-        "Speak the psyche's own vocabulary, not the agents'.",
-        "a name is never an explanation.",
-        "let compression outrun the psyche's model:",
-        "Use clear plain-text ASCII diagrams in psyche-facing chat, never Mermaid or",
-        "another diagram DSL.",
-        "Keep the explanation understandable directly in plain text;",
-        "graphical syntax is not itself an explanation.",
-        "Mermaid remains available for",
-        "technical artifacts when the target surface separately calls for it.",
-        "When the psyche signals lost understanding, stop advancing and re-ground before",
-        "in the psyche's own terms.",
-        "Name the Session and Lane in PascalCase alphanumeric;",
-        "a hyphenated name forces a translation",
+        "record or mutate Spirit",
+        "Send a fully specified authorized Spirit mutation to Intent Recorder",
+        "Dispatch asynchronously",
+        "one specialist",
+        "read-only Scout",
+        "one Generalist",
+        "peer specialists in parallel",
+        "PascalCase alphanumeric Session, Lane, and Fresh/Recovery mode",
+        "Privacy stays closed by default",
+        "lead with the causal mechanism",
+        "self-contained",
+        "plain-text ASCII diagrams",
+        "one consolidated synthesis",
     ] {
         assert!(
             management.contains(required),
             "missing management rule: {required}"
         );
     }
+    for forbidden in [
+        "turnBudget",
+        "toolBudget",
+        "timeoutMs",
+        "maxRuntimeMs",
+        "agent-output-protocol",
+        "artifact naming protocol",
+    ] {
+        assert!(
+            !management.contains(forbidden),
+            "portable doctrine names {forbidden}"
+        );
+        assert!(
+            !manager_role.contains(forbidden),
+            "manager role names {forbidden}"
+        );
+    }
     for required in [
-        "Never spawn a blocking agent.",
-        "Run every dispatched agent in the background;",
-        "defer dependent dispatch until completion notification",
-        "remain available for psyche redirection.",
+        "Stay psyche-facing and outside direct task work.",
+        "Keep Spirit access read-only.",
+        "Dispatch workers asynchronously",
+        "Defer dependent dispatch until completion notification",
     ] {
         assert!(
             manager_role.contains(required),
             "missing manager role rule: {required}"
-        );
-    }
-    assert!(!management.contains("orchestrator"));
-    assert!(!management.contains("orchestration"));
-    for operational_detail in [
-        "deploy",
-        "lojix",
-        "launcher",
-        "profile",
-        "Home Manager",
-        "rollback",
-    ] {
-        assert!(
-            !management
-                .to_lowercase()
-                .contains(&operational_detail.to_lowercase()),
-            "management contains operational detail: {operational_detail}"
         );
     }
 }
@@ -1509,7 +1460,10 @@ fn pi_project_role_frontmatter_matches_extension_parser_contract_fixture() {
         .expect("project-role contract fixture generates");
 
     let generated = fixture.read_workspace_file(".pi/agents/planner.md");
-    let contract_fixture = include_str!("fixtures/pi-project-role-frontmatter-contract.md");
+    let contract_fixture = include_str!("fixtures/pi-project-role-frontmatter-contract-new.md");
+    let old_contract_fixture = include_str!("fixtures/pi-project-role-frontmatter-contract-old.md");
+    assert!(old_contract_fixture.contains("allowedChildRoleNames: 'reader, writer'"));
+    assert!(!old_contract_fixture.contains("allowedChildRoleNames:\n  - reader"));
     assert_eq!(
         frontmatter_block(&generated),
         frontmatter_block(contract_fixture)
@@ -1570,28 +1524,8 @@ fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_tr
                     "tracker-weaver",
                 ],
             ),
-            (
-                "crucial-greenfield-developer-for-chatgpt",
-                vec![
-                    "scout",
-                    "repo-scaffolder",
-                    "general-code-implementer",
-                    "rust-auditor",
-                    "nix-auditor",
-                    "repository-closeout",
-                ],
-            ),
-            (
-                "crucial-greenfield-developer-for-claude",
-                vec![
-                    "scout",
-                    "repo-scaffolder",
-                    "general-code-implementer",
-                    "rust-auditor",
-                    "nix-auditor",
-                    "repository-closeout",
-                ],
-            ),
+            ("crucial-greenfield-developer-for-chatgpt", vec![]),
+            ("crucial-greenfield-developer-for-claude", vec![]),
             (
                 "operating-system-implementer",
                 vec![
@@ -1664,40 +1598,67 @@ fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_tr
         greenfield_roles[0].module_identifier, greenfield_roles[1].module_identifier,
         "both peers use one role curriculum source"
     );
-    assert_eq!(
-        greenfield_roles[0].included_modules, greenfield_roles[1].included_modules,
-        "both peers compose the same existing curriculum"
+    assert!(
+        greenfield_roles
+            .iter()
+            .all(|role| role.included_modules.payload().is_empty()),
+        "shared modules are absent from target-specific role records"
     );
     let optional_skills = NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
         .parse::<RoleOptionalSkills>()
         .expect("optional skills parse");
-    let peer_training = greenfield_roles
-        .iter()
-        .map(|role| {
-            optional_skills
-                .payload()
-                .iter()
-                .find(|entry| entry.output_identifier == role.output_identifier)
-                .expect("greenfield peer training exists")
-                .optional_skills
-                .clone()
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(peer_training[0], peer_training[1]);
+    assert!(greenfield_roles.iter().all(|role| {
+        optional_skills
+            .payload()
+            .iter()
+            .all(|entry| entry.output_identifier != role.output_identifier)
+    }));
+    let curricula = NotaSource::new(include_str!("../manifests/role-curricula.nota"))
+        .parse::<RoleCurricula>()
+        .expect("role curricula parse");
+    assert_eq!(curricula.payload().len(), 1);
+    let curriculum = &curricula.payload()[0];
+    assert_eq!(
+        curriculum
+            .assigned_roles
+            .payload()
+            .iter()
+            .map(|role| role.as_ref())
+            .collect::<Vec<_>>(),
+        [
+            "crucial-greenfield-developer-for-chatgpt",
+            "crucial-greenfield-developer-for-claude"
+        ]
+    );
+    assert_eq!(
+        curriculum
+            .allowed_leaf_roles
+            .payload()
+            .iter()
+            .map(|role| role.as_ref())
+            .collect::<Vec<_>>(),
+        [
+            "scout",
+            "repo-scaffolder",
+            "general-code-implementer",
+            "rust-auditor",
+            "nix-auditor",
+            "repository-closeout"
+        ]
+    );
+    let peer_training = &curriculum.optional_skills;
     for required in [
         "repo-intent",
         "design-quality",
         "component-architecture",
-        "code-implementation",
         "testing",
         "rust-storage-and-wire",
         "rust-errors",
         "versioning",
         "repository-management",
-        "repository-publication",
     ] {
         assert!(
-            peer_training[0]
+            peer_training
                 .payload()
                 .iter()
                 .any(|skill| skill.as_ref() == required),
@@ -2106,7 +2067,7 @@ fn role_model_assignments_reject_missing_duplicate_stale_and_duplicate_catalog_e
     duplicate_catalog.write_role_generation_sources();
     duplicate_catalog.write_source_file(
         "manifests/model-catalog.nota",
-        "[(ChatGpt (gpt-test openai-codex [(High 30)])) (ChatGpt (gpt-test openai-codex [(High 30)])) (Claude (claude-test [(High 30)]))]\n",
+        "[(ChatGpt (gpt-test openai-codex Advanced [High])) (ChatGpt (gpt-test openai-codex Advanced [High])) (Claude (claude-test Advanced [High]))]\n",
     );
     let error = duplicate_catalog
         .generate(GenerationMode::Write)
@@ -2120,7 +2081,7 @@ fn role_model_assignments_reject_missing_duplicate_stale_and_duplicate_catalog_e
     duplicate_effort.write_role_generation_sources();
     duplicate_effort.write_source_file(
         "manifests/model-catalog.nota",
-        "[(ChatGpt (gpt-test openai-codex [(High 30) (High 40)])) (Claude (claude-test [(High 30)]))]\n",
+        "[(ChatGpt (gpt-test openai-codex Advanced [High High])) (Claude (claude-test Advanced [High]))]\n",
     );
     let error = duplicate_effort
         .generate(GenerationMode::Write)
@@ -2901,6 +2862,337 @@ fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
 }
 
 #[test]
+fn named_capability_tiers_define_the_cross_provider_profile_order() {
+    let catalog = NotaSource::new(include_str!("../manifests/model-catalog.nota"))
+        .parse::<ModelCatalog>()
+        .expect("model catalog parses");
+    let tiers: BTreeMap<_, _> = catalog
+        .payload()
+        .iter()
+        .map(|entry| match entry {
+            ModelCatalogEntry::ChatGpt(model) => {
+                (model.model_identifier.as_ref(), model.capability_tier)
+            }
+            ModelCatalogEntry::Claude(model) => {
+                (model.model_identifier.as_ref(), model.capability_tier)
+            }
+        })
+        .collect();
+    assert_eq!(tiers["gpt-5.6-sol"], CapabilityTier::Premier);
+    assert_eq!(tiers["fable-5"], CapabilityTier::Premier);
+    assert_eq!(tiers["gpt-5.6-terra"], CapabilityTier::Advanced);
+    assert_eq!(tiers["claude-opus-4-8"], CapabilityTier::Advanced);
+    assert_eq!(tiers["gpt-5.6-luna"], CapabilityTier::Standard);
+    assert_eq!(tiers["claude-sonnet-5"], CapabilityTier::Standard);
+
+    let source = include_str!("../manifests/model-catalog.nota");
+    for retired_numeric_strength in ["Medium 50", "High 60", "High 30", "Xhigh 40"] {
+        assert!(!source.contains(retired_numeric_strength));
+    }
+}
+
+#[test]
+fn read_only_roles_exclude_editing_and_non_ideal_mutation_doctrine() {
+    let outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
+        .parse::<ActiveOutputs>()
+        .expect("active outputs parse");
+    let expected: BTreeMap<&str, &[&str]> = BTreeMap::from([
+        ("scout", &[][..]),
+        (
+            "rust-auditor",
+            &["rust-core", "architectural-truth-tests"][..],
+        ),
+        ("nix-auditor", &["nix-core"][..]),
+    ]);
+    for (role_identifier, included) in expected {
+        let role = outputs
+            .payload()
+            .iter()
+            .find_map(|output| match output {
+                skills::schema::assembly::ActiveOutput::Role(role)
+                    if role.output_identifier.as_ref() == role_identifier =>
+                {
+                    Some(role)
+                }
+                _ => None,
+            })
+            .expect("read-only role exists");
+        assert_eq!(
+            role.included_modules
+                .payload()
+                .iter()
+                .map(|module| module.as_ref())
+                .collect::<Vec<_>>(),
+            included
+        );
+        for forbidden in [
+            "edit-coordination-core",
+            "editing-closeout",
+            "non-ideal-registry",
+            "nixos-vm-testing",
+        ] {
+            assert!(
+                !role
+                    .included_modules
+                    .payload()
+                    .iter()
+                    .any(|module| module.as_ref() == forbidden)
+            );
+        }
+    }
+    assert!(include_str!("../roles/scout/full.md").contains("Remain read-only"));
+    assert!(include_str!("../roles/rust-auditor/full.md").contains("Do not edit source"));
+    assert!(include_str!("../roles/nix-auditor/full.md").contains("Do not edit source"));
+}
+
+#[test]
+fn optional_skills_do_not_duplicate_preloaded_modules_or_grant_manager_mutation() {
+    let outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
+        .parse::<ActiveOutputs>()
+        .expect("active outputs parse");
+    let optional = NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
+        .parse::<RoleOptionalSkills>()
+        .expect("optional skills parse");
+    for entry in optional.payload() {
+        let role = outputs
+            .payload()
+            .iter()
+            .find_map(|output| match output {
+                skills::schema::assembly::ActiveOutput::Role(role)
+                    if role.output_identifier == entry.output_identifier =>
+                {
+                    Some(role)
+                }
+                _ => None,
+            })
+            .expect("optional role active");
+        for skill in entry.optional_skills.payload() {
+            assert!(
+                !role
+                    .included_modules
+                    .payload()
+                    .iter()
+                    .any(|module| module.as_ref() == skill.as_ref()),
+                "{} duplicates {}",
+                role.output_identifier.as_ref(),
+                skill.as_ref()
+            );
+        }
+    }
+    let manager = optional
+        .payload()
+        .iter()
+        .find(|entry| entry.output_identifier.as_ref() == "manager")
+        .expect("manager optional metadata exists");
+    assert_eq!(
+        manager
+            .optional_skills
+            .payload()
+            .iter()
+            .map(|skill| skill.as_ref())
+            .collect::<Vec<_>>(),
+        [
+            "spirit-query",
+            "intent-clarification",
+            "context-handover",
+            "helper-context-transfer"
+        ]
+    );
+    for mutation_skill in [
+        "intent-log",
+        "spirit-cli",
+        "intent-maintenance",
+        "intent-manifestation",
+    ] {
+        assert!(
+            !manager
+                .optional_skills
+                .payload()
+                .iter()
+                .any(|skill| skill.as_ref() == mutation_skill)
+        );
+    }
+    let curricula = NotaSource::new(include_str!("../manifests/role-curricula.nota"))
+        .parse::<RoleCurricula>()
+        .expect("role curricula parse");
+    for duplicate in ["code-implementation", "repository-publication"] {
+        assert!(
+            !curricula.payload()[0]
+                .optional_skills
+                .payload()
+                .iter()
+                .any(|skill| skill.as_ref() == duplicate)
+        );
+    }
+}
+
+#[test]
+fn specialized_nixos_vm_testing_is_reached_only_through_optional_operations_skill() {
+    let outputs = include_str!("../manifests/active-outputs.nota");
+    assert!(!outputs.lines().any(|line| {
+        line.contains("(Role (operating-system-implementer") && line.contains("nixos-vm-testing")
+            || line.contains("(Role (nix-auditor") && line.contains("nixos-vm-testing")
+    }));
+    let dependencies = NotaSource::new(include_str!("../manifests/module-dependencies.nota"))
+        .parse::<ModuleDependencies>()
+        .expect("dependencies parse");
+    let operations = dependencies
+        .payload()
+        .iter()
+        .find(|entry| entry.module_identifier.as_ref() == "operating-system-operations")
+        .expect("operations skill indexed");
+    assert_eq!(
+        operations
+            .dependency_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["nixos-vm-testing"]
+    );
+    let vm = dependencies
+        .payload()
+        .iter()
+        .find(|entry| entry.module_identifier.as_ref() == "nixos-vm-testing")
+        .expect("VM curriculum indexed");
+    assert_eq!(vm.module_kind, ModuleKind::RuntimeSkill);
+    let optional = include_str!("../manifests/role-optional-skills.nota");
+    for role in ["operating-system-implementer", "nix-auditor"] {
+        assert!(optional.lines().any(|line| {
+            line.contains(&format!("({role} [")) && line.contains("operating-system-operations")
+        }));
+    }
+}
+
+#[test]
+fn shared_role_curriculum_rejects_direct_manifest_drift() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Role (parent parent [feature] [Parent role.] [PiAgent])) (Role (child child [] [Child role.] [PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(parent roles/parent/full.md [] RoleSource) (child roles/child/full.md [] RoleSource) (feature modules/feature/full.md [] RoleComposition)]\n",
+    );
+    fixture.write_source_file(
+        "manifests/role-curricula.nota",
+        "[(shared [parent] [feature] [] [child])]\n",
+    );
+    fixture.write_source_file(
+        "manifests/model-catalog.nota",
+        "[(ChatGpt (gpt-test openai-codex Advanced [Medium])) (Claude (claude-test Advanced [Medium]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/role-model-assignments.nota",
+        "[(parent (gpt-test Medium) (claude-test Medium)) (child (gpt-test Medium) (claude-test Medium))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/nested-role-relations.nota",
+        "[(parent [(PiAgent gpt-test Medium)] [])]\n",
+    );
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("direct shared curriculum fields fail");
+    assert!(
+        matches!(error, Error::RoleCurriculumIncludedModuleDrift { .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
+fn source_cross_references_and_dependency_edges_resolve() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    for directory in ["modules", "roles"] {
+        for entry in fs::read_dir(root.join(directory)).expect("source directory readable") {
+            let path = entry.expect("source entry readable").path().join("full.md");
+            if !path.is_file() {
+                continue;
+            }
+            let text = fs::read_to_string(&path).expect("source markdown readable");
+            for forbidden in [
+                "agent-output-protocol",
+                "artifact naming protocol",
+                "skills/management.md",
+                "skills/intent-log.md",
+                "skills/intent-maintenance.md",
+                "skills/micro-components.md",
+                "RequestWorktree",
+                "ConcludeWorktree",
+            ] {
+                assert!(
+                    !text.contains(forbidden),
+                    "{} contains {forbidden}",
+                    path.display()
+                );
+            }
+        }
+    }
+    let dependencies = NotaSource::new(include_str!("../manifests/module-dependencies.nota"))
+        .parse::<ModuleDependencies>()
+        .expect("dependencies parse");
+    let identifiers: BTreeSet<_> = dependencies
+        .payload()
+        .iter()
+        .map(|entry| entry.module_identifier.as_ref())
+        .collect();
+    for entry in dependencies.payload() {
+        assert!(
+            root.join(entry.module_path.as_ref()).is_file(),
+            "missing {}",
+            entry.module_path.as_ref()
+        );
+        for dependency in entry.dependency_modules.payload() {
+            assert!(
+                identifiers.contains(dependency.as_ref()),
+                "missing dependency {}",
+                dependency.as_ref()
+            );
+        }
+    }
+}
+
+#[test]
+fn generated_role_packets_stay_within_per_role_and_corpus_budgets() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current role corpus generates");
+    let mut corpus_bytes = 0_u64;
+    for directory in [".claude/agents", ".codex/agents", ".pi/agents"] {
+        for entry in fs::read_dir(fixture.workspace.path().join(directory))
+            .expect("generated role directory readable")
+        {
+            let path = entry.expect("generated role readable").path();
+            let bytes = path.metadata().expect("role metadata readable").len();
+            assert!(bytes <= 25_000, "{} is {bytes} bytes", path.display());
+            corpus_bytes += bytes;
+        }
+    }
+    assert!(
+        corpus_bytes <= 550_000,
+        "role corpus is {corpus_bytes} bytes"
+    );
+
+    let source_role_bytes: u64 = fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("roles"))
+        .expect("role source directory readable")
+        .map(|entry| {
+            entry
+                .expect("role source readable")
+                .path()
+                .join("full.md")
+                .metadata()
+                .expect("role source metadata readable")
+                .len()
+        })
+        .sum();
+    assert!(
+        source_role_bytes <= 17_000,
+        "role source corpus is {source_role_bytes} bytes"
+    );
+}
+
+#[test]
 fn trunk_guard_passes_source_without_jujutsu_working_copy() {
     let source = TempDir::new().expect("source tempdir");
 
@@ -3027,7 +3319,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/model-catalog.nota",
-            "[(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50)])) (ChatGpt (gpt-5.6-terra openai-codex [(High 30)])) (Claude (fable-5 [(Medium 50)])) (Claude (claude-opus-4-8 [(Xhigh 40)]))]\n",
+            "[(ChatGpt (gpt-5.6-sol openai-codex Premier [Medium])) (ChatGpt (gpt-5.6-terra openai-codex Advanced [High])) (Claude (fable-5 Premier [Medium])) (Claude (claude-opus-4-8 Advanced [Xhigh]))]\n",
         );
         self.write_source_file(
             "manifests/role-model-assignments.nota",
@@ -3060,7 +3352,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/model-catalog.nota",
-            "[(ChatGpt (gpt-ordinary ordinary-provider [(Medium 50)])) (ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)])) (Claude (claude-ordinary [(Medium 50)])) (Claude (fable-5 [(Medium 50) (High 60)]))]\n",
+            "[(ChatGpt (gpt-ordinary ordinary-provider Premier [Medium])) (ChatGpt (gpt-5.6-sol openai-codex Premier [Medium High])) (Claude (claude-ordinary Premier [Medium])) (Claude (fable-5 Premier [Medium High]))]\n",
         );
         self.write_source_file(
             "manifests/role-model-assignments.nota",
@@ -3087,7 +3379,7 @@ impl Fixture {
     fn write_role_metadata(&self, role_identifiers: &[&str]) {
         self.write_source_file(
             "manifests/model-catalog.nota",
-            "[(ChatGpt (gpt-test openai-codex [(Medium 20) (High 30)])) (Claude (claude-test [(Medium 20) (High 30)]))]\n",
+            "[(ChatGpt (gpt-test openai-codex Advanced [Medium High])) (Claude (claude-test Advanced [Medium High]))]\n",
         );
         let assignments = role_identifiers
             .iter()

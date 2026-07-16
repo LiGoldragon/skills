@@ -9,7 +9,7 @@ use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
 
 use crate::{
     error::{Error, Result},
-    schema::assembly::{FrontmatterEntry, OutputSurface},
+    schema::assembly::{FrontmatterEntry, FrontmatterValue, OutputSurface},
     workspace_path::WorkspacePath,
 };
 
@@ -139,16 +139,32 @@ impl<'a> FrontmatterBlock<'a> {
         for entry in self.entries {
             let key = entry.frontmatter_key.as_ref();
             FrontmatterKey::new(self.path.clone(), key).validate()?;
-            let scalar = YamlScalar::new(
-                self.path.clone(),
-                key.to_owned(),
-                entry.frontmatter_value.as_ref(),
-            );
-            scalar.validate()?;
-            output.push_str(key);
-            output.push_str(": ");
-            output.push_str(&scalar.rendered());
-            output.push('\n');
+            match &entry.frontmatter_value {
+                FrontmatterValue::Scalar(value) => {
+                    let scalar = YamlScalar::new(self.path.clone(), key.to_owned(), value.as_ref());
+                    scalar.validate()?;
+                    output.push_str(key);
+                    output.push_str(": ");
+                    output.push_str(&scalar.rendered());
+                    output.push('\n');
+                }
+                FrontmatterValue::Sequence(values) => {
+                    output.push_str(key);
+                    if values.payload().is_empty() {
+                        output.push_str(": []\n");
+                    } else {
+                        output.push_str(":\n");
+                        for value in values.payload() {
+                            let scalar =
+                                YamlScalar::new(self.path.clone(), key.to_owned(), value.as_ref());
+                            scalar.validate()?;
+                            output.push_str("  - ");
+                            output.push_str(&scalar.rendered());
+                            output.push('\n');
+                        }
+                    }
+                }
+            }
         }
         output.push_str("---\n\n");
         Ok(output)

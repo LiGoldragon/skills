@@ -291,39 +291,29 @@
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
             target_insertions=${cleanSource}/manifests/target-module-insertions.nota
-            grep -F 'When the request is concrete and doubt is absent, dispatch' "$management" >/dev/null
-            grep -F 'Direct known work goes to one specialist.' "$management" >/dev/null
-            grep -F 'documentation-first' "$management" >/dev/null
-            grep -F 'one accountable Generalist' "$management" >/dev/null
+            grep -F 'Ask only when unresolved intent, authority, safety, or privacy' "$management" >/dev/null
+            grep -F 'known work: one specialist' "$management" >/dev/null
+            grep -F 'a fast read-only Scout first' "$management" >/dev/null
+            grep -F 'tightly coupled specialties: one Generalist' "$management" >/dev/null
             grep -F 'peer specialists in parallel' "$management" >/dev/null
-            grep -F 'Do not impose a rigid one-level delegation limit.' "$management" >/dev/null
-            grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
-            grep -F 'load only the optional skills listed in its generated role packet' "$management" >/dev/null
-            grep -F 'Do not repeat ambient' "$management" >/dev/null
-            grep -F 'The manager never spawns a blocking agent.' "$management" >/dev/null
-            grep -F 'Every manager-dispatched agent runs' "$management" >/dev/null
-            grep -F 'Never use a foreground agent call or wait synchronously' "$management" >/dev/null
-            grep -F 'defer its dispatch until completion' "$management" >/dev/null
-            grep -F 'keeping psyche chat available for redirection.' "$management" >/dev/null
-            grep -F 'Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or' "$management" >/dev/null
-            grep -F 'hypothetical runaway risk do not justify limits.' "$management" >/dev/null
-            grep -F 'concrete external constraint requires it,' "$management" >/dev/null
-            grep -F 'disclose that constraint before dispatch.' "$management" >/dev/null
-            grep -F 'Do not interrupt or terminate a worker for turn count or silence' "$management" >/dev/null
-            grep -F 'Inspect concrete evidence of blockage first.' "$management" >/dev/null
-            grep -F 'do not fail a read-only Scout for lacking' "$management" >/dev/null
-            grep -F 'changed-file evidence.' "$management" >/dev/null
-            grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$management" >/dev/null
-            grep -F 'Never spawn a blocking agent.' "$manager_role" >/dev/null
-            grep -F 'Run every dispatched agent in the background;' "$manager_role" >/dev/null
-            grep -F 'defer dependent dispatch until completion notification' "$manager_role" >/dev/null
-            grep -F 'returns, in ordinary English.' "$management" >/dev/null
+            grep -F 'does not inspect repositories, commands, links, or systems' "$management" >/dev/null
+            grep -F 'Send a fully specified authorized Spirit mutation to Intent Recorder' "$management" >/dev/null
+            grep -F 'Dispatch asynchronously' "$management" >/dev/null
+            grep -F 'Use no arbitrary turn, tool, or runtime limits by default.' "$management" >/dev/null
+            grep -F 'read-only Scout needs no changed-file proof' "$management" >/dev/null
+            grep -F 'one consolidated synthesis' "$management" >/dev/null
+            grep -F 'Stay psyche-facing and outside direct task work.' "$manager_role" >/dev/null
+            grep -F 'Dispatch workers asynchronously' "$manager_role" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
             grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
             grep -F '(Role (manager role-manager [management]' "$manifest" >/dev/null
             grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
+            if grep -E 'turnBudget|toolBudget|timeoutMs|maxRuntimeMs' "$management" "$manager_role"; then
+              echo "portable management doctrine must not name harness API fields" >&2
+              exit 1
+            fi
             if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$management"; then
               echo "management must keep operational mechanics in owning doctrine" >&2
               exit 1
@@ -343,11 +333,11 @@
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
             model_catalog=${cleanSource}/manifests/model-catalog.nota
             role_assignments=${cleanSource}/manifests/role-model-assignments.nota
-            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))' "$model_catalog" >/dev/null
-            grep -F '(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))' "$model_catalog" >/dev/null
-            grep -F '(Claude (fable-5 [(Medium 50) (High 60)]))' "$model_catalog" >/dev/null
-            grep -F '(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))' "$model_catalog" >/dev/null
-            grep -F '(Claude (claude-sonnet-5 [(Medium 10)]))' "$model_catalog" >/dev/null
+            grep -F '(ChatGpt (gpt-5.6-sol openai-codex Premier [Medium High]))' "$model_catalog" >/dev/null
+            grep -F '(ChatGpt (gpt-5.6-terra openai-codex Advanced [Medium High]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (fable-5 Premier [Medium High]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (claude-opus-4-8 Advanced [High Xhigh]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (claude-sonnet-5 Standard [Medium]))' "$model_catalog" >/dev/null
             grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
             grep -F '(crucial-greenfield-developer-for-chatgpt (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null
             grep -F '(crucial-greenfield-developer-for-claude (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null
@@ -358,7 +348,7 @@
               echo "Claude Sonnet roles must not regress to Sonnet 4.6" >&2
               exit 1
             fi
-            grep -F '(manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
+            grep -F '(manager [spirit-query intent-clarification context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
             touch "$out"
           '';
           active-appellations = pkgs.runCommand "skills-active-appellations" { } ''

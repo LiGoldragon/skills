@@ -1,10 +1,10 @@
-;; Canonical role-model catalog. Each model+effort profile carries one explicit total-order strength.
+;; Canonical role-model catalog. Capability tier and effort form one lexicographic profile order.
 ;; ChatGPT identifiers render provider-qualified for Pi and bare for Codex.
 [
-  (ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))
-  (ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))
-  (ChatGpt (gpt-5.6-luna openai-codex [(Medium 10)]))
-  (Claude (fable-5 [(Medium 50) (High 60)]))
-  (Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))
-  (Claude (claude-sonnet-5 [(Medium 10)]))
+  (ChatGpt (gpt-5.6-sol openai-codex Premier [Medium High]))
+  (ChatGpt (gpt-5.6-terra openai-codex Advanced [Medium High]))
+  (ChatGpt (gpt-5.6-luna openai-codex Standard [Medium]))
+  (Claude (fable-5 Premier [Medium High]))
+  (Claude (claude-opus-4-8 Advanced [High Xhigh]))
+  (Claude (claude-sonnet-5 Standard [Medium]))
 ]

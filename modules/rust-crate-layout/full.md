@@ -52,7 +52,7 @@ Cross-crate `Cargo.toml` deps use `git = "..."`, never `path =
 non-portable: fresh clones don't reproduce, `Cargo.lock` doesn't pin the
 rev, and `nix flake check` can't fetch through the sandbox.
 
-See `skills/micro-components.md` for the `Cargo.toml` dependency rule. Keep
+Use the `micro-components` skill for the `Cargo.toml` dependency rule. Keep
 toolchain conventions and pin strategy in the repo's own guidance or flake.
 
 ## Tests live in separate files

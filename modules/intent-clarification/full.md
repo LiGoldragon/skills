@@ -47,20 +47,20 @@ When several decisions are ready at once, batch them as a numbered
 slate the psyche can answer item by item, and record the graded state
 each lands in: accepted, non-rejection (explicitly not acceptance —
 track for later psyche review), rejection, or hedged lean (preserve
-the hedge verbatim). See `skills/management.md`.
+the hedge verbatim). Use the `management` skill.
 
 ## After the psyche answers
 
 The psyche just gave a new statement. Classify it before capturing:
 only the rare, unbending orienting will that passes the intent test
-in `skills/intent-log.md` is intent; matter — defaults, mechanisms,
+in the `intent-log` skill is intent; matter — defaults, mechanisms,
 single-component or architectural decisions, Spirit-operation — goes
 to its owning surface, not Spirit. When a statement names
 implementation-specific substance (a technology, format, component,
 or mechanism), extract and verify the universal principle behind it
 before recording, and route the substance itself to its owning
-surface. When it is intent, record it per `skills/intent-log.md`. If it supersedes prior intent, follow the
-supersession protocol in `skills/intent-maintenance.md`; if it
+surface. When it is intent, use `intent-log`. If it supersedes prior intent, use
+`intent-maintenance`; if it
 merely extends, record under a new sub-topic. Reflect
 project-specific statements into the relevant repo's
 `ARCHITECTURE.md` (or a code stub with an explanatory comment).

@@ -19,7 +19,9 @@
   Frontmatter (Vector FrontmatterEntry)
   FrontmatterEntry { FrontmatterKey FrontmatterValue }
   FrontmatterKey String {| Display AsRef PartialEq |}
-  FrontmatterValue String {| Display AsRef PartialEq |}
+  FrontmatterValue [(Scalar FrontmatterScalar) (Sequence FrontmatterSequence)]
+  FrontmatterScalar String {| Display AsRef PartialEq |}
+  FrontmatterSequence (Vector FrontmatterScalar)
   ModulePath Path {| Display AsRef PartialEq |}
   Modules (Vector ModulePath)
   ActiveOutputs (Vector ActiveOutput)
@@ -34,13 +36,12 @@
   RoleTargetSurface [ClaudeAgent CodexAgent PiAgent]
   ModelCatalog (Vector ModelCatalogEntry)
   ModelCatalogEntry [(ChatGpt ChatGptModel) (Claude ClaudeModel)]
-  ChatGptModel { ModelIdentifier PiProvider ModelEffortStrengths }
-  ClaudeModel { ModelIdentifier ModelEffortStrengths }
+  ChatGptModel { ModelIdentifier PiProvider CapabilityTier SupportedEfforts }
+  ClaudeModel { ModelIdentifier CapabilityTier SupportedEfforts }
   ModelIdentifier String {| Display AsRef PartialEq Ord |}
   PiProvider String {| Display AsRef PartialEq |}
-  ModelEffortStrengths (Vector ModelEffortStrength)
-  ModelEffortStrength { EffortLevel ModelStrength }
-  ModelStrength Integer {| Display PartialEq PartialOrd |}
+  CapabilityTier [Standard Advanced Premier]
+  SupportedEfforts (Vector EffortLevel)
   EffortLevel [Medium High Xhigh]
   RoleModelAssignments (Vector RoleModelAssignment)
   RoleModelAssignment { OutputIdentifier ChatGptModelAssignment ClaudeModelAssignment }
@@ -49,6 +50,10 @@
   RoleOptionalSkills (Vector RoleOptionalSkill)
   RoleOptionalSkill { OutputIdentifier OptionalSkills }
   OptionalSkills (Vector OutputIdentifier)
+  RoleCurricula (Vector RoleCurriculum)
+  RoleCurriculum { CurriculumIdentifier AssignedRoles IncludedModules OptionalSkills AllowedLeafRoles }
+  CurriculumIdentifier String {| Display AsRef PartialEq Ord |}
+  AssignedRoles (Vector OutputIdentifier)
   NestedRoleRelations (Vector NestedRoleRelation)
   NestedRoleRelation { OutputIdentifier NestedRoleMinimumModels AllowedLeafRoles }
   NestedRoleMinimumModels (Vector NestedRoleMinimumModel)

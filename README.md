@@ -31,8 +31,9 @@ at `manifests/target-module-insertions.nota`. Canonical model support lives in
 `manifests/model-catalog.nota`; every active role has one profile in
 `manifests/role-model-assignments.nota` and one optional-skill list in
 `manifests/role-optional-skills.nota`. Typed nested-role minimum models and
-exclusive leaf-role edges live in `manifests/nested-role-relations.nota`. The
-CLI consumes these inputs for normal generation. The compatibility roster at
+exclusive leaf-role edges live in `manifests/nested-role-relations.nota`.
+`manifests/role-curricula.nota` factors curriculum shared by distinct role identities.
+The CLI consumes these inputs for normal generation. The compatibility roster at
 `manifests/skills-roster.nota` remains parseable for legacy checks and
 archived/deleted skill modeling.
 
@@ -60,9 +61,11 @@ validated list of optional skills. Manager packets receive target-relative
 Manager rosters; nested-role packets receive only their exclusive allowed leaf
 roles. Pi packets also carry the extension contract fields
 `projectRoleIdentity`, `projectRoleDispatchKind`, and, for nested roles,
-`allowedChildRoleNames`. Optional skill bodies are loadable but not preloaded. Claude receives `model` and `effort`; Pi receives a
-provider-qualified `model` and `thinking`; Codex receives `model` and
-`model_reasoning_effort`. Primary `skills/*.md` skill bodies are not emitted
-when no consuming harness needs them.
+`allowedChildRoleNames`. That field is a YAML sequence for nested roles; consuming
+Pi extensions must support sequence-valued frontmatter before deploying this generator.
+Optional skill bodies are loadable but not preloaded. Claude receives `model` and
+`effort`; Pi receives a provider-qualified `model` and `thinking`; Codex receives
+`model` and `model_reasoning_effort`. Runtime skill bodies emit only to configured
+harness targets.
 
 `generate-skills` prunes generated skill directories (`.agents/skills`, `.claude/skills`) before writing. Role packet directories are not whole-directory pruned; stale role cleanup uses `skills/generated-role-outputs.nota` so only previously generated role paths are removed. `check-skills` is non-writing and reports stale generated outputs with regeneration guidance.

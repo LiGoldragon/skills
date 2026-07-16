@@ -6,7 +6,6 @@
 ;; Universal role packet modules live in universal-role-modules.nota.
 ;; The active output manifest decides what emits; this file records source module edges and kind.
 [
-  (agent-output-protocol modules/agent-output-protocol/full.md [] RoleComposition)
   (agent-feedback-loop modules/agent-feedback-loop/full.md [] RoleComposition)
   (return-to-manager modules/return-to-manager/full.md [] RoleComposition)
   (spirit-submission modules/spirit-submission/full.md [] RoleComposition)
@@ -19,7 +18,7 @@
   (intent-core modules/intent-core/full.md [] RoleComposition)
   (repo-scaffold-core modules/repo-scaffold-core/full.md [repository-publication] RoleComposition)
   (repo-operation-core modules/repo-operation-core/full.md [repository-publication] RoleComposition)
-  (edit-coordination modules/edit-coordination/full.md [] RuntimeSkill)
+  (edit-coordination modules/edit-coordination-core/full.md [] RuntimeSkill)
   (code-implementation modules/code-implementation/full.md [] RuntimeSkill)
   (repository-closeout modules/repository-closeout/full.md [] RuntimeSkill)
   (skill-source-core modules/skill-source-core/full.md [] RoleComposition)
@@ -51,7 +50,7 @@
   (rust-crate-layout modules/rust-crate-layout/full.md [] RuntimeSkill)
   (nix-discipline modules/nix-discipline/full.md [] RuntimeSkill)
   (nix-usage modules/nix-usage/full.md [] RuntimeSkill)
-  (operating-system-operations modules/operating-system-operations/full.md [] RuntimeSkill)
+  (operating-system-operations modules/operating-system-operations/full.md [nixos-vm-testing] RuntimeSkill)
   (pi-internals modules/pi-internals/full.md [] RuntimeSkill)
   (pi-extension-updates modules/pi-extension-updates/full.md [pi-internals] RuntimeSkill)
   (mermaid modules/mermaid/full.md [] RuntimeSkill)
@@ -88,7 +87,7 @@
   (repo-intent modules/repo-intent/full.md [] RuntimeSkill)
   (intent-manifestation modules/intent-manifestation/full.md [] RuntimeSkill)
   (main-feature-integration modules/main-feature-integration/full.md [] RuntimeSkill)
-  (nixos-vm-testing modules/nixos-vm-testing/full.md [] RoleComposition)
+  (nixos-vm-testing modules/nixos-vm-testing/full.md [] RuntimeSkill)
 
   (role-manager roles/manager/full.md [] RoleSource)
   (role-generalist roles/generalist/full.md [] RoleSource)

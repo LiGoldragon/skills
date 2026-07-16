@@ -229,7 +229,26 @@ pub struct FrontmatterKey(String);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct FrontmatterValue(String);
+pub enum FrontmatterValue {
+    Scalar(FrontmatterScalar),
+    Sequence(FrontmatterSequence),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct FrontmatterScalar(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct FrontmatterSequence(Vec<FrontmatterScalar>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -406,7 +425,8 @@ pub enum ModelCatalogEntry {
 pub struct ChatGptModel {
     pub model_identifier: ModelIdentifier,
     pub pi_provider: PiProvider,
-    pub model_effort_strengths: ModelEffortStrengths,
+    pub capability_tier: CapabilityTier,
+    pub supported_efforts: SupportedEfforts,
 }
 
 #[rustfmt::skip]
@@ -417,7 +437,8 @@ pub struct ChatGptModel {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaudeModel {
     pub model_identifier: ModelIdentifier,
-    pub model_effort_strengths: ModelEffortStrengths,
+    pub capability_tier: CapabilityTier,
+    pub supported_efforts: SupportedEfforts,
 }
 
 #[rustfmt::skip]
@@ -452,18 +473,20 @@ pub struct PiProvider(String);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ModelEffortStrengths(Vec<ModelEffortStrength>);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
 )]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ModelEffortStrength {
-    pub effort_level: EffortLevel,
-    pub model_strength: ModelStrength,
+pub enum CapabilityTier {
+    Standard,
+    Advanced,
+    Premier,
 }
 
 #[rustfmt::skip]
@@ -472,7 +495,7 @@ pub struct ModelEffortStrength {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ModelStrength(Integer);
+pub struct SupportedEfforts(Vec<EffortLevel>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -563,6 +586,55 @@ pub struct RoleOptionalSkill {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OptionalSkills(Vec<OutputIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleCurricula(Vec<RoleCurriculum>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleCurriculum {
+    pub curriculum_identifier: CurriculumIdentifier,
+    pub assigned_roles: AssignedRoles,
+    pub included_modules: IncludedModules,
+    pub optional_skills: OptionalSkills,
+    pub allowed_leaf_roles: AllowedLeafRoles,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
+#[rkyv(derive(PartialEq, Eq, PartialOrd, Ord))]
+pub struct CurriculumIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AssignedRoles(Vec<OutputIdentifier>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -1121,7 +1193,7 @@ impl From<String> for FrontmatterKey {
 }
 
 #[rustfmt::skip]
-impl FrontmatterValue {
+impl FrontmatterScalar {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
     }
@@ -1133,8 +1205,27 @@ impl FrontmatterValue {
     }
 }
 #[rustfmt::skip]
-impl From<String> for FrontmatterValue {
+impl From<String> for FrontmatterScalar {
     fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl FrontmatterSequence {
+    pub fn new(payload: Vec<FrontmatterScalar>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<FrontmatterScalar> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<FrontmatterScalar> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<FrontmatterScalar>> for FrontmatterSequence {
+    fn from(payload: Vec<FrontmatterScalar>) -> Self {
         Self::new(payload)
     }
 }
@@ -1349,39 +1440,20 @@ impl From<String> for PiProvider {
 }
 
 #[rustfmt::skip]
-impl ModelEffortStrengths {
-    pub fn new(payload: Vec<ModelEffortStrength>) -> Self {
+impl SupportedEfforts {
+    pub fn new(payload: Vec<EffortLevel>) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &Vec<ModelEffortStrength> {
+    pub fn payload(&self) -> &Vec<EffortLevel> {
         &self.0
     }
-    pub fn into_payload(self) -> Vec<ModelEffortStrength> {
+    pub fn into_payload(self) -> Vec<EffortLevel> {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<Vec<ModelEffortStrength>> for ModelEffortStrengths {
-    fn from(payload: Vec<ModelEffortStrength>) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl ModelStrength {
-    pub fn new(payload: Integer) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Integer {
-        &self.0
-    }
-    pub fn into_payload(self) -> Integer {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Integer> for ModelStrength {
-    fn from(payload: Integer) -> Self {
+impl From<Vec<EffortLevel>> for SupportedEfforts {
+    fn from(payload: Vec<EffortLevel>) -> Self {
         Self::new(payload)
     }
 }
@@ -1438,6 +1510,63 @@ impl OptionalSkills {
 }
 #[rustfmt::skip]
 impl From<Vec<OutputIdentifier>> for OptionalSkills {
+    fn from(payload: Vec<OutputIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleCurricula {
+    pub fn new(payload: Vec<RoleCurriculum>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<RoleCurriculum> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<RoleCurriculum> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<RoleCurriculum>> for RoleCurricula {
+    fn from(payload: Vec<RoleCurriculum>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl CurriculumIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for CurriculumIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl AssignedRoles {
+    pub fn new(payload: Vec<OutputIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OutputIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OutputIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OutputIdentifier>> for AssignedRoles {
     fn from(payload: Vec<OutputIdentifier>) -> Self {
         Self::new(payload)
     }
@@ -1893,21 +2022,21 @@ impl PartialEq<&str> for FrontmatterKey {
 }
 
 #[rustfmt::skip]
-impl std::fmt::Display for FrontmatterValue {
+impl std::fmt::Display for FrontmatterScalar {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
     }
 }
 
 #[rustfmt::skip]
-impl AsRef<str> for FrontmatterValue {
+impl AsRef<str> for FrontmatterScalar {
     fn as_ref(&self) -> &str {
         self.payload().as_str()
     }
 }
 
 #[rustfmt::skip]
-impl PartialEq<&str> for FrontmatterValue {
+impl PartialEq<&str> for FrontmatterScalar {
     fn eq(&self, other: &&str) -> bool {
         self.payload() == other
     }
@@ -2040,23 +2169,23 @@ impl PartialEq<&str> for PiProvider {
 }
 
 #[rustfmt::skip]
-impl std::fmt::Display for ModelStrength {
+impl std::fmt::Display for CurriculumIdentifier {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
     }
 }
 
 #[rustfmt::skip]
-impl PartialEq<u64> for ModelStrength {
-    fn eq(&self, other: &u64) -> bool {
-        self.payload() == other
+impl AsRef<str> for CurriculumIdentifier {
+    fn as_ref(&self) -> &str {
+        self.payload().as_str()
     }
 }
 
 #[rustfmt::skip]
-impl PartialOrd<u64> for ModelStrength {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        self.payload().partial_cmp(other)
+impl PartialEq<&str> for CurriculumIdentifier {
+    fn eq(&self, other: &&str) -> bool {
+        self.payload() == other
     }
 }
 
@@ -2180,6 +2309,16 @@ impl GenerationOutcome {
 }
 
 #[rustfmt::skip]
+impl FrontmatterValue {
+    pub fn scalar(payload: String) -> Self {
+        Self::Scalar(FrontmatterScalar::new(payload))
+    }
+    pub fn sequence(payload: Vec<FrontmatterScalar>) -> Self {
+        Self::Sequence(FrontmatterSequence::new(payload))
+    }
+}
+
+#[rustfmt::skip]
 impl ActiveOutput {
     pub fn skill(payload: ActiveSkill) -> Self {
         Self::Skill(payload)
@@ -2220,6 +2359,20 @@ impl From<GenerationRequest> for Operation {
 impl From<GenerationReport> for GenerationOutcome {
     fn from(payload: GenerationReport) -> Self {
         Self::Generated(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<FrontmatterScalar> for FrontmatterValue {
+    fn from(payload: FrontmatterScalar) -> Self {
+        Self::Scalar(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<FrontmatterSequence> for FrontmatterValue {
+    fn from(payload: FrontmatterSequence) -> Self {
+        Self::Sequence(payload)
     }
 }
 

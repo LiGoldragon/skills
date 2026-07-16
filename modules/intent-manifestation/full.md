@@ -6,7 +6,7 @@ Manifestation moves accepted psyche intent from Spirit into the guidance surface
 
 Manifest only what the psyche stated. Do not expand a record into agent rationale, implementation preference, or broad doctrine the statement does not support.
 
-Matter that never belonged in Spirit still goes directly to its owning surface: code, `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `NON_IDEAL_AGENTS.md`, tracker item, or skill source. The intent-versus-matter boundary is defined in `skills/intent-log.md`.
+Matter that never belonged in Spirit still goes directly to its owning surface: code, `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `NON_IDEAL_AGENTS.md`, tracker item, or skill source. The `intent-log` skill defines the intent-versus-matter boundary.
 
 ## Destination
 

@@ -1,0 +1,8 @@
+;; Shared role curriculum. Assigned role identities and target surfaces remain distinct.
+[
+  (greenfield-development
+    [crucial-greenfield-developer-for-chatgpt crucial-greenfield-developer-for-claude]
+    [edit-coordination-core editing-closeout repo-scaffold-core code-implementation-core architectural-truth-tests]
+    [repo-intent design-quality component-architecture structural-forms contract-repo micro-components actor-systems feature-development repository-management rust-methods rust-errors rust-storage-and-wire rust-crate-layout nix-discipline testing version-control versioning main-feature-integration privacy secrets]
+    [scout repo-scaffolder general-code-implementer rust-auditor nix-auditor repository-closeout])
+]

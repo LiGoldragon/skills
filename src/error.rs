@@ -90,6 +90,30 @@ pub enum Error {
         effort: String,
     },
 
+    #[error("role curriculum `{curriculum_identifier}` is listed more than once")]
+    DuplicateRoleCurriculum { curriculum_identifier: String },
+
+    #[error("role curriculum assignment names inactive role `{role_identifier}`")]
+    InactiveRoleCurriculumAssignment { role_identifier: String },
+
+    #[error("role `{role_identifier}` is assigned to more than one shared curriculum")]
+    DuplicateRoleCurriculumAssignment { role_identifier: String },
+
+    #[error(
+        "role `{role_identifier}` duplicates included modules instead of inheriting its shared curriculum"
+    )]
+    RoleCurriculumIncludedModuleDrift { role_identifier: String },
+
+    #[error(
+        "role `{role_identifier}` duplicates optional skills instead of inheriting its shared curriculum"
+    )]
+    RoleCurriculumOptionalSkillDrift { role_identifier: String },
+
+    #[error(
+        "role `{role_identifier}` duplicates child policy instead of inheriting its shared curriculum"
+    )]
+    RoleCurriculumChildPolicyDrift { role_identifier: String },
+
     #[error("active role `{role_identifier}` has no optional-skill metadata")]
     MissingRoleOptionalSkills { role_identifier: String },
 
