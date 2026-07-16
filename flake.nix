@@ -313,11 +313,11 @@
             grep -F 'Inspect concrete evidence of blockage first.' "$management" >/dev/null
             grep -F 'do not fail a read-only Scout for lacking' "$management" >/dev/null
             grep -F 'changed-file evidence.' "$management" >/dev/null
-            grep -F 'While workers remain active, report only' "$management" >/dev/null
+            grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$management" >/dev/null
             grep -F 'Never spawn a blocking agent.' "$manager_role" >/dev/null
             grep -F 'Run every dispatched agent in the background;' "$manager_role" >/dev/null
             grep -F 'defer dependent dispatch until completion notification' "$manager_role" >/dev/null
-            grep -F 'synthesize in ordinary English' "$management" >/dev/null
+            grep -F 'returns, in ordinary English.' "$management" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
@@ -343,9 +343,12 @@
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
             model_catalog=${cleanSource}/manifests/model-catalog.nota
             role_assignments=${cleanSource}/manifests/role-model-assignments.nota
-            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [High]))' "$model_catalog" >/dev/null
+            grep -F '(ChatGpt (gpt-5.6-sol openai-codex [Medium High]))' "$model_catalog" >/dev/null
+            grep -F '(Claude (fable-5 [Medium High]))' "$model_catalog" >/dev/null
             grep -F '(Claude (claude-sonnet-5 [Medium]))' "$model_catalog" >/dev/null
             grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
+            grep -F '(crucial-greenfield-developer-for-chatgpt (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null
+            grep -F '(crucial-greenfield-developer-for-claude (gpt-5.6-sol High) (fable-5 High))' "$role_assignments" >/dev/null
             grep -F '(intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
             grep -F '(scout (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
             grep -F '(repository-closeout (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null
@@ -359,7 +362,7 @@
           active-appellations = pkgs.runCommand "skills-active-appellations" { } ''
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
-            for required in component-architecture design-quality version-control work-tracking management manager generalist intent-recorder intent-curator repository-closeout tracker-weaver; do
+            for required in component-architecture design-quality version-control work-tracking management manager generalist crucial-greenfield-developer-for-chatgpt crucial-greenfield-developer-for-claude intent-recorder intent-curator repository-closeout tracker-weaver; do
               grep -F "$required" "$manifest" >/dev/null || {
                 echo "$required must be present in active output manifest" >&2
                 exit 1

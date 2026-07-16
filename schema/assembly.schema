@@ -47,6 +47,11 @@
   RoleOptionalSkills (Vector RoleOptionalSkill)
   RoleOptionalSkill { OutputIdentifier OptionalSkills }
   OptionalSkills (Vector OutputIdentifier)
+  NestedRoleRelations (Vector NestedRoleRelation)
+  NestedRoleRelation { OutputIdentifier NestedRoleMinimumModels AllowedLeafRoles }
+  NestedRoleMinimumModels (Vector NestedRoleMinimumModel)
+  NestedRoleMinimumModel { RoleTargetSurface ModelIdentifier EffortLevel }
+  AllowedLeafRoles (Vector OutputIdentifier)
   ModuleDependencies (Vector ModuleDependency)
   UniversalRoleModules (Vector ModuleIdentifier)
   ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }

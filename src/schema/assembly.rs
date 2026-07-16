@@ -551,6 +551,54 @@ pub struct OptionalSkills(Vec<OutputIdentifier>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleRelations(Vec<NestedRoleRelation>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleRelation {
+    pub output_identifier: OutputIdentifier,
+    pub nested_role_minimum_models: NestedRoleMinimumModels,
+    pub allowed_leaf_roles: AllowedLeafRoles,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleMinimumModels(Vec<NestedRoleMinimumModel>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NestedRoleMinimumModel {
+    pub role_target_surface: RoleTargetSurface,
+    pub model_identifier: ModelIdentifier,
+    pub effort_level: EffortLevel,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AllowedLeafRoles(Vec<OutputIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModuleDependencies(Vec<ModuleDependency>);
 
 #[rustfmt::skip]
@@ -1352,6 +1400,63 @@ impl OptionalSkills {
 }
 #[rustfmt::skip]
 impl From<Vec<OutputIdentifier>> for OptionalSkills {
+    fn from(payload: Vec<OutputIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl NestedRoleRelations {
+    pub fn new(payload: Vec<NestedRoleRelation>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<NestedRoleRelation> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<NestedRoleRelation> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<NestedRoleRelation>> for NestedRoleRelations {
+    fn from(payload: Vec<NestedRoleRelation>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl NestedRoleMinimumModels {
+    pub fn new(payload: Vec<NestedRoleMinimumModel>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<NestedRoleMinimumModel> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<NestedRoleMinimumModel> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<NestedRoleMinimumModel>> for NestedRoleMinimumModels {
+    fn from(payload: Vec<NestedRoleMinimumModel>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl AllowedLeafRoles {
+    pub fn new(payload: Vec<OutputIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OutputIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OutputIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OutputIdentifier>> for AllowedLeafRoles {
     fn from(payload: Vec<OutputIdentifier>) -> Self {
         Self::new(payload)
     }

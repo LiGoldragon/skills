@@ -9,10 +9,11 @@ use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
-        ActiveOutputs, EmissionPolicy, GenerationMode, GenerationRequest, ManifestPath,
-        ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle, RoleModelAssignments,
-        RoleOptionalSkills, RoleTargetSurface, SkillRoster, SourceRoot, TargetModuleInsertions,
-        TargetSurface, UniversalRoleModules, WorkspaceRoot,
+        ActiveOutputs, EffortLevel, EmissionPolicy, GenerationMode, GenerationRequest,
+        ManifestPath, ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle,
+        NestedRoleRelations, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
+        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
@@ -247,6 +248,10 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
             .parse::<RoleOptionalSkills>()
             .expect("role optional skills parse");
+    let nested_role_relations =
+        NotaSource::new(include_str!("../manifests/nested-role-relations.nota"))
+            .parse::<NestedRoleRelations>()
+            .expect("nested role relations parse");
 
     // These hardcoded generation expectations intentionally catch membership drift.
     // Update them when module membership, role includes, or universal role modules change.
@@ -262,8 +267,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .count();
 
     assert_eq!(skill_count, 64);
-    assert_eq!(role_count, 14);
-    assert_eq!(model_catalog.payload().len(), 5);
+    assert_eq!(role_count, 16);
+    assert_eq!(model_catalog.payload().len(), 6);
+    assert_eq!(nested_role_relations.payload().len(), 5);
     assert_eq!(role_model_assignments.payload().len(), role_count);
     assert_eq!(role_optional_skills.payload().len(), role_count);
 
@@ -477,6 +483,28 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
+            "crucial-greenfield-developer-for-chatgpt",
+            "role-crucial-greenfield-developer",
+            &[
+                "edit-coordination-core",
+                "editing-closeout",
+                "repo-scaffold-core",
+                "code-implementation-core",
+                "architectural-truth-tests",
+            ],
+        ),
+        (
+            "crucial-greenfield-developer-for-claude",
+            "role-crucial-greenfield-developer",
+            &[
+                "edit-coordination-core",
+                "editing-closeout",
+                "repo-scaffold-core",
+                "code-implementation-core",
+                "architectural-truth-tests",
+            ],
+        ),
+        (
             "intent-recorder",
             "role-intent-recorder",
             &["spirit-submission"],
@@ -588,14 +616,18 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 .collect::<Vec<_>>(),
             *included_modules
         );
-        assert_eq!(
-            role.role_target_surfaces.payload(),
-            &[
+        let expected_surfaces: &[RoleTargetSurface] = match *output_identifier {
+            "crucial-greenfield-developer-for-chatgpt" => {
+                &[RoleTargetSurface::CodexAgent, RoleTargetSurface::PiAgent]
+            }
+            "crucial-greenfield-developer-for-claude" => &[RoleTargetSurface::ClaudeAgent],
+            _ => &[
                 RoleTargetSurface::ClaudeAgent,
                 RoleTargetSurface::CodexAgent,
                 RoleTargetSurface::PiAgent,
-            ]
-        );
+            ],
+        };
+        assert_eq!(role.role_target_surfaces.payload(), expected_surfaces);
         assert!(dependency_modules.contains(module_identifier));
         assert_eq!(
             module_kinds.get(module_identifier),
@@ -1258,7 +1290,7 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\nmodel: 'openai-codex/gpt-test'\nthinking: high\n---\n\n"));
+    assert!(pi.starts_with("---\nname: worker\ndescription: 'Worker role.'\nmodel: 'openai-codex/gpt-test'\nthinking: high\ndelegation-role-classification: LeafRole\nallowed-child-role-identifiers: None\n---\n\n"));
     assert!(!pi.contains("Skill-read de-duplication"));
 
     let inventory = fixture.read_workspace_file("skills/generated-role-outputs.nota");
@@ -1268,84 +1300,459 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
-fn pi_manager_dispatch_roster_equals_generated_pi_agents_without_manager_or_non_pi_roles() {
+fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
     let fixture = Fixture::new();
-    let children = [
-        "generalist",
-        "intent-recorder",
-        "intent-translator",
-        "scout",
-        "repo-scaffolder",
-        "general-code-implementer",
-        "operating-system-implementer",
-        "rust-auditor",
-        "nix-auditor",
-        "skill-editor",
-        "intent-curator",
-        "repository-closeout",
-        "tracker-weaver",
-    ];
-    let mut active_outputs =
-        vec!["(Role (manager manager [] [Manager root.] [PiAgent]))".to_owned()];
-    active_outputs.extend(
-        children
-            .iter()
-            .map(|role| format!("(Role ({role} {role} [] [Role {role}.] [PiAgent]))")),
-    );
-    active_outputs
-        .push("(Role (claude-only claude-only [] [Non Pi witness.] [ClaudeAgent]))".to_owned());
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        &format!("[{}]\n", active_outputs.join(" ")),
+        "[(Role (manager manager [] [Manager root.] [ClaudeAgent CodexAgent PiAgent])) (Role (shared shared [] [Shared role.] [ClaudeAgent CodexAgent PiAgent])) (Role (pi-only pi-only [] [Pi role.] [PiAgent])) (Role (claude-only claude-only [] [Claude role.] [ClaudeAgent])) (Role (codex-only codex-only [] [Codex role.] [CodexAgent]))]\n",
     );
-
-    let mut dependencies = Vec::new();
-    for role in children.iter().chain(["manager", "claude-only"].iter()) {
-        dependencies.push(format!("({role} roles/{role}/full.md [] RoleSource)"));
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(manager roles/manager/full.md [] RoleSource) (shared roles/shared/full.md [] RoleSource) (pi-only roles/pi-only/full.md [] RoleSource) (claude-only roles/claude-only/full.md [] RoleSource) (codex-only roles/codex-only/full.md [] RoleSource)]\n",
+    );
+    for role in ["manager", "shared", "pi-only", "claude-only", "codex-only"] {
         fixture.write_source_file(
             &format!("roles/{role}/full.md"),
             &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
         );
     }
-    fixture.write_source_file(
-        "manifests/module-dependencies.nota",
-        &format!("[{}]\n", dependencies.join(" ")),
-    );
-    let metadata_roles = children
-        .iter()
-        .chain(["manager", "claude-only"].iter())
-        .copied()
-        .collect::<Vec<_>>();
-    fixture.write_role_metadata(&metadata_roles);
+    fixture.write_role_metadata(&["manager", "shared", "pi-only", "claude-only", "codex-only"]);
 
-    let report = fixture
+    fixture
         .generate(GenerationMode::Write)
         .expect("generation succeeds");
-    let manager = fixture.read_workspace_file(".pi/agents/manager.md");
-    let roster = manager
-        .lines()
-        .filter_map(|line| {
-            line.strip_prefix("- `")
-                .and_then(|line| line.split('`').next())
-        })
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
-    let generated_pi_agents = report
-        .payload()
+
+    let roster = |packet: &str| {
+        packet
+            .replace("\\n", "\n")
+            .lines()
+            .filter_map(|line| line.strip_prefix("- `")?.split('`').next())
+            .map(str::to_owned)
+            .collect::<Vec<_>>()
+    };
+    let pi = fixture.read_workspace_file(".pi/agents/manager.md");
+    let claude = fixture.read_workspace_file(".claude/agents/manager.md");
+    let codex = fixture.read_workspace_file(".codex/agents/manager.toml");
+
+    assert_eq!(roster(&pi), ["shared", "pi-only"]);
+    assert_eq!(roster(&claude), ["shared", "claude-only"]);
+    assert_eq!(roster(&codex), ["shared", "codex-only"]);
+    assert!(pi.contains("delegation-role-classification: Manager"));
+    assert!(pi.contains("allowed-child-role-identifiers: 'shared, pi-only'"));
+    for packet in [&pi, &claude, &codex] {
+        assert!(packet.contains("Manager dispatch roster"));
+        assert!(!packet.contains("`list`"));
+        assert!(!packet.contains("Orchestrator"));
+        assert!(!roster(packet).contains(&"manager".to_owned()));
+    }
+}
+
+#[test]
+fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_training() {
+    let relations = NotaSource::new(include_str!("../manifests/nested-role-relations.nota"))
+        .parse::<NestedRoleRelations>()
+        .expect("nested role relations parse");
+    let observed: BTreeMap<_, _> = relations
         .payload()
         .iter()
-        .filter_map(|file| file.output_path.as_ref().strip_prefix(".pi/agents/"))
-        .filter_map(|path| path.strip_suffix(".md"))
-        .filter(|role| *role != "manager")
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
+        .map(|relation| {
+            (
+                relation.output_identifier.as_ref(),
+                relation
+                    .allowed_leaf_roles
+                    .payload()
+                    .iter()
+                    .map(|role| role.as_ref())
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        observed,
+        BTreeMap::from([
+            (
+                "generalist",
+                vec![
+                    "scout",
+                    "repo-scaffolder",
+                    "general-code-implementer",
+                    "rust-auditor",
+                    "nix-auditor",
+                    "repository-closeout",
+                    "tracker-weaver",
+                ],
+            ),
+            (
+                "crucial-greenfield-developer-for-chatgpt",
+                vec![
+                    "scout",
+                    "repo-scaffolder",
+                    "general-code-implementer",
+                    "rust-auditor",
+                    "nix-auditor",
+                    "repository-closeout",
+                ],
+            ),
+            (
+                "crucial-greenfield-developer-for-claude",
+                vec![
+                    "scout",
+                    "repo-scaffolder",
+                    "general-code-implementer",
+                    "rust-auditor",
+                    "nix-auditor",
+                    "repository-closeout",
+                ],
+            ),
+            (
+                "operating-system-implementer",
+                vec![
+                    "scout",
+                    "general-code-implementer",
+                    "rust-auditor",
+                    "nix-auditor",
+                    "repository-closeout",
+                ],
+            ),
+            (
+                "skill-editor",
+                vec![
+                    "scout",
+                    "general-code-implementer",
+                    "rust-auditor",
+                    "repository-closeout",
+                ],
+            ),
+        ])
+    );
+    for relation in relations.payload() {
+        for minimum in relation.nested_role_minimum_models.payload() {
+            assert_eq!(minimum.effort_level, EffortLevel::Medium);
+            match minimum.role_target_surface {
+                RoleTargetSurface::ClaudeAgent => {
+                    assert_eq!(minimum.model_identifier.as_ref(), "fable-5")
+                }
+                RoleTargetSurface::CodexAgent | RoleTargetSurface::PiAgent => {
+                    assert_eq!(minimum.model_identifier.as_ref(), "gpt-5.6-sol")
+                }
+            }
+        }
+    }
+    let nested_identifiers: BTreeSet<_> = observed.keys().copied().collect();
+    for (parent, children) in &observed {
+        assert_ne!(*parent, "manager");
+        assert!(!children.contains(parent));
+        assert!(
+            children
+                .iter()
+                .all(|child| !nested_identifiers.contains(child)),
+            "nested roles never delegate to nested roles"
+        );
+        for psyche_facing_mutator in ["intent-recorder", "intent-translator", "intent-curator"] {
+            assert!(!children.contains(&psyche_facing_mutator));
+        }
+    }
 
-    assert_eq!(roster, generated_pi_agents);
-    assert_eq!(roster, children);
-    assert_eq!(roster.len(), 13);
-    assert!(!roster.contains(&"manager".to_owned()));
-    assert!(!roster.contains(&"claude-only".to_owned()));
-    assert!(manager.contains("runtime validation handles unknown or disabled names"));
+    let active_outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
+        .parse::<ActiveOutputs>()
+        .expect("active outputs parse");
+    let greenfield_roles = active_outputs
+        .payload()
+        .iter()
+        .filter_map(|output| match output {
+            skills::schema::assembly::ActiveOutput::Role(role)
+                if role
+                    .output_identifier
+                    .as_ref()
+                    .starts_with("crucial-greenfield-") =>
+            {
+                Some(role)
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(greenfield_roles.len(), 2);
+    assert_eq!(
+        greenfield_roles[0].module_identifier, greenfield_roles[1].module_identifier,
+        "both peers use one role curriculum source"
+    );
+    assert_eq!(
+        greenfield_roles[0].included_modules, greenfield_roles[1].included_modules,
+        "both peers compose the same existing curriculum"
+    );
+    let optional_skills = NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
+        .parse::<RoleOptionalSkills>()
+        .expect("optional skills parse");
+    let peer_training = greenfield_roles
+        .iter()
+        .map(|role| {
+            optional_skills
+                .payload()
+                .iter()
+                .find(|entry| entry.output_identifier == role.output_identifier)
+                .expect("greenfield peer training exists")
+                .optional_skills
+                .clone()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(peer_training[0], peer_training[1]);
+    for required in [
+        "repo-intent",
+        "design-quality",
+        "component-architecture",
+        "code-implementation",
+        "testing",
+        "rust-storage-and-wire",
+        "rust-errors",
+        "versioning",
+        "repository-management",
+        "repository-publication",
+    ] {
+        assert!(
+            peer_training[0]
+                .payload()
+                .iter()
+                .any(|skill| skill.as_ref() == required),
+            "shared training includes {required}"
+        );
+    }
+    assert!(Path::new("roles/crucial-greenfield-developer/full.md").is_file());
+    assert!(!Path::new("modules/crucial-greenfield-developer/full.md").exists());
+}
+
+#[test]
+fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current manifests generate");
+
+    let roster = |path: &str| {
+        let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
+        let roster_body = packet
+            .split("## Allowed child-role roster")
+            .nth(1)
+            .or_else(|| packet.split("## Manager dispatch roster").nth(1))
+            .expect("generated roster heading exists");
+        roster_body
+            .split("## optional skills")
+            .next()
+            .expect("role roster has content")
+            .lines()
+            .filter_map(|line| line.strip_prefix("- `")?.split('`').next())
+            .map(str::to_owned)
+            .collect::<Vec<_>>()
+    };
+    let generalist_children = vec![
+        "scout",
+        "repo-scaffolder",
+        "general-code-implementer",
+        "rust-auditor",
+        "nix-auditor",
+        "repository-closeout",
+        "tracker-weaver",
+    ];
+    assert_eq!(roster(".pi/agents/generalist.md"), generalist_children);
+    assert_eq!(roster(".claude/agents/generalist.md"), generalist_children);
+    assert_eq!(roster(".codex/agents/generalist.toml"), generalist_children);
+    let greenfield_children = vec![
+        "scout",
+        "repo-scaffolder",
+        "general-code-implementer",
+        "rust-auditor",
+        "nix-auditor",
+        "repository-closeout",
+    ];
+    assert_eq!(
+        roster(".pi/agents/crucial-greenfield-developer-for-chatgpt.md"),
+        greenfield_children
+    );
+    assert_eq!(
+        roster(".codex/agents/crucial-greenfield-developer-for-chatgpt.toml"),
+        greenfield_children
+    );
+    assert_eq!(
+        roster(".claude/agents/crucial-greenfield-developer-for-claude.md"),
+        greenfield_children
+    );
+    assert_eq!(
+        roster(".pi/agents/operating-system-implementer.md"),
+        [
+            "scout",
+            "general-code-implementer",
+            "rust-auditor",
+            "nix-auditor",
+            "repository-closeout",
+        ]
+    );
+    assert_eq!(
+        roster(".pi/agents/skill-editor.md"),
+        [
+            "scout",
+            "general-code-implementer",
+            "rust-auditor",
+            "repository-closeout",
+        ]
+    );
+
+    let manager_pi = fixture.read_workspace_file(".pi/agents/manager.md");
+    let manager_claude = roster(".claude/agents/manager.md");
+    let manager_codex = roster(".codex/agents/manager.toml");
+    assert!(manager_pi.contains("delegation-role-classification: Manager"));
+    assert!(!manager_pi.contains("delegation-role-classification: NestedRole"));
+    assert!(
+        roster(".pi/agents/manager.md")
+            .contains(&"crucial-greenfield-developer-for-chatgpt".to_owned())
+    );
+    assert!(
+        !roster(".pi/agents/manager.md")
+            .contains(&"crucial-greenfield-developer-for-claude".to_owned())
+    );
+    assert!(manager_codex.contains(&"crucial-greenfield-developer-for-chatgpt".to_owned()));
+    assert!(!manager_codex.contains(&"crucial-greenfield-developer-for-claude".to_owned()));
+    assert!(manager_claude.contains(&"crucial-greenfield-developer-for-claude".to_owned()));
+    assert!(!manager_claude.contains(&"crucial-greenfield-developer-for-chatgpt".to_owned()));
+
+    let chatgpt_peer =
+        fixture.read_workspace_file(".pi/agents/crucial-greenfield-developer-for-chatgpt.md");
+    assert!(chatgpt_peer.contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high"));
+    assert!(chatgpt_peer.contains("delegation-role-classification: NestedRole"));
+    assert!(chatgpt_peer.contains("allowed-child-role-identifiers: 'scout, repo-scaffolder, general-code-implementer, rust-auditor, nix-auditor, repository-closeout'"));
+    let claude_peer =
+        fixture.read_workspace_file(".claude/agents/crucial-greenfield-developer-for-claude.md");
+    assert!(claude_peer.contains("model: fable-5\neffort: high"));
+    assert!(!chatgpt_peer.contains("`list`"));
+    assert!(!claude_peer.contains("`list`"));
+}
+
+#[test]
+fn nested_model_resolution_uses_strongest_assignment_and_ordinary_wins_ties() {
+    let tie = Fixture::new();
+    tie.write_model_resolution_sources("Medium");
+    tie.generate(GenerationMode::Write)
+        .expect("equal-strength ordinary assignments generate");
+    assert!(
+        tie.read_workspace_file(".pi/agents/parent.md")
+            .contains("model: 'ordinary-provider/gpt-ordinary'\nthinking: medium")
+    );
+    assert!(
+        tie.read_workspace_file(".claude/agents/parent.md")
+            .contains("model: claude-ordinary\neffort: medium")
+    );
+
+    let stronger_floor = Fixture::new();
+    stronger_floor.write_model_resolution_sources("High");
+    stronger_floor
+        .generate(GenerationMode::Write)
+        .expect("stronger minimum assignments generate");
+    assert!(
+        stronger_floor
+            .read_workspace_file(".pi/agents/parent.md")
+            .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high")
+    );
+    assert!(
+        stronger_floor
+            .read_workspace_file(".codex/agents/parent.toml")
+            .contains("model = \"gpt-5.6-sol\"\nmodel_reasoning_effort = \"high\"")
+    );
+    assert!(
+        stronger_floor
+            .read_workspace_file(".claude/agents/parent.md")
+            .contains("model: fable-5\neffort: high")
+    );
+}
+
+#[test]
+fn nested_role_validation_rejects_child_and_recursion_inconsistencies() {
+    let missing = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [])]",
+    );
+    assert!(matches!(missing, Error::MissingNestedRoleChild { .. }));
+    let duplicate_relation = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child]) (parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        duplicate_relation,
+        Error::DuplicateNestedRoleRelation { .. }
+    ));
+    let inactive_parent =
+        nested_relation_error("[(inactive [(ClaudeAgent claude-test Medium)] [child])]");
+    assert!(matches!(inactive_parent, Error::InactiveNestedRole { .. }));
+    let duplicate_child = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child child])]",
+    );
+    assert!(matches!(
+        duplicate_child,
+        Error::DuplicateNestedRoleChild { .. }
+    ));
+    let inactive_child = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [inactive])]",
+    );
+    assert!(matches!(
+        inactive_child,
+        Error::InactiveNestedRoleChild { .. }
+    ));
+    let incompatible_child = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [claude-child])]",
+    );
+    assert!(matches!(
+        incompatible_child,
+        Error::TargetIncompatibleNestedRoleChild { .. }
+    ));
+    let self_edge = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [parent])]",
+    );
+    assert!(matches!(self_edge, Error::NestedRoleSelfEdge { .. }));
+    let nested_edge = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [nested-two]) (nested-two [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        nested_edge,
+        Error::NestedRoleChildCannotBeNested { .. }
+    ));
+    let manager_nested = nested_relation_error(
+        "[(manager [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(manager_nested, Error::ManagerCannotBeNestedRole));
+    let manager_child = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [manager])]",
+    );
+    assert!(matches!(
+        manager_child,
+        Error::ManagerCannotBeNestedChild { .. }
+    ));
+}
+
+#[test]
+fn nested_role_validation_rejects_minimum_model_target_inconsistencies() {
+    let missing = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        missing,
+        Error::MissingNestedRoleMinimumModel { .. }
+    ));
+    let duplicate = nested_relation_error(
+        "[(parent [(ClaudeAgent claude-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        duplicate,
+        Error::DuplicateNestedRoleMinimumModel { .. }
+    ));
+    let inactive_target = nested_relation_error(
+        "[(claude-child [(ClaudeAgent claude-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        inactive_target,
+        Error::NestedRoleMinimumForInactiveTarget { .. }
+    ));
+    let wrong_family = nested_relation_error(
+        "[(parent [(ClaudeAgent gpt-test Medium) (CodexAgent gpt-test Medium) (PiAgent gpt-test Medium)] [child])]",
+    );
+    assert!(matches!(
+        wrong_family,
+        Error::NestedRoleMinimumModelFamilyMismatch { .. }
+    ));
 }
 
 #[test]
@@ -1384,7 +1791,7 @@ fn role_profiles_and_optional_skills_render_without_preloading_skill_bodies() {
     assert!(!claude.contains("This body must not be preloaded."));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi.contains("model: 'openai-codex/gpt-test'\nthinking: high\nskills: example"));
+    assert!(pi.contains("model: 'openai-codex/gpt-test'\nthinking: high\ndelegation-role-classification: LeafRole\nallowed-child-role-identifiers: None\nskills: example"));
     assert!(pi.contains("## optional skills"));
     assert!(!pi.contains("This body must not be preloaded."));
 
@@ -2249,6 +2656,14 @@ fn trunk_divergence_refuses_regeneration_when_trunk_has_unreached_commits() {
     );
 }
 
+fn nested_relation_error(relations: &str) -> Error {
+    let fixture = Fixture::new();
+    fixture.write_nested_validation_sources(relations);
+    fixture
+        .generate(GenerationMode::Write)
+        .expect_err("invalid nested-role relation fails generation")
+}
+
 struct Fixture {
     source: TempDir,
     workspace: TempDir,
@@ -2287,6 +2702,54 @@ impl Fixture {
             "[(worker roles/worker/full.md [] RoleSource) (shared modules/shared/full.md [] RoleComposition) (feature modules/feature/full.md [shared] RoleComposition)]\n",
         );
         self.write_role_metadata(&["worker"]);
+    }
+
+    fn write_nested_validation_sources(&self, relations: &str) {
+        self.write_source_file(
+            "manifests/active-outputs.nota",
+            "[(Role (manager manager [] [Manager role.] [ClaudeAgent CodexAgent PiAgent])) (Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (nested-two nested-two [] [Nested two.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent])) (Role (claude-child claude-child [] [Claude child.] [ClaudeAgent]))]\n",
+        );
+        self.write_source_file(
+            "manifests/module-dependencies.nota",
+            "[(manager roles/manager/full.md [] RoleSource) (parent roles/parent/full.md [] RoleSource) (nested-two roles/nested-two/full.md [] RoleSource) (child roles/child/full.md [] RoleSource) (claude-child roles/claude-child/full.md [] RoleSource)]\n",
+        );
+        self.write_role_metadata(&["manager", "parent", "nested-two", "child", "claude-child"]);
+        self.write_source_file("manifests/nested-role-relations.nota", relations);
+    }
+
+    fn write_model_resolution_sources(&self, minimum_effort: &str) {
+        self.write_source_file(
+            "manifests/active-outputs.nota",
+            "[(Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        );
+        self.write_source_file(
+            "manifests/module-dependencies.nota",
+            "[(parent roles/parent/full.md [] RoleSource) (child roles/child/full.md [] RoleSource)]\n",
+        );
+        self.write_source_file(
+            "manifests/model-catalog.nota",
+            "[(ChatGpt (gpt-ordinary ordinary-provider [Medium])) (ChatGpt (gpt-5.6-sol openai-codex [Medium High])) (Claude (claude-ordinary [Medium])) (Claude (fable-5 [Medium High]))]\n",
+        );
+        self.write_source_file(
+            "manifests/role-model-assignments.nota",
+            "[(parent (gpt-ordinary Medium) (claude-ordinary Medium)) (child (gpt-ordinary Medium) (claude-ordinary Medium))]\n",
+        );
+        self.write_source_file(
+            "manifests/role-optional-skills.nota",
+            "[(parent []) (child [])]\n",
+        );
+        self.write_source_file(
+            "manifests/nested-role-relations.nota",
+            &format!(
+                "[(parent [(ClaudeAgent fable-5 {minimum_effort}) (CodexAgent gpt-5.6-sol {minimum_effort}) (PiAgent gpt-5.6-sol {minimum_effort})] [child])]\n"
+            ),
+        );
+        for role in ["parent", "child"] {
+            self.write_source_file(
+                &format!("roles/{role}/full.md"),
+                &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
+            );
+        }
     }
 
     fn write_role_metadata(&self, role_identifiers: &[&str]) {

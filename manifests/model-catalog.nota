@@ -1,8 +1,9 @@
 ;; Canonical role-model catalog. ChatGPT identifiers render provider-qualified for Pi and bare for Codex.
 [
-  (ChatGpt (gpt-5.6-sol openai-codex [High]))
+  (ChatGpt (gpt-5.6-sol openai-codex [Medium High]))
   (ChatGpt (gpt-5.6-terra openai-codex [Medium High]))
   (ChatGpt (gpt-5.6-luna openai-codex [Medium]))
+  (Claude (fable-5 [Medium High]))
   (Claude (claude-opus-4-8 [High Xhigh]))
   (Claude (claude-sonnet-5 [Medium]))
 ]

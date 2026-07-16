@@ -16,10 +16,11 @@ use crate::{
         GeneratedRoleOutputs, GenerationMode, GenerationOutcome, GenerationReport,
         GenerationRequest, Manifest, ManifestPath, ModelCatalog, ModelCatalogEntry,
         ModelIdentifier, ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind,
-        ModuleLifecycle, ModulePath, Modules, Operation, OptionalSkills, OutputIdentifier,
-        OutputKind, OutputPath, OutputSurface, RoleModelAssignment, RoleModelAssignments,
-        RoleOptionalSkills, RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster,
-        TargetModuleInsertion, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        ModuleLifecycle, ModulePath, Modules, NestedRoleMinimumModel, NestedRoleRelations,
+        Operation, OptionalSkills, OutputIdentifier, OutputKind, OutputPath, OutputSurface,
+        RoleModelAssignment, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
+        SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion, TargetModuleInsertions,
+        TargetSurface, UniversalRoleModules,
     },
     trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
@@ -237,14 +238,22 @@ impl GenerationSource {
             SourceFile::new(self.source_root.clone(), role_optional_skills_path)
                 .read_optional()?
                 .unwrap_or_else(|| RoleOptionalSkills::new(Vec::new()));
+        let nested_role_relations_path = manifest_directory.join("nested-role-relations.nota");
+        let nested_role_relations: NestedRoleRelations =
+            SourceFile::new(self.source_root.clone(), nested_role_relations_path)
+                .read_optional()?
+                .unwrap_or_else(|| NestedRoleRelations::new(Vec::new()));
         GenerationConfiguration::active(
             active_outputs,
             module_dependencies,
             target_module_insertions,
             universal_role_modules,
-            model_catalog,
-            role_model_assignments,
-            role_optional_skills,
+            RoleMetadataSources {
+                model_catalog,
+                role_model_assignments,
+                role_optional_skills,
+                nested_role_relations,
+            },
         )
     }
 
@@ -335,18 +344,16 @@ impl GenerationJobs {
                 manifest,
             )));
         }
-        let pi_dispatch_roster = self.configuration.pi_dispatch_roster();
         for manifest in self.configuration.role_manifests()? {
-            let assembler = ManifestAssembler::new(
+            let generated_roster = self.configuration.generated_role_roster(&manifest);
+            let mut assembler = ManifestAssembler::new(
                 self.source_root.clone(),
                 self.workspace_root.clone(),
                 manifest,
             );
-            let assembler = if assembler.is_pi_manager_agent() {
-                assembler.with_generated_fragment(pi_dispatch_roster.clone())
-            } else {
-                assembler
-            };
+            if let Some(roster) = generated_roster {
+                assembler = assembler.with_generated_fragment(roster);
+            }
             jobs.push(GenerationJob::Manifest(assembler));
         }
         if self.configuration.uses_active_manifest() {
@@ -375,6 +382,7 @@ impl GenerationJobs {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct RoleMetadataIndex {
     entries: BTreeMap<OutputIdentifier, RoleMetadata>,
+    nested_roles: NestedRoleIndex,
 }
 
 impl RoleMetadataIndex {
@@ -383,6 +391,7 @@ impl RoleMetadataIndex {
         model_catalog: ModelCatalog,
         role_model_assignments: RoleModelAssignments,
         role_optional_skills: RoleOptionalSkills,
+        nested_role_relations: NestedRoleRelations,
     ) -> Result<Self> {
         let active_roles: BTreeMap<OutputIdentifier, ActiveRole> = active_outputs
             .payload()
@@ -403,6 +412,7 @@ impl RoleMetadataIndex {
             })
             .collect();
         let catalog = ModelCatalogIndex::new(model_catalog)?;
+        let nested_roles = NestedRoleIndex::new(nested_role_relations, &active_roles, &catalog)?;
         let assignments = RoleModelAssignmentIndex::new(role_model_assignments, &active_roles)?;
         let optional_skills =
             RoleOptionalSkillIndex::new(role_optional_skills, &active_roles, &active_skills)?;
@@ -428,7 +438,10 @@ impl RoleMetadataIndex {
                 },
             );
         }
-        Ok(Self { entries })
+        Ok(Self {
+            entries,
+            nested_roles,
+        })
     }
 
     fn metadata(&self, role_identifier: &OutputIdentifier) -> Result<&RoleMetadata> {
@@ -437,6 +450,10 @@ impl RoleMetadataIndex {
             .ok_or_else(|| Error::MissingRoleModelAssignment {
                 role_identifier: role_identifier.as_ref().to_owned(),
             })
+    }
+
+    fn nested_role(&self, role_identifier: &OutputIdentifier) -> Option<&NestedRoleMetadata> {
+        self.nested_roles.entries.get(role_identifier)
     }
 }
 
@@ -453,6 +470,58 @@ struct RoleModelProfile {
     chat_gpt_effort: EffortLevel,
     claude_model: String,
     claude_effort: EffortLevel,
+}
+
+impl RoleModelProfile {
+    fn target(&self, output_surface: OutputSurface) -> TargetModelProfile {
+        match output_surface {
+            OutputSurface::ClaudeAgent => TargetModelProfile {
+                model_identifier: self.claude_model.clone(),
+                pi_provider: None,
+                effort_level: self.claude_effort,
+            },
+            OutputSurface::CodexAgent => TargetModelProfile {
+                model_identifier: self.chat_gpt_model.clone(),
+                pi_provider: None,
+                effort_level: self.chat_gpt_effort,
+            },
+            OutputSurface::PiAgent => TargetModelProfile {
+                model_identifier: self.chat_gpt_model.clone(),
+                pi_provider: Some(self.pi_provider.clone()),
+                effort_level: self.chat_gpt_effort,
+            },
+            _ => unreachable!("target model profiles exist only for role surfaces"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct TargetModelProfile {
+    model_identifier: String,
+    pi_provider: Option<String>,
+    effort_level: EffortLevel,
+}
+
+impl TargetModelProfile {
+    fn strongest(ordinary: Self, minimum: Option<&Self>) -> Self {
+        match minimum {
+            Some(minimum) if minimum.effort_level.strength() > ordinary.effort_level.strength() => {
+                minimum.clone()
+            }
+            Some(_) | None => ordinary,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct NestedRoleIndex {
+    entries: BTreeMap<OutputIdentifier, NestedRoleMetadata>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct NestedRoleMetadata {
+    minimum_models: Vec<(RoleTargetSurface, TargetModelProfile)>,
+    allowed_leaf_roles: Vec<OutputIdentifier>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -590,6 +659,71 @@ impl ModelCatalogIndex {
             effort: effort.as_str().to_owned(),
         })
     }
+
+    fn nested_minimum(
+        &self,
+        role_identifier: &str,
+        minimum: &NestedRoleMinimumModel,
+    ) -> Result<TargetModelProfile> {
+        let identifier = minimum.model_identifier.as_ref();
+        let model = self.model(role_identifier, identifier)?;
+        match (&minimum.role_target_surface, model) {
+            (
+                RoleTargetSurface::CodexAgent | RoleTargetSurface::PiAgent,
+                CatalogModel::ChatGpt {
+                    pi_provider,
+                    supported_efforts,
+                },
+            ) => {
+                self.validate_effort(
+                    role_identifier,
+                    identifier,
+                    minimum.effort_level,
+                    supported_efforts,
+                )?;
+                Ok(TargetModelProfile {
+                    model_identifier: identifier.to_owned(),
+                    pi_provider: match minimum.role_target_surface {
+                        RoleTargetSurface::PiAgent => Some(pi_provider.clone()),
+                        RoleTargetSurface::CodexAgent => None,
+                        RoleTargetSurface::ClaudeAgent => unreachable!(),
+                    },
+                    effort_level: minimum.effort_level,
+                })
+            }
+            (RoleTargetSurface::ClaudeAgent, CatalogModel::Claude { supported_efforts }) => {
+                self.validate_effort(
+                    role_identifier,
+                    identifier,
+                    minimum.effort_level,
+                    supported_efforts,
+                )?;
+                Ok(TargetModelProfile {
+                    model_identifier: identifier.to_owned(),
+                    pi_provider: None,
+                    effort_level: minimum.effort_level,
+                })
+            }
+            (surface, CatalogModel::ChatGpt { .. }) => {
+                Err(Error::NestedRoleMinimumModelFamilyMismatch {
+                    role_identifier: role_identifier.to_owned(),
+                    model_identifier: identifier.to_owned(),
+                    role_surface: format!("{surface:?}"),
+                    expected_family: "Claude".to_owned(),
+                    actual_family: "ChatGPT".to_owned(),
+                })
+            }
+            (surface, CatalogModel::Claude { .. }) => {
+                Err(Error::NestedRoleMinimumModelFamilyMismatch {
+                    role_identifier: role_identifier.to_owned(),
+                    model_identifier: identifier.to_owned(),
+                    role_surface: format!("{surface:?}"),
+                    expected_family: "ChatGPT".to_owned(),
+                    actual_family: "Claude".to_owned(),
+                })
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -601,6 +735,139 @@ enum CatalogModel {
     Claude {
         supported_efforts: Vec<EffortLevel>,
     },
+}
+
+impl NestedRoleIndex {
+    fn new(
+        relations: NestedRoleRelations,
+        active_roles: &BTreeMap<OutputIdentifier, ActiveRole>,
+        catalog: &ModelCatalogIndex,
+    ) -> Result<Self> {
+        let mut relations_by_role = BTreeMap::new();
+        for relation in relations.into_payload() {
+            let role_identifier = relation.output_identifier.clone();
+            if relations_by_role
+                .insert(role_identifier.clone(), relation)
+                .is_some()
+            {
+                return Err(Error::DuplicateNestedRoleRelation {
+                    role_identifier: role_identifier.into_payload(),
+                });
+            }
+        }
+        let nested_role_identifiers: BTreeSet<OutputIdentifier> =
+            relations_by_role.keys().cloned().collect();
+        let mut entries = BTreeMap::new();
+        for (role_identifier, relation) in relations_by_role {
+            let role =
+                active_roles
+                    .get(&role_identifier)
+                    .ok_or_else(|| Error::InactiveNestedRole {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                    })?;
+            if role_identifier.as_ref() == "manager" {
+                return Err(Error::ManagerCannotBeNestedRole);
+            }
+
+            let mut minimum_models = Vec::new();
+            for minimum in relation.nested_role_minimum_models.into_payload() {
+                let surface = minimum.role_target_surface;
+                if minimum_models
+                    .iter()
+                    .any(|(recorded_surface, _)| *recorded_surface == surface)
+                {
+                    return Err(Error::DuplicateNestedRoleMinimumModel {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        role_surface: format!("{surface:?}"),
+                    });
+                }
+                if !role.role_target_surfaces.payload().contains(&surface) {
+                    return Err(Error::NestedRoleMinimumForInactiveTarget {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        role_surface: format!("{surface:?}"),
+                    });
+                }
+                let profile = catalog.nested_minimum(role_identifier.as_ref(), &minimum)?;
+                minimum_models.push((surface, profile));
+            }
+            for surface in role.role_target_surfaces.payload() {
+                if !minimum_models
+                    .iter()
+                    .any(|(recorded_surface, _)| recorded_surface == surface)
+                {
+                    return Err(Error::MissingNestedRoleMinimumModel {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        role_surface: format!("{surface:?}"),
+                    });
+                }
+            }
+
+            let allowed_leaf_roles = relation.allowed_leaf_roles.into_payload();
+            if allowed_leaf_roles.is_empty() {
+                return Err(Error::MissingNestedRoleChild {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            let mut seen_children = BTreeSet::new();
+            for child_identifier in &allowed_leaf_roles {
+                if !seen_children.insert(child_identifier.as_ref()) {
+                    return Err(Error::DuplicateNestedRoleChild {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        child_identifier: child_identifier.as_ref().to_owned(),
+                    });
+                }
+                if child_identifier == &role_identifier {
+                    return Err(Error::NestedRoleSelfEdge {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                    });
+                }
+                if child_identifier.as_ref() == "manager" {
+                    return Err(Error::ManagerCannotBeNestedChild {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                    });
+                }
+                if nested_role_identifiers.contains(child_identifier) {
+                    return Err(Error::NestedRoleChildCannotBeNested {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        child_identifier: child_identifier.as_ref().to_owned(),
+                    });
+                }
+                let child = active_roles.get(child_identifier).ok_or_else(|| {
+                    Error::InactiveNestedRoleChild {
+                        role_identifier: role_identifier.as_ref().to_owned(),
+                        child_identifier: child_identifier.as_ref().to_owned(),
+                    }
+                })?;
+                for surface in role.role_target_surfaces.payload() {
+                    if !child.role_target_surfaces.payload().contains(surface) {
+                        return Err(Error::TargetIncompatibleNestedRoleChild {
+                            role_identifier: role_identifier.as_ref().to_owned(),
+                            child_identifier: child_identifier.as_ref().to_owned(),
+                            role_surface: format!("{surface:?}"),
+                        });
+                    }
+                }
+            }
+            entries.insert(
+                role_identifier,
+                NestedRoleMetadata {
+                    minimum_models,
+                    allowed_leaf_roles,
+                },
+            );
+        }
+        Ok(Self { entries })
+    }
+}
+
+impl NestedRoleMetadata {
+    fn minimum_model(&self, output_surface: OutputSurface) -> Option<&TargetModelProfile> {
+        let role_surface = output_surface.role_target_surface();
+        self.minimum_models
+            .iter()
+            .find(|(surface, _)| *surface == role_surface)
+            .map(|(_, profile)| profile)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -713,6 +980,22 @@ impl EffortLevel {
             Self::Xhigh => "xhigh",
         }
     }
+
+    fn strength(&self) -> u8 {
+        match self {
+            Self::Medium => 1,
+            Self::High => 2,
+            Self::Xhigh => 3,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RoleMetadataSources {
+    model_catalog: ModelCatalog,
+    role_model_assignments: RoleModelAssignments,
+    role_optional_skills: RoleOptionalSkills,
+    nested_role_relations: NestedRoleRelations,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -731,15 +1014,14 @@ impl GenerationConfiguration {
         module_dependencies: ModuleDependencies,
         target_module_insertions: TargetModuleInsertions,
         universal_role_modules: UniversalRoleModules,
-        model_catalog: ModelCatalog,
-        role_model_assignments: RoleModelAssignments,
-        role_optional_skills: RoleOptionalSkills,
+        role_metadata_sources: RoleMetadataSources,
     ) -> Result<Self> {
         let role_metadata = RoleMetadataIndex::new(
             &active_outputs,
-            model_catalog,
-            role_model_assignments,
-            role_optional_skills,
+            role_metadata_sources.model_catalog,
+            role_metadata_sources.role_model_assignments,
+            role_metadata_sources.role_optional_skills,
+            role_metadata_sources.nested_role_relations,
         )?;
         Ok(Self {
             active_outputs,
@@ -811,31 +1093,77 @@ impl GenerationConfiguration {
             self.module_dependencies.clone(),
             self.target_module_insertions.clone(),
         )?;
+        let active_roles = self.active_roles();
         let mut manifests = Vec::new();
-        for role in self.active_roles() {
+        for role in &active_roles {
             let role_metadata = self
                 .role_metadata
                 .as_ref()
                 .expect("active role generation has validated metadata");
             let metadata = role_metadata.metadata(&role.output_identifier)?;
-            for manifest in role.manifests(&module_index, &self.universal_role_modules, metadata)? {
+            for manifest in role.manifests(
+                &module_index,
+                &self.universal_role_modules,
+                metadata,
+                role_metadata.nested_role(&role.output_identifier),
+                &active_roles,
+            )? {
                 manifests.push(manifest);
             }
         }
         Ok(manifests)
     }
 
-    fn pi_dispatch_roster(&self) -> String {
-        let entries = self
-            .active_roles()
-            .into_iter()
-            .filter(|role| {
-                role.output_identifier.as_ref() != "manager"
-                    && role
-                        .role_target_surfaces
-                        .payload()
-                        .contains(&RoleTargetSurface::PiAgent)
+    fn allowed_child_roles(
+        &self,
+        role_identifier: &OutputIdentifier,
+        output_surface: OutputSurface,
+    ) -> Vec<ActiveRole> {
+        let active_roles = self.active_roles();
+        if role_identifier.as_ref() == "manager" {
+            return active_roles
+                .into_iter()
+                .filter(|role| {
+                    role.output_identifier.as_ref() != "manager"
+                        && role
+                            .role_target_surfaces
+                            .payload()
+                            .contains(&output_surface.role_target_surface())
+                })
+                .collect();
+        }
+        let Some(nested_role) = self
+            .role_metadata
+            .as_ref()
+            .and_then(|metadata| metadata.nested_role(role_identifier))
+        else {
+            return Vec::new();
+        };
+        nested_role
+            .allowed_leaf_roles
+            .iter()
+            .filter_map(|allowed_identifier| {
+                active_roles
+                    .iter()
+                    .find(|role| &role.output_identifier == allowed_identifier)
+                    .cloned()
             })
+            .collect()
+    }
+
+    fn generated_role_roster(&self, manifest: &Manifest) -> Option<String> {
+        let role_identifier = manifest.role_identifier();
+        let nested = self
+            .role_metadata
+            .as_ref()
+            .and_then(|metadata| metadata.nested_role(&role_identifier))
+            .is_some();
+        if role_identifier.as_ref() != "manager" && !nested {
+            return None;
+        }
+        let entries = self
+            .allowed_child_roles(&role_identifier, manifest.output_surface)
+            .into_iter()
             .map(|role| {
                 format!(
                     "- `{}` — {}",
@@ -845,9 +1173,15 @@ impl GenerationConfiguration {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        format!(
-            "# Module - generated Pi dispatch roster\n\n## Project dispatch roster\n\nDispatch a known role directly; runtime validation handles unknown or disabled names. `list` is optional recovery or diagnostics. Use `generalist` when no specialist fits.\n\n{entries}\n"
-        )
+        if role_identifier.as_ref() == "manager" {
+            Some(format!(
+                "# Module - generated Manager roster\n\n## Manager dispatch roster\n\nThe root Manager may dispatch these target-available roles directly. Use `generalist` when no specialist fits.\n\n{entries}\n"
+            ))
+        } else {
+            Some(format!(
+                "# Module - generated nested role roster\n\n## Allowed child-role roster\n\nThis NestedRole may dispatch only these leaf roles on this target.\n\n{entries}\n"
+            ))
+        }
     }
 
     fn role_output_inventory(&self) -> RoleOutputInventory {
@@ -983,10 +1317,18 @@ impl ActiveRole {
         module_index: &ModuleIndex,
         universal_role_modules: &UniversalRoleModules,
         metadata: &RoleMetadata,
+        nested_role: Option<&NestedRoleMetadata>,
+        active_roles: &[ActiveRole],
     ) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
         for surface in self.role_target_surfaces.payload() {
             let output_surface = OutputSurface::from(surface);
+            let target_profile = TargetModelProfile::strongest(
+                metadata.profile.target(output_surface),
+                nested_role.and_then(|nested| nested.minimum_model(output_surface)),
+            );
+            let allowed_child_role_identifiers =
+                self.allowed_child_role_identifiers(output_surface, nested_role, active_roles);
             manifests.push(Manifest {
                 output_path: OutputPath::new(
                     output_surface.role_path(self.output_identifier.as_ref()),
@@ -995,8 +1337,10 @@ impl ActiveRole {
                 output_surface,
                 frontmatter: self.frontmatter(
                     output_surface,
-                    &metadata.profile,
+                    &target_profile,
                     &metadata.optional_skills,
+                    nested_role.is_some(),
+                    &allowed_child_role_identifiers,
                 ),
                 optional_skills: metadata.optional_skills.clone(),
                 modules: Modules::new(self.assembled_modules(
@@ -1007,6 +1351,30 @@ impl ActiveRole {
             });
         }
         Ok(manifests)
+    }
+
+    fn allowed_child_role_identifiers(
+        &self,
+        output_surface: OutputSurface,
+        nested_role: Option<&NestedRoleMetadata>,
+        active_roles: &[ActiveRole],
+    ) -> Vec<OutputIdentifier> {
+        if self.output_identifier.as_ref() == "manager" {
+            return active_roles
+                .iter()
+                .filter(|role| {
+                    role.output_identifier.as_ref() != "manager"
+                        && role
+                            .role_target_surfaces
+                            .payload()
+                            .contains(&output_surface.role_target_surface())
+                })
+                .map(|role| role.output_identifier.clone())
+                .collect();
+        }
+        nested_role
+            .map(|nested| nested.allowed_leaf_roles.clone())
+            .unwrap_or_default()
     }
 
     fn assembled_modules(
@@ -1030,8 +1398,10 @@ impl ActiveRole {
     fn frontmatter(
         &self,
         output_surface: OutputSurface,
-        profile: &RoleModelProfile,
+        profile: &TargetModelProfile,
         optional_skills: &OptionalSkills,
+        is_nested_role: bool,
+        allowed_child_role_identifiers: &[OutputIdentifier],
     ) -> Frontmatter {
         let mut entries = vec![
             FrontmatterEntry {
@@ -1047,11 +1417,11 @@ impl ActiveRole {
             OutputSurface::ClaudeAgent => {
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("model"),
-                    frontmatter_value: FrontmatterValue::new(&profile.claude_model),
+                    frontmatter_value: FrontmatterValue::new(&profile.model_identifier),
                 });
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("effort"),
-                    frontmatter_value: FrontmatterValue::new(profile.claude_effort.as_str()),
+                    frontmatter_value: FrontmatterValue::new(profile.effort_level.as_str()),
                 });
             }
             OutputSurface::PiAgent => {
@@ -1059,12 +1429,42 @@ impl ActiveRole {
                     frontmatter_key: FrontmatterKey::new("model"),
                     frontmatter_value: FrontmatterValue::new(format!(
                         "{}/{}",
-                        profile.pi_provider, profile.chat_gpt_model
+                        profile
+                            .pi_provider
+                            .as_deref()
+                            .expect("Pi target model has a provider"),
+                        profile.model_identifier
                     )),
                 });
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("thinking"),
-                    frontmatter_value: FrontmatterValue::new(profile.chat_gpt_effort.as_str()),
+                    frontmatter_value: FrontmatterValue::new(profile.effort_level.as_str()),
+                });
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("delegation-role-classification"),
+                    frontmatter_value: FrontmatterValue::new(
+                        if self.output_identifier.as_ref() == "manager" {
+                            "Manager"
+                        } else if is_nested_role {
+                            "NestedRole"
+                        } else {
+                            "LeafRole"
+                        },
+                    ),
+                });
+                entries.push(FrontmatterEntry {
+                    frontmatter_key: FrontmatterKey::new("allowed-child-role-identifiers"),
+                    frontmatter_value: FrontmatterValue::new(
+                        if allowed_child_role_identifiers.is_empty() {
+                            "None".to_owned()
+                        } else {
+                            allowed_child_role_identifiers
+                                .iter()
+                                .map(|identifier| identifier.as_ref())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        },
+                    ),
                 });
                 if !optional_skills.payload().is_empty() {
                     entries.push(FrontmatterEntry {
@@ -1083,11 +1483,11 @@ impl ActiveRole {
             OutputSurface::CodexAgent => {
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("model"),
-                    frontmatter_value: FrontmatterValue::new(&profile.chat_gpt_model),
+                    frontmatter_value: FrontmatterValue::new(&profile.model_identifier),
                 });
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("model_reasoning_effort"),
-                    frontmatter_value: FrontmatterValue::new(profile.chat_gpt_effort.as_str()),
+                    frontmatter_value: FrontmatterValue::new(profile.effort_level.as_str()),
                 });
             }
             _ => unreachable!("role frontmatter renders only for role surfaces"),
@@ -1513,12 +1913,37 @@ impl OutputSurface {
         }
     }
 
+    fn role_target_surface(&self) -> RoleTargetSurface {
+        match self {
+            Self::ClaudeAgent => RoleTargetSurface::ClaudeAgent,
+            Self::CodexAgent => RoleTargetSurface::CodexAgent,
+            Self::PiAgent => RoleTargetSurface::PiAgent,
+            Self::Workspace
+            | Self::AgentsSkill
+            | Self::ClaudeSkill
+            | Self::ClaudeCommand
+            | Self::CodexPrompt
+            | Self::CodexCommand => unreachable!("not a role target surface"),
+        }
+    }
+
     fn is_skill(&self) -> bool {
         matches!(self, Self::AgentsSkill | Self::ClaudeSkill)
     }
 
     fn is_role(&self) -> bool {
         matches!(self, Self::ClaudeAgent | Self::CodexAgent | Self::PiAgent)
+    }
+}
+
+impl Manifest {
+    fn role_identifier(&self) -> OutputIdentifier {
+        self.frontmatter
+            .payload()
+            .iter()
+            .find(|entry| entry.frontmatter_key.as_ref() == "name")
+            .map(|entry| OutputIdentifier::new(entry.frontmatter_value.as_ref()))
+            .expect("generated role manifest has a name")
     }
 }
 
@@ -1623,11 +2048,6 @@ impl ManifestAssembler {
             manifest,
             generated_fragments: Vec::new(),
         }
-    }
-
-    fn is_pi_manager_agent(&self) -> bool {
-        self.manifest.output_surface == OutputSurface::PiAgent
-            && self.manifest.output_path.as_ref() == ".pi/agents/manager.md"
     }
 
     fn with_generated_fragment(mut self, fragment: String) -> Self {

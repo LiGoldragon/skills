@@ -116,6 +116,86 @@ pub enum Error {
         role_surface: String,
     },
 
+    #[error("nested role `{role_identifier}` is listed more than once")]
+    DuplicateNestedRoleRelation { role_identifier: String },
+
+    #[error("nested-role metadata names inactive role `{role_identifier}`")]
+    InactiveNestedRole { role_identifier: String },
+
+    #[error("Manager is the root Manager and cannot be a NestedRole")]
+    ManagerCannotBeNestedRole,
+
+    #[error("nested role `{role_identifier}` has no allowed leaf role")]
+    MissingNestedRoleChild { role_identifier: String },
+
+    #[error("nested role `{role_identifier}` lists child `{child_identifier}` more than once")]
+    DuplicateNestedRoleChild {
+        role_identifier: String,
+        child_identifier: String,
+    },
+
+    #[error("nested role `{role_identifier}` cannot delegate to itself")]
+    NestedRoleSelfEdge { role_identifier: String },
+
+    #[error("nested role `{role_identifier}` cannot name Manager as a child")]
+    ManagerCannotBeNestedChild { role_identifier: String },
+
+    #[error("nested role `{role_identifier}` cannot delegate to nested role `{child_identifier}`")]
+    NestedRoleChildCannotBeNested {
+        role_identifier: String,
+        child_identifier: String,
+    },
+
+    #[error("nested role `{role_identifier}` names inactive leaf role `{child_identifier}`")]
+    InactiveNestedRoleChild {
+        role_identifier: String,
+        child_identifier: String,
+    },
+
+    #[error(
+        "leaf role `{child_identifier}` for nested role `{role_identifier}` does not support role surface `{role_surface}`"
+    )]
+    TargetIncompatibleNestedRoleChild {
+        role_identifier: String,
+        child_identifier: String,
+        role_surface: String,
+    },
+
+    #[error(
+        "nested role `{role_identifier}` has no minimum model for role surface `{role_surface}`"
+    )]
+    MissingNestedRoleMinimumModel {
+        role_identifier: String,
+        role_surface: String,
+    },
+
+    #[error(
+        "nested role `{role_identifier}` has more than one minimum model for role surface `{role_surface}`"
+    )]
+    DuplicateNestedRoleMinimumModel {
+        role_identifier: String,
+        role_surface: String,
+    },
+
+    #[error(
+        "nested role `{role_identifier}` sets a minimum model for inactive role surface `{role_surface}`"
+    )]
+    NestedRoleMinimumForInactiveTarget {
+        role_identifier: String,
+        role_surface: String,
+    },
+
+    #[error(
+        "nested role `{role_identifier}` minimum `{model_identifier}` for `{role_surface}` must be {expected_family}, but the catalog marks it {actual_family}"
+    )]
+    NestedRoleMinimumModelFamilyMismatch {
+        role_identifier: String,
+        model_identifier: String,
+        role_surface: String,
+        expected_family: String,
+        actual_family: String,
+    },
+
     #[error(
         "generated output path `{relative_path}` resolves to duplicate physical path {physical_path}"
     )]

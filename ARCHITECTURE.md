@@ -29,6 +29,7 @@ workers do not discover doctrine through a runtime index.
 - `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family role models and supported effort levels.
 - `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
 - `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
+- `manifests/nested-role-relations.nota`: typed nested roles, target-relative minimum models, and exclusive allowed leaf-role edges.
 - `manifests/skills-roster.nota`: compatibility input for legacy checks and archived/deleted module modeling.
 - `schema/assembly.schema`: schema-authored generator interface source.
 - `src/schema/assembly.rs`: generated Rust interface from `schema/assembly.schema`.
@@ -56,16 +57,21 @@ The active source surface is manifest-owned: one active-outputs manifest lists
 generated `Skill` and `Role` outputs, where presence means active; sidecar
 indexes map module identifiers to source paths, dependencies, target overlays,
 and universal role modules. Role sidecars assign validated model profiles and
-optional skills. The active manifest decides what emits; the module index
-decides expansion order and module kind.
+optional skills. Nested-role relations add validated target-relative minimum
+models and exclusive leaf-role delegation without changing Manager's root
+identity. The active manifest decides what emits; the module index decides
+expansion order and module kind.
 
 Assembly is ordered concatenation of source modules after manifest expansion.
 For skills, the active skill's module expands through the dependency index and
 the generated output surface's target insertions. For roles, the role body is
 emitted first, followed by universal role modules, per-role preloaded modules,
-their dependencies, surface-specific insertions, and a generated list of
-optional skills. Optional skill bodies remain outside the packet until loaded.
-A generated role packet is the curated runtime bundle for normal role work.
+their dependencies, surface-specific insertions, a generated target-relative
+Manager or nested-role roster when applicable, and a generated list of optional
+skills. Optional skill bodies remain outside the packet until loaded. Ordinary
+model assignment wins an equal-strength minimum-model tie; a stronger nested
+minimum prevents downgrade. A generated role packet is the curated runtime
+bundle for normal role work.
 
 Module dependencies are typed by module identifier rather than inferred from
 markdown links or filesystem layout. The dependency index also carries source
@@ -77,8 +83,8 @@ model choice: a base module, output surface, and inserted module list determine
 which overlay appears in a generated harness surface. Universal role modules
 are data, not repeated role prose; the generator includes them in every role
 packet. Generation metadata such as descriptions, tiers, frontmatter, target
-surfaces, role output identity, model profiles, and optional skills live in
-manifests or the compatibility roster.
+surfaces, role output identity, model profiles, and optional skills, nested-role edges, and minimum models live in manifests or the
+compatibility roster.
 
 ## Ownership Boundaries
 
