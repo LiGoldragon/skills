@@ -4,11 +4,11 @@
 
 Use this when a code or engine repository lacks a remote, needs a public remote, or must make dependency pushes portable.
 
-Code and engine repositories are public by default. Use a private repository only for secrets, credentials, personal data, unpublished third-party code, or an explicit confidentiality constraint.
+Repositories are public by default. Use private visibility only when a concrete privacy or safety constraint requires it, such as secrets, credentials, personal data, unpublished third-party code, or explicit confidentiality.
 
-Creating a public repository under the psyche's GitHub owner for a new code or engine repository is standing pre-authorized policy. Proceed without asking and never stall for approval. Content stays governed by the privacy discipline: keep private, personal, or secret material out of any public repository.
+Public creation under the psyche's GitHub owner is standing pre-authorized. Do not ask or repeatedly seek visibility permission absent such a conflict. Public-by-default visibility never authorizes publishing private information, secrets, credentials, or unreviewed private material.
 
-Create the public GitHub repository from the local source when the repository does not already exist:
+Before creation, inspect configured remotes and query the canonical owner/name on the forge. Create a repository only when no remote repository already exists. Then create the public GitHub repository from the local source:
 
 ```sh
 gh repo create LiGoldragon/<name> --public --source . --remote origin --push

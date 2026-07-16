@@ -31,4 +31,6 @@ Create a new repository only for a genuinely new project or concern. Major rewri
 
 Before creating or repurposing a repository, surface unmerged branches, stale dependencies, and dependencies with unmerged branches that affect the decision.
 
-When unsure whether a name should become a repository, ask before creating the repo.
+When a new repository is justified, treat public visibility as the default and use `repository-publication` for remote discovery, creation, and privacy gates. Ask about visibility only when a concrete privacy or safety conflict applies.
+
+When unsure whether the project is genuinely distinct, ask about the project boundary before creation.

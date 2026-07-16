@@ -769,6 +769,57 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
 }
 
 #[test]
+fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
+    let publication = include_str!("../modules/repository-publication/full.md");
+    for required in [
+        "Repositories are public by default.",
+        "Do not ask or repeatedly seek visibility permission absent such a conflict.",
+        "Public-by-default visibility never authorizes publishing private information, secrets, credentials, or unreviewed private material.",
+        "Before creation, inspect configured remotes and query the canonical owner/name on the forge.",
+        "Create a repository only when no remote repository already exists.",
+    ] {
+        assert!(
+            publication.contains(required),
+            "missing repository-publication rule: {required}"
+        );
+    }
+
+    let management = include_str!("../modules/repository-management/full.md");
+    for required in [
+        "treat public visibility as the default",
+        "use `repository-publication` for remote discovery, creation, and privacy gates",
+        "Ask about visibility only when a concrete privacy or safety conflict applies.",
+        "ask about the project boundary before creation.",
+    ] {
+        assert!(
+            management.contains(required),
+            "missing repository-management rule: {required}"
+        );
+    }
+
+    let dependencies = NotaSource::new(include_str!("../manifests/module-dependencies.nota"))
+        .parse::<ModuleDependencies>()
+        .expect("module dependency index parses");
+    for role_module in ["repo-scaffold-core", "repo-operation-core"] {
+        let dependency = dependencies
+            .payload()
+            .iter()
+            .find(|dependency| dependency.module_identifier.as_ref() == role_module)
+            .unwrap_or_else(|| panic!("{role_module} dependency indexed"));
+        assert_eq!(
+            dependency
+                .dependency_modules
+                .payload()
+                .iter()
+                .map(|module| module.as_ref())
+                .collect::<Vec<_>>(),
+            ["repository-publication"],
+            "{role_module} carries repository visibility doctrine into role packets"
+        );
+    }
+}
+
+#[test]
 fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
     let skill_module = include_str!("../modules/skill-editor/full.md");
     let role_module = include_str!("../roles/skill-editor/full.md");
