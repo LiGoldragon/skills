@@ -1722,15 +1722,14 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
 }
 
 #[test]
-fn generated_role_packets_bound_design_authority_and_psyche_facing_commitments() {
+fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_commitments() {
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
         .expect("current role packets generate");
 
     let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
-    let ephemeral_commitment =
-        "Agents are ephemeral. A statement in chat does not change future agent behavior.";
+    let skill_bound_commitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.\n\nTreat a concrete failure as evidence that its governing guard is inadequate. Do\nnot answer it with “I will follow it more strictly,” “I will avoid this next\ntime,” or a claim that the guard is sufficient. Strengthen the owning role or\nskill guard before claiming changed future behavior, unless specific contrary\nevidence shows the guard did prevent the behavior. Until then, describe the\nchange as a proposal or pending work, not an accomplished behavioral change.\nCite the durable guard and its verification when claiming future behavior has\nchanged.";
     let manager_spirit_clause = "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
     let recorder_spirit_clause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
     let active_roles = [
@@ -1764,12 +1763,12 @@ fn generated_role_packets_bound_design_authority_and_psyche_facing_commitments()
             );
             if role == "manager" {
                 assert!(
-                    packet.contains(ephemeral_commitment),
-                    "{path} is the sole psyche-facing packet with ephemeral-commitment guidance"
+                    packet.contains(skill_bound_commitment),
+                    "{path} is the sole psyche-facing packet with skill-bound commitment guidance"
                 );
             } else {
                 assert!(
-                    !packet.contains(ephemeral_commitment),
+                    !packet.contains(skill_bound_commitment),
                     "{path} is not a psyche-facing packet"
                 );
             }
