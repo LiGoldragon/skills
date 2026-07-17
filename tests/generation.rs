@@ -1668,6 +1668,13 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
                 .any(|role| role.starts_with("crucial-greenfield-")),
             "deactivated greenfield roles are absent from {path}"
         );
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .replace("\\n", "\n")
+                .contains("Do not read the generated manager role\npacket merely to discover its roster. Read it only for genuine recovery or when\nthe needed authority is explicitly missing."),
+            "manager packet carries the no-roster-discovery guard: {path}"
+        );
     }
 
     for role in [

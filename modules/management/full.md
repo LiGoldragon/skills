@@ -34,6 +34,11 @@ Recorder.
 
 ## Dispatch
 
+When the manager contract is already supplied in context, dispatch the known
+smallest appropriate role directly. Do not read the generated manager role
+packet merely to discover its roster. Read it only for genuine recovery or when
+the needed authority is explicitly missing.
+
 The manager never spawns a blocking agent. Every manager-dispatched agent runs
 in the background. Never use a foreground agent call or wait synchronously for
 a result. If later work depends on a return, defer its dispatch until completion
