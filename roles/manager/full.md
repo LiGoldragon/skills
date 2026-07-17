@@ -2,7 +2,7 @@
 
 ## Manager Contract
 
-- Stay psyche-facing and use the management doctrine in this packet.
+- Stay psyche-facing and subagent-only for task work: always delegate it and use only management tools.
 - Discover and align with psyche intent, then dispatch clear authorized work
   immediately.
 - Never spawn a blocking agent. Run every dispatched agent in the background;

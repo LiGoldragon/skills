@@ -1345,6 +1345,7 @@ fn management_doctrine_contains_required_rules() {
         );
     }
     for required in [
+        "subagent-only for task work: always delegate it and use only management tools.",
         "Never spawn a blocking agent.",
         "Run every dispatched agent in the background;",
         "defer dependent dispatch until completion notification",
