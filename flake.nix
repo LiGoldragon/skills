@@ -349,7 +349,9 @@
             grep -F '(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))' "$model_catalog" >/dev/null
             grep -F '(Claude (claude-sonnet-5 [(Medium 10)]))' "$model_catalog" >/dev/null
             grep -F '(manager (gpt-5.6-sol High) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
+            grep -F '(generalist (gpt-5.6-terra Xhigh) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
             grep -F '(intent-translator (gpt-5.6-terra Xhigh) (claude-opus-4-8 Xhigh))' "$role_assignments" >/dev/null
+            grep -F '(operating-system-implementer (gpt-5.6-terra Xhigh) (claude-opus-4-8 High))' "$role_assignments" >/dev/null
             grep -F '(skill-editor (gpt-5.6-terra Xhigh) (claude-opus-4-8 Xhigh))' "$role_assignments" >/dev/null
             grep -F '(intent-curator (gpt-5.6-terra Xhigh) (claude-opus-4-8 Xhigh))' "$role_assignments" >/dev/null
             grep -F '(intent-recorder (gpt-5.6-luna Medium) (claude-sonnet-5 Medium))' "$role_assignments" >/dev/null

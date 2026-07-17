@@ -1656,7 +1656,13 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
         );
     }
 
-    for role in ["intent-translator", "skill-editor", "intent-curator"] {
+    for role in [
+        "generalist",
+        "intent-translator",
+        "operating-system-implementer",
+        "skill-editor",
+        "intent-curator",
+    ] {
         assert!(
             fixture
                 .read_workspace_file(&format!(".pi/agents/{role}.md"))
