@@ -3,4 +3,5 @@
 [
   (management ClaudeSkill [claude-management])
   (management ClaudeAgent [claude-management])
+  (agent-feedback-loop CodexAgent [codex-skill-loading])
 ]

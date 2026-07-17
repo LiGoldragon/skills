@@ -78,6 +78,7 @@
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
   (management modules/management/full.md [] RuntimeSkill)
   (claude-management modules/claude-management/full.md [] RuntimeSkill)
+  (codex-skill-loading modules/codex-skill-loading/full.md [] RoleComposition)
   (spirit-query modules/spirit-query/full.md [nota-design] RuntimeSkill)
   (helper-context-transfer modules/helper-context-transfer/full.md [] RuntimeSkill)
   (context-maintenance modules/context-maintenance/full.md [] RuntimeSkill)

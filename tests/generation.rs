@@ -436,6 +436,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "agent-feedback-loop",
         "design-authority",
         "psyche-facing-commitments",
+        "codex-skill-loading",
         "edit-coordination-core",
         "editing-closeout",
         "code-implementation-core",
@@ -540,6 +541,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "management",
                 skills::schema::assembly::OutputSurface::ClaudeAgent,
                 vec!["claude-management"]
+            ),
+            (
+                "agent-feedback-loop",
+                skills::schema::assembly::OutputSurface::CodexAgent,
+                vec!["codex-skill-loading"]
             ),
         ]
     );
@@ -1278,6 +1284,7 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 fn management_doctrine_contains_required_rules() {
     let management = include_str!("../modules/management/full.md");
     let manager_role = include_str!("../roles/manager/full.md");
+    let codex_skill_loading = include_str!("../modules/codex-skill-loading/full.md");
     for required in [
         "doubt about intent, authority, safety, or privacy",
         "reflection and confirmation are not ritual gates.",
@@ -1287,12 +1294,14 @@ fn management_doctrine_contains_required_rules() {
         "Independent work goes to peer specialists in parallel.",
         "A Generalist may use subagents when useful",
         "Do not impose a rigid one-level delegation limit.",
-        "does not inspect repositories, commands, links, or systems",
+        "Outside this action space, every investigation and operation goes to a subagent.",
+        "Send skill reading and small routine work to a small Scout when no specialist is\nneeded:",
+        "routine work can turn bad, and delegation usually uses Manager context\nmore efficiently.",
+        "does not inspect repositories, commands, links, systems, or skills",
         "It never records or mutates Spirit.",
         "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,",
         "receive explicit approval.",
         "Include evidence of that exact proposal and\napproval in the fully specified, warranted submission brief;",
-        "load only the optional skills listed in its generated role packet",
         "return or feedback protocols already present in role packets.",
         "The manager never spawns a blocking agent.",
         "Every manager-dispatched agent runs",
@@ -1325,8 +1334,9 @@ fn management_doctrine_contains_required_rules() {
         "Make every psyche-facing question or decision request self-contained.",
         "in enough substance to answer from chat alone.",
         "psyche opens a report or recalls a prior session.",
-        "Speak the psyche's own vocabulary, not the agents'.",
-        "a name is never an explanation.",
+        "Explain the actual situation in plain language before agent terminology.",
+        "A hash, ID, repository shorthand,\nor agent-coined name is never an explanation.",
+        "materially needed for traceability, after and subordinate to a plain description.",
         "let compression outrun the psyche's model:",
         "Use clear plain-text ASCII diagrams in psyche-facing chat, never Mermaid or",
         "another diagram DSL.",
@@ -1345,7 +1355,9 @@ fn management_doctrine_contains_required_rules() {
         );
     }
     for required in [
-        "subagent-only for task work: always delegate it and use only management tools.",
+        "Keep only psyche conversation, read-only intent grounding\n  where applicable, dispatch, worker outputs, and synthesis.",
+        "Apart from read-only intent grounding, use subagents for every investigation\n  and operation; send skill reading and small routine work to a small Scout.",
+        "Do not load skills directly; dispatch a Scout to read needed instruction and\n  return the applicable rule.",
         "Never spawn a blocking agent.",
         "Run every dispatched agent in the background;",
         "defer dependent dispatch until completion notification",
@@ -1356,6 +1368,11 @@ fn management_doctrine_contains_required_rules() {
             "missing manager role rule: {required}"
         );
     }
+    assert!(codex_skill_loading.contains("A pasted `<skill ...>...</skill>` block is complete"));
+    assert!(
+        codex_skill_loading
+            .contains("Treat a complete pasted skill block as already loaded for this session.")
+    );
     assert!(!management.contains("orchestrator"));
     assert!(!management.contains("orchestration"));
     for operational_detail in [
@@ -1420,11 +1437,6 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(codex.contains("developer_instructions = \"# worker"));
     assert!(codex.contains("## shared"));
     assert!(codex.contains("## feature"));
-    assert!(
-        codex.contains(
-            "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete"
-        )
-    );
     assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
@@ -1731,6 +1743,7 @@ fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_c
     let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
     let skill_bound_commitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.\n\nTreat a concrete failure as evidence that its governing guard is inadequate. Do\nnot answer it with “I will follow it more strictly,” “I will avoid this next\ntime,” or a claim that the guard is sufficient. Strengthen the owning role or\nskill guard before claiming changed future behavior, unless specific contrary\nevidence shows the guard did prevent the behavior. Until then, describe the\nchange as a proposal or pending work, not an accomplished behavioral change.\nCite the durable guard and its verification when claiming future behavior has\nchanged.";
     let manager_spirit_clause = "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
+    let codex_skill_read_clause = "A pasted `<skill ...>...</skill>` block is complete when it has matching opening\nand closing `<skill>` tags, a skill name, a location, and non-empty body text.";
     let recorder_spirit_clause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
     let active_roles = [
         "manager",
@@ -1772,6 +1785,17 @@ fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_c
                     "{path} is not a psyche-facing packet"
                 );
             }
+            if path.ends_with(".toml") {
+                assert!(
+                    packet.contains(codex_skill_read_clause),
+                    "{path} receives source-owned Codex skill-read guidance"
+                );
+            } else {
+                assert!(
+                    !packet.contains(codex_skill_read_clause),
+                    "{path} excludes Codex-only skill-read guidance"
+                );
+            }
         }
     }
 
@@ -1786,6 +1810,21 @@ fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_c
                 .replace("\\n", "\n")
                 .contains(manager_spirit_clause),
             "{path} requires exact Spirit proposal approval before dispatch"
+        );
+    }
+    assert!(
+        fixture
+            .read_workspace_file(".codex/agents/manager.toml")
+            .replace("\\n", "\n")
+            .contains(codex_skill_read_clause),
+        "Codex manager packet receives its source-owned skill-read overlay"
+    );
+    for path in [".pi/agents/manager.md", ".claude/agents/manager.md"] {
+        assert!(
+            !fixture
+                .read_workspace_file(path)
+                .contains(codex_skill_read_clause),
+            "{path} excludes the Codex-only skill-read overlay"
         );
     }
     for path in [

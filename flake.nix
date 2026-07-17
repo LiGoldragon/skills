@@ -287,6 +287,7 @@
           management-doctrine-guardrails = pkgs.runCommand "skills-management-doctrine-guardrails" { } ''
             management=${cleanSource}/modules/management/full.md
             claude_management=${cleanSource}/modules/claude-management/full.md
+            codex_skill_loading=${cleanSource}/modules/codex-skill-loading/full.md
             manager_role=${cleanSource}/roles/manager/full.md
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
@@ -300,7 +301,14 @@
             grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
             grep -F 'the exact proposed Spirit intent wording, scope, and proposed privacy,' "$management" >/dev/null
             grep -F 'and receive explicit approval.' "$management" >/dev/null
-            grep -F 'load only the optional skills listed in its generated role packet' "$management" >/dev/null
+            grep -F 'Outside this action space, every investigation and operation goes to a subagent.' "$management" >/dev/null
+            grep -F 'Send skill reading and small routine work to a small Scout' "$management" >/dev/null
+            grep -F 'routine work can turn bad, and delegation usually uses Manager context' "$management" >/dev/null
+            grep -F 'Explain the actual situation in plain language before agent terminology.' "$management" >/dev/null
+            grep -F 'A hash, ID, repository shorthand,' "$management" >/dev/null
+            grep -F 'materially needed for traceability, after and subordinate to a plain description.' "$management" >/dev/null
+            grep -F 'Apart from read-only intent grounding, use subagents for every investigation' "$manager_role" >/dev/null
+            grep -F 'Do not load skills directly; dispatch a Scout' "$manager_role" >/dev/null
             grep -F 'Do not repeat ambient' "$management" >/dev/null
             grep -F 'The manager never spawns a blocking agent.' "$management" >/dev/null
             grep -F 'Every manager-dispatched agent runs' "$management" >/dev/null
@@ -322,10 +330,17 @@
             grep -F 'returns, in ordinary English.' "$management" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(codex-skill-loading modules/codex-skill-loading/full.md [] RoleComposition)' "$index" >/dev/null
             grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
             grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
+            grep -F '(agent-feedback-loop CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null
             grep -F '(Role (manager role-manager [management psyche-facing-commitments]' "$manifest" >/dev/null
             grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
+            grep -F 'A pasted `<skill ...>...</skill>` block is complete' "$codex_skill_loading" >/dev/null
+            if grep -F 'CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION' ${cleanSource}/src/assembly.rs; then
+              echo "Codex skill-read guidance belongs in its source module, not generator code" >&2
+              exit 1
+            fi
             if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$management"; then
               echo "management must keep operational mechanics in owning doctrine" >&2
               exit 1

@@ -26,7 +26,6 @@ use crate::{
     workspace_path::WorkspacePath,
 };
 
-const CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION: &str = "Skill-read de-duplication: A pasted <skill ...>...</skill> block is complete when it has matching opening and closing <skill> tags, a skill name, a location, and non-empty body text. Treat a complete pasted skill block as already loaded for this session. Read the same skill location again only when the block is structurally missing content, the user asks to verify source or freshness, or a higher-priority instruction explicitly requires verification.";
 const GENERATED_SKILL_BLOCK_BYTE_LIMIT: usize = 32 * 1024;
 const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] = &[
     "Repo Operator",
@@ -2138,12 +2137,7 @@ impl ManifestAssembler {
             self.markdown_fragments()?,
         )
         .render()?;
-        let developer_instructions = match self.manifest.output_surface {
-            OutputSurface::CodexAgent => {
-                format!("{body}\n\n{CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION}")
-            }
-            _ => body,
-        };
+        let developer_instructions = body;
         if self.manifest.output_surface.is_role() {
             RetiredCurrentDestinationProse::new(output_path.clone(), &developer_instructions)
                 .validate()?;
