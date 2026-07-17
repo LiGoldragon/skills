@@ -346,9 +346,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .count();
 
     assert_eq!(skill_count, 64);
-    assert_eq!(role_count, 16);
+    assert_eq!(role_count, 14);
     assert_eq!(model_catalog.payload().len(), 6);
-    assert_eq!(nested_role_relations.payload().len(), 5);
+    assert_eq!(nested_role_relations.payload().len(), 3);
     assert_eq!(role_model_assignments.payload().len(), role_count);
     assert_eq!(role_optional_skills.payload().len(), role_count);
 
@@ -361,7 +361,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     );
     assert!(
         model_catalog_source
-            .contains("(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))")
+            .contains("(ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30) (Xhigh 40)]))")
     );
     assert!(model_catalog_source.contains("(Claude (fable-5 [(Medium 50) (High 60)]))"));
     assert!(model_catalog_source.contains("(Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))"));
@@ -573,28 +573,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ],
         ),
         (
-            "crucial-greenfield-developer-for-chatgpt",
-            "role-crucial-greenfield-developer",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "repo-scaffold-core",
-                "code-implementation-core",
-                "architectural-truth-tests",
-            ],
-        ),
-        (
-            "crucial-greenfield-developer-for-claude",
-            "role-crucial-greenfield-developer",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "repo-scaffold-core",
-                "code-implementation-core",
-                "architectural-truth-tests",
-            ],
-        ),
-        (
             "intent-recorder",
             "role-intent-recorder",
             &["spirit-submission"],
@@ -711,17 +689,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 .collect::<Vec<_>>(),
             *included_modules
         );
-        let expected_surfaces: &[RoleTargetSurface] = match *output_identifier {
-            "crucial-greenfield-developer-for-chatgpt" => {
-                &[RoleTargetSurface::CodexAgent, RoleTargetSurface::PiAgent]
-            }
-            "crucial-greenfield-developer-for-claude" => &[RoleTargetSurface::ClaudeAgent],
-            _ => &[
-                RoleTargetSurface::ClaudeAgent,
-                RoleTargetSurface::CodexAgent,
-                RoleTargetSurface::PiAgent,
-            ],
-        };
+        let expected_surfaces: &[RoleTargetSurface] = &[
+            RoleTargetSurface::ClaudeAgent,
+            RoleTargetSurface::CodexAgent,
+            RoleTargetSurface::PiAgent,
+        ];
         assert_eq!(role.role_target_surfaces.payload(), expected_surfaces);
         assert!(dependency_modules.contains(module_identifier));
         assert_eq!(
@@ -1536,7 +1508,7 @@ fn pi_project_role_frontmatter_matches_extension_parser_contract_fixture() {
 }
 
 #[test]
-fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_training() {
+fn nested_role_schema_preserves_child_rosters_without_model_upgrades() {
     let relations = NotaSource::new(include_str!("../manifests/nested-role-relations.nota"))
         .parse::<NestedRoleRelations>()
         .expect("nested role relations parse");
@@ -1571,28 +1543,6 @@ fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_tr
                 ],
             ),
             (
-                "crucial-greenfield-developer-for-chatgpt",
-                vec![
-                    "scout",
-                    "repo-scaffolder",
-                    "general-code-implementer",
-                    "rust-auditor",
-                    "nix-auditor",
-                    "repository-closeout",
-                ],
-            ),
-            (
-                "crucial-greenfield-developer-for-claude",
-                vec![
-                    "scout",
-                    "repo-scaffolder",
-                    "general-code-implementer",
-                    "rust-auditor",
-                    "nix-auditor",
-                    "repository-closeout",
-                ],
-            ),
-            (
                 "operating-system-implementer",
                 vec![
                     "scout",
@@ -1618,98 +1568,29 @@ fn nested_role_schema_has_exact_non_recursive_relations_and_shared_greenfield_tr
             assert_eq!(minimum.effort_level, EffortLevel::Medium);
             match minimum.role_target_surface {
                 RoleTargetSurface::ClaudeAgent => {
-                    assert_eq!(minimum.model_identifier.as_ref(), "fable-5")
+                    assert_eq!(minimum.model_identifier.as_ref(), "claude-sonnet-5")
                 }
                 RoleTargetSurface::CodexAgent | RoleTargetSurface::PiAgent => {
-                    assert_eq!(minimum.model_identifier.as_ref(), "gpt-5.6-sol")
+                    assert_eq!(minimum.model_identifier.as_ref(), "gpt-5.6-luna")
                 }
             }
         }
     }
-    let nested_identifiers: BTreeSet<_> = observed.keys().copied().collect();
-    for (parent, children) in &observed {
-        assert_ne!(*parent, "manager");
-        assert!(!children.contains(parent));
-        assert!(
-            children
-                .iter()
-                .all(|child| !nested_identifiers.contains(child)),
-            "nested roles never delegate to nested roles"
-        );
-        for psyche_facing_mutator in ["intent-recorder", "intent-translator", "intent-curator"] {
-            assert!(!children.contains(&psyche_facing_mutator));
-        }
-    }
-
     let active_outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
         .parse::<ActiveOutputs>()
         .expect("active outputs parse");
-    let greenfield_roles = active_outputs
-        .payload()
-        .iter()
-        .filter_map(|output| match output {
-            skills::schema::assembly::ActiveOutput::Role(role)
-                if role
-                    .output_identifier
-                    .as_ref()
-                    .starts_with("crucial-greenfield-") =>
-            {
-                Some(role)
-            }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(greenfield_roles.len(), 2);
-    assert_eq!(
-        greenfield_roles[0].module_identifier, greenfield_roles[1].module_identifier,
-        "both peers use one role curriculum source"
-    );
-    assert_eq!(
-        greenfield_roles[0].included_modules, greenfield_roles[1].included_modules,
-        "both peers compose the same existing curriculum"
-    );
-    let optional_skills = NotaSource::new(include_str!("../manifests/role-optional-skills.nota"))
-        .parse::<RoleOptionalSkills>()
-        .expect("optional skills parse");
-    let peer_training = greenfield_roles
-        .iter()
-        .map(|role| {
-            optional_skills
-                .payload()
-                .iter()
-                .find(|entry| entry.output_identifier == role.output_identifier)
-                .expect("greenfield peer training exists")
-                .optional_skills
-                .clone()
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(peer_training[0], peer_training[1]);
-    for required in [
-        "repo-intent",
-        "design-quality",
-        "component-architecture",
-        "code-implementation",
-        "testing",
-        "rust-storage-and-wire",
-        "rust-errors",
-        "versioning",
-        "repository-management",
-        "repository-publication",
-    ] {
-        assert!(
-            peer_training[0]
-                .payload()
-                .iter()
-                .any(|skill| skill.as_ref() == required),
-            "shared training includes {required}"
-        );
-    }
-    assert!(Path::new("roles/crucial-greenfield-developer/full.md").is_file());
-    assert!(!Path::new("modules/crucial-greenfield-developer/full.md").exists());
+    assert!(active_outputs.payload().iter().all(|output| {
+        match output {
+            skills::schema::assembly::ActiveOutput::Role(role) => !role
+                .output_identifier
+                .as_ref()
+                .starts_with("crucial-greenfield-"),
+            skills::schema::assembly::ActiveOutput::Skill(_) => true,
+        }
+    }));
 }
-
 #[test]
-fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests() {
+fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
@@ -1731,37 +1612,17 @@ fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests(
             .map(str::to_owned)
             .collect::<Vec<_>>()
     };
-    let generalist_children = vec![
-        "scout",
-        "repo-scaffolder",
-        "general-code-implementer",
-        "rust-auditor",
-        "nix-auditor",
-        "repository-closeout",
-        "tracker-weaver",
-    ];
-    assert_eq!(roster(".pi/agents/generalist.md"), generalist_children);
-    assert_eq!(roster(".claude/agents/generalist.md"), generalist_children);
-    assert_eq!(roster(".codex/agents/generalist.toml"), generalist_children);
-    let greenfield_children = vec![
-        "scout",
-        "repo-scaffolder",
-        "general-code-implementer",
-        "rust-auditor",
-        "nix-auditor",
-        "repository-closeout",
-    ];
     assert_eq!(
-        roster(".pi/agents/crucial-greenfield-developer-for-chatgpt.md"),
-        greenfield_children
-    );
-    assert_eq!(
-        roster(".codex/agents/crucial-greenfield-developer-for-chatgpt.toml"),
-        greenfield_children
-    );
-    assert_eq!(
-        roster(".claude/agents/crucial-greenfield-developer-for-claude.md"),
-        greenfield_children
+        roster(".pi/agents/generalist.md"),
+        [
+            "scout",
+            "repo-scaffolder",
+            "general-code-implementer",
+            "rust-auditor",
+            "nix-auditor",
+            "repository-closeout",
+            "tracker-weaver",
+        ]
     );
     assert_eq!(
         roster(".pi/agents/operating-system-implementer.md"),
@@ -1782,83 +1643,63 @@ fn generated_nested_rosters_metadata_and_model_outcomes_match_current_manifests(
             "repository-closeout",
         ]
     );
-
-    let manager_pi = fixture.read_workspace_file(".pi/agents/manager.md");
-    let manager_claude = roster(".claude/agents/manager.md");
-    let manager_codex = roster(".codex/agents/manager.toml");
-    assert_eq!(
-        project_role_contract(&manager_pi, "manager"),
-        ParsedProjectRoleContract {
-            project_role_identity: "manager".to_owned(),
-            project_role_dispatch_kind: "manager".to_owned(),
-            allowed_child_role_names: Vec::new(),
-        }
-    );
-    assert!(
-        roster(".pi/agents/manager.md")
-            .contains(&"crucial-greenfield-developer-for-chatgpt".to_owned())
-    );
-    assert!(
-        !roster(".pi/agents/manager.md")
-            .contains(&"crucial-greenfield-developer-for-claude".to_owned())
-    );
-    assert!(manager_codex.contains(&"crucial-greenfield-developer-for-chatgpt".to_owned()));
-    assert!(!manager_codex.contains(&"crucial-greenfield-developer-for-claude".to_owned()));
-    assert!(manager_claude.contains(&"crucial-greenfield-developer-for-claude".to_owned()));
-    assert!(!manager_claude.contains(&"crucial-greenfield-developer-for-chatgpt".to_owned()));
-
     for path in [
-        ".pi/agents/generalist.md",
-        ".pi/agents/operating-system-implementer.md",
+        ".pi/agents/manager.md",
+        ".codex/agents/manager.toml",
+        ".claude/agents/manager.md",
     ] {
         assert!(
-            fixture
-                .read_workspace_file(path)
-                .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: medium")
+            !roster(path)
+                .iter()
+                .any(|role| role.starts_with("crucial-greenfield-")),
+            "deactivated greenfield roles are absent from {path}"
         );
     }
-    for path in [
-        ".claude/agents/generalist.md",
-        ".claude/agents/operating-system-implementer.md",
-        ".claude/agents/skill-editor.md",
-    ] {
+
+    for role in ["intent-translator", "skill-editor", "intent-curator"] {
         assert!(
             fixture
-                .read_workspace_file(path)
-                .contains("model: fable-5\neffort: medium")
+                .read_workspace_file(&format!(".pi/agents/{role}.md"))
+                .contains("model: 'openai-codex/gpt-5.6-terra'\nthinking: xhigh"),
+            "{role} has the Terra xhigh Pi assignment"
         );
     }
-    assert!(
-        fixture
-            .read_workspace_file(".pi/agents/skill-editor.md")
-            .contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high")
-    );
-
-    let chatgpt_peer =
-        fixture.read_workspace_file(".pi/agents/crucial-greenfield-developer-for-chatgpt.md");
-    assert!(chatgpt_peer.contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high"));
-    assert_eq!(
-        project_role_contract(&chatgpt_peer, "crucial-greenfield-developer-for-chatgpt"),
-        ParsedProjectRoleContract {
-            project_role_identity: "crucial-greenfield-developer-for-chatgpt".to_owned(),
-            project_role_dispatch_kind: "nested".to_owned(),
-            allowed_child_role_names: vec![
-                "scout".to_owned(),
-                "repo-scaffolder".to_owned(),
-                "general-code-implementer".to_owned(),
-                "rust-auditor".to_owned(),
-                "nix-auditor".to_owned(),
-                "repository-closeout".to_owned(),
-            ],
+    let active_roles = [
+        "manager",
+        "generalist",
+        "intent-recorder",
+        "intent-translator",
+        "scout",
+        "repo-scaffolder",
+        "general-code-implementer",
+        "operating-system-implementer",
+        "rust-auditor",
+        "nix-auditor",
+        "skill-editor",
+        "intent-curator",
+        "repository-closeout",
+        "tracker-weaver",
+    ];
+    for role in active_roles {
+        let pi = fixture.read_workspace_file(&format!(".pi/agents/{role}.md"));
+        let codex = fixture.read_workspace_file(&format!(".codex/agents/{role}.toml"));
+        let claude = fixture.read_workspace_file(&format!(".claude/agents/{role}.md"));
+        if role == "manager" {
+            assert!(pi.contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high"));
+            assert!(codex.contains("model = \"gpt-5.6-sol\""));
+        } else {
+            assert!(!pi.contains("gpt-5.6-sol"), "{role} has no Pi Sol model");
+            assert!(
+                !codex.contains("model = \"gpt-5.6-sol\""),
+                "{role} has no Codex Sol model"
+            );
         }
-    );
-    let claude_peer =
-        fixture.read_workspace_file(".claude/agents/crucial-greenfield-developer-for-claude.md");
-    assert!(claude_peer.contains("model: fable-5\neffort: high"));
-    assert!(!chatgpt_peer.contains("`list`"));
-    assert!(!claude_peer.contains("`list`"));
+        assert!(
+            !claude.contains("model: fable-5"),
+            "{role} has no Claude Fable model"
+        );
+    }
 }
-
 #[test]
 fn nested_model_resolution_uses_strongest_assignment_and_ordinary_wins_ties() {
     let tie = Fixture::new();

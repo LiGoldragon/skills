@@ -2,7 +2,7 @@
 ;; ChatGPT identifiers render provider-qualified for Pi and bare for Codex.
 [
   (ChatGpt (gpt-5.6-sol openai-codex [(Medium 50) (High 60)]))
-  (ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30)]))
+  (ChatGpt (gpt-5.6-terra openai-codex [(Medium 20) (High 30) (Xhigh 40)]))
   (ChatGpt (gpt-5.6-luna openai-codex [(Medium 10)]))
   (Claude (fable-5 [(Medium 50) (High 60)]))
   (Claude (claude-opus-4-8 [(High 30) (Xhigh 40)]))
