@@ -434,6 +434,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
     let role_composition_modules = [
         "agent-output-protocol",
         "agent-feedback-loop",
+        "design-authority",
+        "psyche-facing-commitments",
         "edit-coordination-core",
         "editing-closeout",
         "code-implementation-core",
@@ -547,7 +549,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["agent-feedback-loop", "return-to-manager"]
+        [
+            "agent-feedback-loop",
+            "return-to-manager",
+            "design-authority"
+        ]
     );
 
     let active_roles: BTreeMap<&str, _> = active_outputs
@@ -561,7 +567,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         })
         .collect();
     let expected_roles: &[(&str, &str, &[&str])] = &[
-        ("manager", "role-manager", &["management"]),
+        (
+            "manager",
+            "role-manager",
+            &["management", "psyche-facing-commitments"],
+        ),
         (
             "generalist",
             "role-generalist",
@@ -1279,6 +1289,9 @@ fn management_doctrine_contains_required_rules() {
         "Do not impose a rigid one-level delegation limit.",
         "does not inspect repositories, commands, links, or systems",
         "It never records or mutates Spirit.",
+        "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,",
+        "receive explicit approval.",
+        "Include evidence of that exact proposal and\napproval in the fully specified, warranted submission brief;",
         "load only the optional skills listed in its generated role packet",
         "return or feedback protocols already present in role packets.",
         "The manager never spawns a blocking agent.",
@@ -1706,6 +1719,90 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
         );
     }
 }
+
+#[test]
+fn generated_role_packets_bound_design_authority_and_psyche_facing_commitments() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current role packets generate");
+
+    let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
+    let ephemeral_commitment =
+        "Agents are ephemeral. A statement in chat does not change future agent behavior.";
+    let manager_spirit_clause = "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
+    let recorder_spirit_clause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
+    let active_roles = [
+        "manager",
+        "generalist",
+        "intent-recorder",
+        "intent-translator",
+        "scout",
+        "repo-scaffolder",
+        "general-code-implementer",
+        "operating-system-implementer",
+        "rust-auditor",
+        "nix-auditor",
+        "skill-editor",
+        "intent-curator",
+        "repository-closeout",
+        "tracker-weaver",
+    ];
+
+    for role in active_roles {
+        for path in [
+            format!(".pi/agents/{role}.md"),
+            format!(".claude/agents/{role}.md"),
+            format!(".codex/agents/{role}.toml"),
+        ] {
+            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
+            assert_eq!(
+                packet.matches(design_authority).count(),
+                1,
+                "{path} receives design-authority guidance exactly once"
+            );
+            if role == "manager" {
+                assert!(
+                    packet.contains(ephemeral_commitment),
+                    "{path} is the sole psyche-facing packet with ephemeral-commitment guidance"
+                );
+            } else {
+                assert!(
+                    !packet.contains(ephemeral_commitment),
+                    "{path} is not a psyche-facing packet"
+                );
+            }
+        }
+    }
+
+    for path in [
+        ".pi/agents/manager.md",
+        ".claude/agents/manager.md",
+        ".codex/agents/manager.toml",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .replace("\\n", "\n")
+                .contains(manager_spirit_clause),
+            "{path} requires exact Spirit proposal approval before dispatch"
+        );
+    }
+    for path in [
+        ".pi/agents/intent-recorder.md",
+        ".claude/agents/intent-recorder.md",
+        ".codex/agents/intent-recorder.toml",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .replace("\\n", "\n")
+                .contains(recorder_spirit_clause),
+            "{path} rejects a Spirit submission without approved proposal evidence"
+        );
+    }
+}
+
 #[test]
 fn nested_model_resolution_uses_strongest_assignment_and_ordinary_wins_ties() {
     let tie = Fixture::new();

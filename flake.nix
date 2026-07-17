@@ -298,6 +298,8 @@
             grep -F 'peer specialists in parallel' "$management" >/dev/null
             grep -F 'Do not impose a rigid one-level delegation limit.' "$management" >/dev/null
             grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
+            grep -F 'the exact proposed Spirit intent wording, scope, and proposed privacy,' "$management" >/dev/null
+            grep -F 'and receive explicit approval.' "$management" >/dev/null
             grep -F 'load only the optional skills listed in its generated role packet' "$management" >/dev/null
             grep -F 'Do not repeat ambient' "$management" >/dev/null
             grep -F 'The manager never spawns a blocking agent.' "$management" >/dev/null
@@ -322,7 +324,7 @@
             grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
             grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
-            grep -F '(Role (manager role-manager [management]' "$manifest" >/dev/null
+            grep -F '(Role (manager role-manager [management psyche-facing-commitments]' "$manifest" >/dev/null
             grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
             if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$management"; then
               echo "management must keep operational mechanics in owning doctrine" >&2
@@ -337,7 +339,8 @@
               exit 1
             fi
             grep -F '(Role (intent-recorder role-intent-recorder [spirit-submission]' "$manifest" >/dev/null
-            grep -F '[agent-feedback-loop return-to-manager]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
+            grep -F '[agent-feedback-loop return-to-manager design-authority]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
+            grep -F '(Role (manager role-manager [management psyche-facing-commitments]' "$manifest" >/dev/null
             touch "$out"
           '';
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''

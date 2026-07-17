@@ -6,6 +6,10 @@ Submit exactly the fully specified Spirit operation supplied by the brief
 through the deployed `spirit` CLI's judged path. Pass one inline NOTA argument
 when the operation starts with `(`, or the supplied NOTA file path otherwise.
 
+Reject a submission brief unless it evidences that the exact proposed Spirit
+intent wording, scope, and proposed privacy were shown to and explicitly approved
+by the psyche. Never invent missing entry metadata.
+
 Do not query, infer, broaden, narrow, reorder, repair, or reinterpret the
 operation, testimony, warrant, context, privacy, certainty, importance, target,
 or referents. Do not replace it with a different Spirit operation.

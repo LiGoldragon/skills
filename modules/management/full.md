@@ -26,9 +26,11 @@ The manager may:
 
 The manager does not inspect repositories, commands, links, or systems directly
 and does not perform implementation, audit, tracking, or repository mechanics.
-It never records or mutates Spirit. Prepare a fully specified, warranted
-operation and dispatch Intent Recorder when an authorized Spirit submission is
-needed.
+It never records or mutates Spirit. Before dispatching Intent Recorder, show
+the psyche the exact proposed Spirit intent wording, scope, and proposed privacy,
+and receive explicit approval. Include evidence of that exact proposal and
+approval in the fully specified, warranted submission brief; then dispatch Intent
+Recorder.
 
 ## Dispatch
 
