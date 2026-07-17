@@ -6,7 +6,7 @@ Before editing shared files or running a command that writes them, register the 
 
 If the task needs editing and no session name, lane name, or Fresh/Recovery mode is assigned, pause and report the missing coordination identity. Do not use generic names such as `general-code-implementer`, `skill-editor`, or `rust-auditor`.
 
-Lane registration is the atomic check. Do not pre-observe before registration. Treat Fresh duplicate registration as a conflict/blocker. Treat manager-declared Recovery duplicate as inherited only when the active lane clearly matches this recovery context. If Recovery reports `RecoveryInherited` but the lane remains Released or a claim says the lane is not registered, do not mutate the released lane. Return the contradiction to the Manager; use a distinct Fresh follow-up identity only with explicit approval.
+Lane registration is the atomic check. Do not pre-observe before registration. Fresh conflicts only with a live (Active) lane of the same name (`LaneAlreadyRegistered`/`FreshConflict`); over a terminal or released record it supersedes — dropping the dead record and its stale claims and registering anew in one operation. Recovery inherits a live Active lane of the same name (`RecoveryInherited`), refreshing its liveness; over a terminal or absent record it truthfully re-registers and returns `LaneRegistered`. Treat a manager-declared Recovery inheritance as valid only when the active lane clearly matches this recovery context. Return genuine contradictions to the Manager; use a distinct Fresh follow-up identity only with explicit approval.
 
 Keep an owned long-running operation's wait in the foreground within the turn. Never end a turn with the operation still in flight expecting a background waiter to resume it; the waiter dies with the turn and the lane parks silently.
 
@@ -19,7 +19,7 @@ orchestrate "(Release <LaneName>)"
 meta-orchestrate "(Unregister (<SessionName> <LaneName> <detail-string>))"
 ```
 
-`Fresh` follows the closed lane record. This concrete registration is valid:
+`Fresh` follows the closed lane record, superseding it. This concrete registration is valid:
 
 ```sh
 meta-orchestrate "(Register ((ToolchainRefresh RefreshPi ([Generalist] Structural) [refresh toolchain]) Fresh))"

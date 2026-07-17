@@ -25,7 +25,7 @@ Name sessions and lanes in PascalCase alphanumeric — an uppercase first letter
 
 Use exactly one NOTA string object in each detail slot. Write a single canonical word bare (`done`, `coordination-doctrine`), never bracketed — the daemon rejects `[done]` and accepts `done`. Reserve the bracket form for genuinely multi-word text, such as `[coordination doctrine]`. Do not write multi-word bare text; it is parsed as extra positional objects and fails.
 
-A Fresh duplicate registration is a conflict and blocker. A manager-declared Recovery duplicate inherits the active lane and may proceed when the returned active lane matches the recovery context. To resume a lane this session previously registered and released, register it in Recovery mode, not Fresh; Fresh conflicts with the session's own released record.
+Fresh conflicts only with a live (Active) lane of the same name; over a terminal or released record it supersedes, dropping the dead record and its stale claims and registering anew. A manager-declared Recovery inherits a still-live Active lane and may proceed when the returned active lane matches the recovery context. To resume a lane you previously registered and released, register Fresh — it supersedes the closed record; use Recovery to inherit a lane that is still live.
 
 Observe with the ordinary Orchestrate surface when coordination state is evidence: sessions, all lanes, or lanes in one session. Lane observations include age, status, and resource claims. When showing claim information to agents, include direct age rather than only a wall-clock or start timestamp.
 
