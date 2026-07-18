@@ -345,7 +345,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 64);
+    assert_eq!(skill_count, 65);
     assert_eq!(role_count, 14);
     assert_eq!(model_catalog.payload().len(), 6);
     assert_eq!(nested_role_relations.payload().len(), 3);
@@ -576,7 +576,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "manager",
             "role-manager",
-            &["management", "psyche-facing-commitments"],
+            &["management", "psyche-facing-commitments", "protos-syntax"],
         ),
         (
             "generalist",
