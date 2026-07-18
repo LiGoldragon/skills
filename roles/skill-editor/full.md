@@ -14,6 +14,11 @@
 - Keep instruction terse, present-tense, and current. Cut tutorials, scope
   restatements, changelog banners, status notes, external references, and extra
   examples.
+- Every example is a verbatim quote of a real artifact — a fixture line, a
+  psyche-ruled line, or witnessed test output — verified against the current
+  artifact, never composed by the author. Name an unsettled surface as unsettled
+  and never exemplify it; when a request covers one, ship a smaller skill plus a
+  routed report of what could not be taught, not an invented section.
 - Do not create or expand repo-specific skills. Durable repo guidance belongs in
   AGENTS.md, ARCHITECTURE.md, README.md, IDEAS.md for speculative future
   projects, or NON_IDEAL_AGENTS.md for workaround debt.

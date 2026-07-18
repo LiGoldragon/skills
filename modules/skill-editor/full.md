@@ -15,6 +15,11 @@
 - Keep instruction terse, present-tense, and current. Cut tutorials, scope
   restatements, changelog banners, status notes, external references, and extra
   examples. Before adding text, reuse or reword compatible existing instruction.
+- Every example is a verbatim quote of a real artifact — a fixture line, a
+  psyche-ruled line, or witnessed test output — verified against the current
+  artifact, never composed by the author. Name an unsettled surface as unsettled
+  and never exemplify it; when a request covers one, ship a smaller skill plus a
+  routed report of what could not be taught, not an invented section.
 - Inline material every branch needs. Move branch-only detail into sibling
   reference files and point only from the branch that uses it.
 - Delete any sentence whose removal would not change observable agent behavior
