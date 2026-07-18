@@ -43,6 +43,17 @@ Branch and dependency staleness is closeout evidence. Surface unmerged branches,
 
 Do not run `jj describe @` as a finalization step. Do not leave a real commit descriptionless. If a command would open an editor, cancel and rerun with `-m`, `--message`, or the command's headless equivalent.
 
+## Bookmarks over hashes
+
+Identify pushed work by its bookmark or branch name in reports, briefs, and
+coordination records. A revision hash is machine identity; use it only where a
+lock file or an immutable deploy pin requires one.
+
+Never type or compose a revision hash from memory or by hand-editing a prefix.
+Capture hashes only by pasting or piping from command output — `jj log`,
+`git ls-remote`, an existing lock entry. Treat any hand-authored hash as
+fabricated until verified against such output.
+
 ## Routine checks
 
 Before committing, run the narrow validation that proves the change. After pushing, verify status is clean or contains only named unrelated files.
