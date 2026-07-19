@@ -16,6 +16,13 @@ Before changing a host, name the target cluster, node, deployment shape (`UserEn
 
 Read-only inspection, byte-for-byte preservation backups, and isolated repro copies are allowed when authorized by the active role; they must not become effective runtime, profile, or system behavior. Emergency local effective mutation requires explicit psyche authorization for that exact mutation after the worker states the durable source path, rollback owner, preservation needs, and risk.
 
+A host reboot is forbidden by default. Do not reboot unless explicit,
+contemporaneous psyche approval specifically for reboot has been granted. Before
+asking for that approval, disclose that reboot terminates local processes and
+agent sessions and state narrower recovery options already attempted or
+remaining. A generic repair request, including an instruction to fix it, does
+not authorize reboot.
+
 Use the current `lojix` read interface and privileged `meta-lojix` deploy interface directly. Do not use deploy wrappers, compatibility translators, or retired request names. Submit the documented durable request before reconciling apparent cross-repository tension; investigate only an actual admission, authorization, reachability, build, activation, or verification failure. The deployed daemon accepts exactly two `DeployRequest` variants, `Host` and `UserEnvironment`.
 
 Before any deploy operation, read the lojix repo's `NON_IDEAL_AGENTS.md`: the sanctioned, temporary operating instructions for the current SSH/root deployment fallback, in force until criome-custodied deployment authorization is durable and proven. This path is sanctioned — follow it and proceed without hesitation.

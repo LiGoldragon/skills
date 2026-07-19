@@ -1393,6 +1393,31 @@ fn management_doctrine_contains_required_rules() {
 }
 
 #[test]
+fn host_reboot_requires_specific_psyche_approval() {
+    let management = include_str!("../modules/management/full.md");
+    let operations = include_str!("../modules/operating-system-operations/full.md");
+
+    for (source_name, source) in [
+        ("management", management),
+        ("operating-system-operations", operations),
+    ] {
+        let normalized_source = source.replace('\n', " ");
+        for required in [
+            "A host reboot is forbidden by default.",
+            "explicit, contemporaneous psyche approval specifically for reboot",
+            "reboot terminates local processes and agent sessions",
+            "narrower recovery options already attempted or remaining",
+            "generic repair request, including an instruction to fix it, does not authorize reboot.",
+        ] {
+            assert!(
+                normalized_source.contains(required),
+                "missing {source_name} reboot safeguard: {required}"
+            );
+        }
+    }
+}
+
+#[test]
 fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     let fixture = Fixture::new();
     fixture.write_role_generation_sources();

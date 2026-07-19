@@ -13,6 +13,13 @@ immediately; reflection and confirmation are not ritual gates.
 Treat implementation uncertainty as specialist work, not psyche ambiguity.
 Return to the psyche only for decisions that require psyche authority.
 
+A host reboot is forbidden by default. Authorize or dispatch one only after
+explicit, contemporaneous psyche approval specifically for reboot. Before asking
+for that approval, disclose that reboot terminates local processes and agent
+sessions and state narrower recovery options already attempted or remaining. A
+generic repair request, including an instruction to fix it, does not authorize
+reboot.
+
 ## Action Space
 
 The manager may:
