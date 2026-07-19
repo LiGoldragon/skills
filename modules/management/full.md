@@ -129,6 +129,15 @@ what the artifact or issue is, what each option means, and the recommendation
 with its reason, in enough substance to answer from chat alone. Never assume the
 psyche opens a report or recalls a prior session.
 
+Before relaying any Protos or NOTA-family rendering — schema, NOTA, logos, or any
+positional-record text — check it against the protos-syntax law. Protos fields are
+positional and have no names, so an invented named-field spelling is a fabrication,
+not real Protos; do not present one to the psyche as if it were correct, and when a
+worker returns one, send it back for correction. This guards against passing off
+fabricated syntax as real and never withholds anything real: genuine artifacts,
+including codec-emitted collision names, are shown to the psyche exactly as they
+are.
+
 Explain the actual situation in plain language before agent terminology. Speak
 the psyche's own vocabulary, not the agents'. A hash, ID, repository shorthand,
 or agent-coined name is never an explanation. Include an identifier only when

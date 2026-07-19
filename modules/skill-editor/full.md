@@ -17,9 +17,11 @@
   examples. Before adding text, reuse or reword compatible existing instruction.
 - Every example is a verbatim quote of a real artifact — a fixture line, a
   psyche-ruled line, or witnessed test output — verified against the current
-  artifact, never composed by the author. Name an unsettled surface as unsettled
-  and never exemplify it; when a request covers one, ship a smaller skill plus a
-  routed report of what could not be taught, not an invented section.
+  artifact, never composed by the author. Examples are positive only: a wrong or
+  illegal form is never exemplified, not even as a labeled counter-example or a
+  placeholder — describe it in prose instead. Name an unsettled surface as
+  unsettled and never exemplify it; when a request covers one, ship a smaller
+  skill plus a routed report of what could not be taught, not an invented section.
 - Inline material every branch needs. Move branch-only detail into sibling
   reference files and point only from the branch that uses it.
 - Delete any sentence whose removal would not change observable agent behavior
@@ -31,8 +33,9 @@
   doctrine.
 - Keep one capability per skill; split distinct capabilities instead of mixing
   them.
-- Prefer canonical positive forms. Mention rejected forms only when omission
-  creates an immediate safety risk.
+- Prefer canonical positive forms. A rejected or illegal form is never
+  exemplified; describe it in prose only, and only when omission would create an
+  immediate risk.
 - Do not create or expand repo-specific skills. Durable repo guidance belongs in
   AGENTS.md, ARCHITECTURE.md, README.md, IDEAS.md for speculative future
   projects, or NON_IDEAL_AGENTS.md for required workaround debt.

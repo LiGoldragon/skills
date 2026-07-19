@@ -11,12 +11,23 @@ real artifact; never spell an example from memory of another language.
 
 ## Positional records
 
-Protos records are positional, never named. A block's positions are typed by the
-expected type at each boundary — the type standing there fixes slot count and
-meaning. Field, argument, and variant-payload identity comes from expected type
-plus position, so a block carries no JSON-like labels, ever. A construct's sections
-are ordered positional slots typed by the expected type at their boundaries, never
-labeled heads.
+Positionality is absolute; it is the first law of Protos and outranks every other
+rule here. Protos records are positional and there are no field names in authored
+or candidate Protos text. A block's positions are typed by the expected type at
+each boundary — the type standing there fixes slot count and meaning. Field,
+argument, and variant-payload identity comes from expected type plus position, so a
+block carries no JSON-like labels, ever. A construct's sections are ordered
+positional slots typed by the expected type at their boundaries, never labeled
+heads.
+
+An explicit field name is never a design option, never a candidate, and never an
+example — it exists only as the machine-forced disambiguation described under
+field-name elision, emitted by the codec, not chosen by an author. This law bars
+fabrication, never disclosure: never invent a field name, never present an invented
+named-field spelling as a candidate, example, or real Protos, and never justify one
+by appeal to the collision case, which is codec output rather than an authoring
+surface. Real artifacts stay fully visible: a codec-emitted collision name in a
+real artifact is shown exactly as it stands, and nothing real is ever withheld.
 
 The expected type stands at every boundary: file kind, schema field, declaration
 slot, generic argument, inner block. The raw layer only discovers atoms,
@@ -40,16 +51,17 @@ Each delimiter carries one role; the glyph set is `. ( ) [ ] { }`:
 
 A canonical string is a bare atom (`schema`); a period-joined bare chain reclaims
 its dotted text (`a.b`); a string with spaces takes parentheses (`(alpha beta)`);
-a redundant wrap such as `(schema)` is rejected.
+wrapping an already-canonical bare atom in parentheses is redundant and rejected.
 
 ## Glued-dot application
 
 A glued period binds a head to the following payload as one right-associative
 application: `Private.secretDigest.StateDigest` reads as visibility, then the
-(name, type) remainder. The dot binds only when glued on both sides — `Head
-.Payload`, `Head. Payload`, `Head.`, and `.Payload` are all errors. A period is a
-structural operator, so an atom never contains one; a dotted path (`rustfmt.skip`)
-or a float (`-122.3`) is an application reconstructed from its segments.
+(name, type) remainder. The dot binds only when glued on both sides: a space before
+or after the period, a head with a trailing period and no payload, and a payload
+with a leading period and no head each fail to parse. A period is a structural
+operator, so an atom never contains one; a dotted path (`rustfmt.skip`) or a float
+(`-122.3`) is an application reconstructed from its segments.
 
 ## Capitalization discipline
 
@@ -61,12 +73,16 @@ kind head from its role atoms.
 
 ## Field-name elision
 
-Elision is the default. A field whose type is unique in its block carries no name
-and takes its type-derived name. An explicit field name is legal only where two or
-more fields in the block share a type and the name disambiguates them; a name on a
-uniquely-typed field is an error, not a style choice. In `DatabaseMarker.{
-CommitSequence StateDigest secretDigest.StateDigest }` only the third field, whose
-`StateDigest` type collides with the second, carries an explicit name.
+Elision is not a style choice — it is the only authored form. A field whose type is
+unique in its block carries no name and takes its type-derived name; a name on a
+uniquely-typed field is an error. The single place an explicit name appears is the
+machine-forced disambiguation the codec emits when two or more fields in one block
+share a type and nothing else separates them: the codec writes the name, the author
+never does, and it is never a form to propose or exemplify. That case is codec
+output, a rarity, never an authoring surface. In `DatabaseMarker.{ CommitSequence
+StateDigest secretDigest.StateDigest }` only the third field, whose `StateDigest`
+type collides with the second, carries the codec-forced name — and even there the
+name is forced by the collision, not chosen.
 
 ## Generics and newtypes
 

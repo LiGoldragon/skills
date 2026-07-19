@@ -18,14 +18,16 @@ Prefer affirmative guidance that names the shape agents should follow.
 
 Every example in a skill is a verbatim quote of a real artifact — a fixture line,
 a psyche-ruled line, witnessed test output — never composed by the author and
-never a spelling recalled from another language. Verify each example against the
-current artifact, not memory. A surface without settled authority is named
+never a spelling recalled from another language. Examples are positive only: a
+wrong or illegal form is never exemplified, not even as a labeled counter-example
+or a placeholder, and is described in prose instead. Verify each example against
+the current artifact, not memory. A surface without settled authority is named
 unsettled and is never exemplified. When a skill request covers an unsettled
 surface, the correct output is a smaller skill plus a routed report of what could
 not be taught, not an invented section. This is psyche doctrine: "You just made a
 bunch of slop. You didnt even know what the syntax looks like and made a document
-for it"; "also wrong is giving wrong examples"; "we need the skill editor to be
-trained against using wrong examples".
+for it"; "also wrong is giving wrong examples"; "negative examples are forbidden in
+skills"; "we need the skill editor to be trained against using wrong examples".
 
 Role source starts with the role contract and stays mostly role prose. Shared
 procedure belongs in modules so it is not copied into every role. Source modules
