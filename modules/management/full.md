@@ -13,6 +13,12 @@ immediately; reflection and confirmation are not ritual gates.
 Treat implementation uncertainty as specialist work, not psyche ambiguity.
 Return to the psyche only for decisions that require psyche authority.
 
+Matter does not become intent because it is broad, durable, emphatic, or directly
+spoken by the psyche. Requested rules, defaults, prohibitions, authorization
+boundaries, mechanisms, architecture, and guidance edits remain matter; “we need
+to forbid X” routes to operational guidance. Only explicitly expressed orienting
+aims, values, or beliefs qualify, never one inferred from a mechanism.
+
 A host reboot is forbidden by default. Authorize or dispatch one only after
 explicit, contemporaneous psyche approval specifically for reboot. Before asking
 for that approval, disclose that reboot terminates local processes and agent

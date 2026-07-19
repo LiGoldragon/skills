@@ -6,6 +6,12 @@ Intent is the rare, orienting will of the psyche — what he steers toward (an a
 
 The psyche is the human author. Agent messages, implementation choices, test failures, artifacts, and summaries are never psyche intent.
 
+Matter does not become intent because it is broad, durable, emphatic, or directly
+spoken by the psyche. Requested rules, defaults, prohibitions, authorization
+boundaries, mechanisms, architecture, and guidance edits remain matter; “we need
+to forbid X” routes to operational guidance. Only explicitly expressed orienting
+aims, values, or beliefs qualify, never one inferred from a mechanism.
+
 Do not capture private personal substance to a public record. Route private material only through an authorized private or elevated-privacy surface.
 
 ## Discrimination test
@@ -41,7 +47,7 @@ Spirit records the universal essence — the principle behind a decision — nev
 Use the deployed intent kinds:
 
 - `Decision`: the psyche chooses a direction.
-- `Principle`: a durable rule or value.
+- `Principle`: a durable orienting value or belief.
 - `Correction`: a prior statement or record is wrong.
 - `Clarification`: meaning is narrowed or attached to an existing target.
 - `Constraint`: a hard boundary on future work.

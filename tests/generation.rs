@@ -1393,6 +1393,35 @@ fn management_doctrine_contains_required_rules() {
 }
 
 #[test]
+fn generated_manager_and_recorder_packets_preserve_matter_not_intent_classification() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current manager and recorder packets generate");
+
+    let matter_not_intent_clauses = [
+        "Matter does not become intent because it is broad, durable, emphatic, or directly\nspoken by the psyche.",
+        "Requested rules, defaults, prohibitions, authorization\nboundaries, mechanisms, architecture, and guidance edits remain matter; “we need\nto forbid X” routes to operational guidance.",
+        "Only explicitly expressed orienting\naims, values, or beliefs qualify, never one inferred from a mechanism.",
+    ];
+    for role in ["manager", "intent-recorder"] {
+        for path in [
+            format!(".pi/agents/{role}.md"),
+            format!(".claude/agents/{role}.md"),
+            format!(".codex/agents/{role}.toml"),
+        ] {
+            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
+            for clause in matter_not_intent_clauses {
+                assert!(
+                    packet.contains(clause),
+                    "{path} preserves the matter-not-intent classification clause: {clause}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn host_reboot_requires_specific_psyche_approval() {
     let management = include_str!("../modules/management/full.md");
     let operations = include_str!("../modules/operating-system-operations/full.md");

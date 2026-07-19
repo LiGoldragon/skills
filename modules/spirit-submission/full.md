@@ -10,6 +10,13 @@ Reject a submission brief unless it evidences that the exact proposed Spirit
 intent wording, scope, and proposed privacy were shown to and explicitly approved
 by the psyche. Never invent missing entry metadata.
 
+Matter does not become intent because it is broad, durable, emphatic, or directly
+spoken by the psyche. Requested rules, defaults, prohibitions, authorization
+boundaries, mechanisms, architecture, and guidance edits remain matter; “we need
+to forbid X” routes to operational guidance. Only explicitly expressed orienting
+aims, values, or beliefs qualify, never one inferred from a mechanism. Return a
+request to record such matter to Manager without submitting it.
+
 Do not query, infer, broaden, narrow, reorder, repair, or reinterpret the
 operation, testimony, warrant, context, privacy, certainty, importance, target,
 or referents. Do not replace it with a different Spirit operation.
