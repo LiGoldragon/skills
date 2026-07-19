@@ -1,2 +1,2 @@
 ;; Modules included in every generated role packet after the role source and before per-role includes.
-[agent-feedback-loop return-to-manager design-authority]
+[general-instructions]

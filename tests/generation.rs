@@ -407,7 +407,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "jj",
         "beads",
         "human-interaction",
-        "agent-feedback-loop",
         "orchestration",
     ] {
         assert!(
@@ -433,8 +432,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .collect();
     let role_composition_modules = [
         "agent-output-protocol",
-        "agent-feedback-loop",
-        "design-authority",
+        "general-instructions",
         "psyche-facing-commitments",
         "codex-skill-loading",
         "edit-coordination-core",
@@ -449,7 +447,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "architectural-truth-tests",
         "rust-discipline",
         "bead-weaver",
-        "return-to-manager",
         "spirit-submission",
         "manager-boundary",
         "manager-intent-classification",
@@ -564,7 +561,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 vec!["claude-management"]
             ),
             (
-                "agent-feedback-loop",
+                "general-instructions",
                 skills::schema::assembly::OutputSurface::CodexAgent,
                 vec!["codex-skill-loading"]
             ),
@@ -576,11 +573,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        [
-            "agent-feedback-loop",
-            "return-to-manager",
-            "design-authority"
-        ]
+        ["general-instructions"]
     );
 
     let active_roles: BTreeMap<&str, _> = active_outputs
@@ -1999,13 +1992,60 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
 }
 
 #[test]
-fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_commitments() {
+fn general_instructions_compose_once_and_specialized_guidance_stays_owned() {
+    let general_instructions = include_str!("../modules/general-instructions/full.md");
+    let universal_manifest = include_str!("../manifests/universal-role-modules.nota");
+    let dependency_index = include_str!("../manifests/module-dependencies.nota");
+    let language = "Avoid inventing your own expressions, labels, shorthand, metaphors, or jargon.\nFavor correct, established, plain-language descriptions even when they are\nlonger. Explain necessary established domain terminology plainly rather than\nreplacing it with agent-coined vocabulary.";
+    let feedback = "Report only instruction, tooling, or documentation friction that affected or\nplausibly affects efficiency or correctness.";
+    let ambiguity_return = "When unresolved ambiguity concerns intent, authority, safety, or privacy, stop\nonly the affected branch and return it to the Manager.";
+    let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
+
+    assert!(universal_manifest.contains("[general-instructions]"));
+    assert!(dependency_index.contains(
+        "(general-instructions modules/general-instructions/full.md [] RoleComposition)"
+    ));
+    for removed_module in [
+        "agent-feedback-loop",
+        "return-to-manager",
+        "design-authority",
+    ] {
+        assert!(
+            !dependency_index.contains(&format!("({removed_module} ")),
+            "{removed_module} has no duplicate authoritative module entry"
+        );
+        assert!(
+            !Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("modules")
+                .join(removed_module)
+                .exists(),
+            "{removed_module} source is consolidated into general-instructions"
+        );
+    }
+    for universal_clause in [language, feedback, ambiguity_return, design_authority] {
+        assert!(
+            general_instructions.contains(universal_clause),
+            "general-instructions preserves universal guidance: {universal_clause}"
+        );
+    }
+    for specialized_clause in [
+        "Use only at fresh-context startup when the psyche wants management.",
+        "Classify each instruction before placing it.",
+        "Before editing shared files or running a command that writes them,",
+        "Use only when the brief explicitly requests a worker output artifact",
+        "Treat secret bytes as transient hazardous material.",
+    ] {
+        assert!(
+            !general_instructions.contains(specialized_clause),
+            "specialized guidance does not leak into general-instructions: {specialized_clause}"
+        );
+    }
+
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
         .expect("current role packets generate");
 
-    let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
     let skill_bound_commitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.\n\nTreat a concrete failure as evidence that its governing guard is inadequate. Do\nnot answer it with “I will follow it more strictly,” “I will avoid this next\ntime,” or a claim that the guard is sufficient. Strengthen the owning role or\nskill guard before claiming changed future behavior, unless specific contrary\nevidence shows the guard did prevent the behavior. Until then, describe the\nchange as a proposal or pending work, not an accomplished behavioral change.\nCite the durable guard and its verification when claiming future behavior has\nchanged.";
     let manager_spirit_clause = "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
     let codex_skill_read_clause = "A pasted `<skill ...>...</skill>` block is complete when it has matching opening\nand closing `<skill>` tags, a skill name, a location, and non-empty body text.";
@@ -2034,11 +2074,18 @@ fn generated_role_packets_bound_design_authority_and_skill_bound_psyche_facing_c
             format!(".codex/agents/{role}.toml"),
         ] {
             let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
-            assert_eq!(
-                packet.matches(design_authority).count(),
-                1,
-                "{path} receives design-authority guidance exactly once"
-            );
+            for (name, universal_clause) in [
+                ("language", language),
+                ("feedback", feedback),
+                ("ambiguity return", ambiguity_return),
+                ("authority boundary", design_authority),
+            ] {
+                assert_eq!(
+                    packet.matches(universal_clause).count(),
+                    1,
+                    "{path} receives general-instructions {name} guidance exactly once through the canonical universal composition path"
+                );
+            }
             if role == "manager" {
                 assert!(
                     packet.contains(skill_bound_commitment),

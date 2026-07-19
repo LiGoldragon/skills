@@ -5,5 +5,5 @@
   (skill-editor ClaudeSkill [harness-placement])
   (management ClaudeSkill [claude-management])
   (management ClaudeAgent [claude-management])
-  (agent-feedback-loop CodexAgent [codex-skill-loading])
+  (general-instructions CodexAgent [codex-skill-loading])
 ]

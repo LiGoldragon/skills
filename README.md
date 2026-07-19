@@ -26,8 +26,10 @@ SKILLS_SOURCE_ROOT=$PWD SKILLS_WORKSPACE_ROOT=<workspace-root> cargo run -- skil
 
 The source-side active output manifest lives at
 `manifests/active-outputs.nota`; module paths, dependencies, and source module
-kind live at `manifests/module-dependencies.nota`; target-specific overlays live
-at `manifests/target-module-insertions.nota`. Canonical model support lives in
+kind live at `manifests/module-dependencies.nota`; the authoritative shared role
+doctrine lives in `modules/general-instructions/full.md` and is composed through
+`manifests/universal-role-modules.nota`; target-specific overlays live at
+`manifests/target-module-insertions.nota`. Canonical model support lives in
 `manifests/model-catalog.nota`; every active role has one profile in
 `manifests/role-model-assignments.nota` and one optional-skill list in
 `manifests/role-optional-skills.nota`. Typed nested-role minimum models and
@@ -42,7 +44,9 @@ The active manifest records first-class `Skill` and `Role` outputs. Skill output
 
 Target module insertions append extra modules for a named base module only when
 the generator is producing the named output surface, such as a Claude-only
-overlay for `ClaudeSkill` or `ClaudeAgent`.
+overlay for `ClaudeSkill` or `ClaudeAgent`. The general-instructions module is
+the sole universal role composition path; keep role-, skill-, repository-, and
+harness-specific doctrine in their owning sources.
 
 Repository guidance stays repo-local. Keep ordinary operating rules in
 `AGENTS.md`, architecture and ideal direction in `ARCHITECTURE.md`, overview in

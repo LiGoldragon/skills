@@ -356,7 +356,7 @@
             grep -F '(skill-editor ClaudeSkill [harness-placement])' "$target_insertions" >/dev/null
             grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
             grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
-            grep -F '(agent-feedback-loop CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null
+            grep -F '(general-instructions CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null
             grep -F '(Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax]' "$manifest" >/dev/null
             ! grep -F '(manager [spirit-query' "$optional_skills"
             grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
@@ -395,7 +395,7 @@
               exit 1
             fi
             grep -F '(Role (intent-recorder role-intent-recorder [spirit-submission]' "$manifest" >/dev/null
-            grep -F '[agent-feedback-loop return-to-manager design-authority]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
+            grep -F '[general-instructions]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
             grep -F '(Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax]' "$manifest" >/dev/null
             touch "$out"
           '';

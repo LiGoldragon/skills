@@ -7,10 +7,8 @@
 ;; The active output manifest decides what emits; this file records source module edges and kind.
 [
   (agent-output-protocol modules/agent-output-protocol/full.md [] RoleComposition)
-  (agent-feedback-loop modules/agent-feedback-loop/full.md [] RoleComposition)
-  (design-authority modules/design-authority/full.md [] RoleComposition)
+  (general-instructions modules/general-instructions/full.md [] RoleComposition)
   (psyche-facing-commitments modules/psyche-facing-commitments/full.md [] RoleComposition)
-  (return-to-manager modules/return-to-manager/full.md [] RoleComposition)
   (spirit-submission modules/spirit-submission/full.md [] RoleComposition)
   (edit-coordination-core modules/edit-coordination-core/full.md [] RoleComposition)
   (editing-closeout modules/editing-closeout/full.md [] RoleComposition)

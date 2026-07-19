@@ -25,7 +25,7 @@ workers do not discover doctrine through a runtime index.
 - `manifests/active-outputs.nota`: active `Skill` and `Role` outputs; presence means active.
 - `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
 - `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
-- `manifests/universal-role-modules.nota`: modules included in every generated role packet.
+- `manifests/universal-role-modules.nota`: the sole `general-instructions` module included in every generated role packet.
 - `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family model+effort profiles with explicit total-order strengths.
 - `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
 - `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
@@ -56,8 +56,11 @@ Derived inventory:
 The active source surface is manifest-owned: one active-outputs manifest lists
 generated `Skill` and `Role` outputs, where presence means active; sidecar
 indexes map module identifiers to source paths, dependencies, target overlays,
-and universal role modules. Role sidecars assign validated model profiles and
-optional skills. Nested-role relations add validated target-relative minimum
+and universal role modules. `modules/general-instructions/full.md` is the sole
+source of universal cross-agent role doctrine; role-, skill-, repository-, and
+harness-specific instruction stays in its owning source. Role sidecars assign
+validated model profiles and optional skills. Nested-role relations add
+validated target-relative minimum
 models and exclusive leaf-role delegation without changing Manager's root
 identity. The active manifest decides what emits; the module index decides
 expansion order and module kind.
