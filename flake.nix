@@ -324,6 +324,8 @@
             grep -F 'documentation-first' "$dispatch" >/dev/null
             grep -F 'one accountable Generalist' "$dispatch" >/dev/null
             grep -F 'Do not impose a rigid one-level delegation limit.' "$dispatch" >/dev/null
+            grep -F 'the historical CamelCase wording means the' "$dispatch" >/dev/null
+            grep -F 'daemon-compatible PascalCase alphanumeric form' "$dispatch" >/dev/null
             grep -F 'Never dispatch an agent whose only job is to wait or poll.' "$liveness" >/dev/null
             grep -F 'Report a worker as running only on fresh positive evidence' "$liveness" >/dev/null
             for source in "$orchestration" "$boundary" "$intent_classification" "$safeguards" "$dispatch" "$liveness" "$decisions" "$communication" "$synthesis"; do

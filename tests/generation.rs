@@ -1516,6 +1516,12 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
     }
     assert!(claude_orchestration.contains("## Clarification UI"));
     assert!(manager_role.contains("Apply the preloaded orchestration modules together."));
+    assert!(
+        include_str!("../modules/manager-dispatch/full.md").contains(
+            "the historical CamelCase wording means the\ndaemon-compatible PascalCase alphanumeric form"
+        ),
+        "manager dispatch clarifies the preserved historical session/lane wording"
+    );
     for (name, source, required) in manager_modules {
         assert!(
             source.contains(required),
@@ -1550,6 +1556,7 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
             "Use `spirit` for read-only intent queries before an intent-grounded judgment",
             "A host reboot is forbidden by default.",
             "Report a worker as running only on fresh positive evidence",
+            "the historical CamelCase wording means the\ndaemon-compatible PascalCase alphanumeric form",
             "Psyche responses carry graded states, not one yes or no:",
             "field name is\nillegal Protos, full stop",
             "The synthesis gate binds from first dispatch until the outstanding-worker set is",
