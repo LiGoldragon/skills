@@ -12,22 +12,23 @@ real artifact; never spell an example from memory of another language.
 ## Positional records
 
 Positionality is absolute; it is the first law of Protos and outranks every other
-rule here. Protos records are positional and there are no field names in authored
-or candidate Protos text. A block's positions are typed by the expected type at
+rule here. Protos records are positional and there are no field names anywhere in
+Protos. A block's positions are typed by the expected type at
 each boundary — the type standing there fixes slot count and meaning. Field,
 argument, and variant-payload identity comes from expected type plus position, so a
 block carries no JSON-like labels, ever. A construct's sections are ordered
 positional slots typed by the expected type at their boundaries, never labeled
 heads.
 
-An explicit field name is never a design option, never a candidate, and never an
-example — it exists only as the machine-forced disambiguation described under
-field-name elision, emitted by the codec, not chosen by an author. This law bars
-fabrication, never disclosure: never invent a field name, never present an invented
-named-field spelling as a candidate, example, or real Protos, and never justify one
-by appeal to the collision case, which is codec output rather than an authoring
-surface. Real artifacts stay fully visible: a codec-emitted collision name in a
-real artifact is shown exactly as it stands, and nothing real is ever withheld.
+An explicit field name is completely illegal everywhere — never authored, never a
+candidate, never an example, and never a codec-emitted form. There is no collision
+exception: no field name is ever added to a Protos record, not even by a codec, and
+same-typed fields are separated by position alone. This law bars fabrication, never
+disclosure: never invent a field name and never present a named-field spelling as a
+candidate, example, or real Protos. Real artifacts stay fully visible: a field name
+found in a real artifact is quoted exactly when that artifact is reported, and
+nothing real is ever withheld — but it is never authored, proposed, or presented as
+correct Protos.
 
 The expected type stands at every boundary: file kind, schema field, declaration
 slot, generic argument, inner block. The raw layer only discovers atoms,
@@ -56,8 +57,8 @@ wrapping an already-canonical bare atom in parentheses is redundant and rejected
 ## Glued-dot application
 
 A glued period binds a head to the following payload as one right-associative
-application: `Private.secretDigest.StateDigest` reads as visibility, then the
-(name, type) remainder. The dot binds only when glued on both sides: a space before
+application: `Topics.Vector.Topic` reads as the head `Topics` bound to the payload
+`Vector.Topic`. The dot binds only when glued on both sides: a space before
 or after the period, a head with a trailing period and no payload, and a payload
 with a leading period and no head each fail to parse. A period is a structural
 operator, so an atom never contains one; a dotted path (`rustfmt.skip`) or a float
@@ -65,24 +66,21 @@ operator, so an atom never contains one; a dotted path (`rustfmt.skip`) or a flo
 
 ## Capitalization discipline
 
-Types are PascalCase; field and role names are camelCase. A `name.Type` or
-`role.Type` binding is a camelCase atom dot-prefixing a PascalCase type
-(`token.SubscriptionToken`, `secretDigest.StateDigest`). Capitalization is a
-load-bearing pillar, not decoration: it statically distinguishes a declaration's
-kind head from its role atoms.
+Types, kind heads, and enum variants are PascalCase (`Topic`, `Stream`, `Vector`,
+`Decision`); canonical string atoms and map keys are lowercase bare atoms
+(`schema`, `alpha`, `beta`). Capitalization is a load-bearing pillar, not
+decoration: it statically distinguishes a declaration's PascalCase kind head from
+lowercase data atoms. A lowercase atom labeling a positional slot would be a field
+name, which is illegal everywhere.
 
-## Field-name elision
+## Positional disambiguation
 
-Elision is not a style choice — it is the only authored form. A field whose type is
-unique in its block carries no name and takes its type-derived name; a name on a
-uniquely-typed field is an error. The single place an explicit name appears is the
-machine-forced disambiguation the codec emits when two or more fields in one block
-share a type and nothing else separates them: the codec writes the name, the author
-never does, and it is never a form to propose or exemplify. That case is codec
-output, a rarity, never an authoring surface. In `DatabaseMarker.{ CommitSequence
-StateDigest secretDigest.StateDigest }` only the third field, whose `StateDigest`
-type collides with the second, carries the codec-forced name — and even there the
-name is forced by the collision, not chosen.
+Every field is positional and carries no name. When a struct holds two or more
+fields of the same type, position alone assigns each its meaning: the struct's
+declared field order fixes which slot is which, and the expected type standing at
+each position carries identity. No name is ever added to separate same-typed fields
+— not an authored one and not a codec-emitted one; the disambiguation is entirely
+positional, the same rule that governs every other slot.
 
 ## Generics and newtypes
 
@@ -106,13 +104,6 @@ Topics.Vector.Topic
 Summary.{ Description }
 Entry.{ Topics Kind Description Magnitude }
 Kind.[Decision Principle Correction Clarification Constraint]
-```
-
-The psyche-ruled stream declaration — the two uniquely-typed legs elide, the two
-colliding `SubscriptionToken` legs keep names:
-
-```
-IntentEventStream.Stream.{ token.SubscriptionToken SubscriptionStarted IntentEvent close.SubscriptionToken }
 ```
 
 Encodings witnessed by the NOTA grammar tests: struct `{(commit sequence) 4}`;

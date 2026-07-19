@@ -131,12 +131,13 @@ psyche opens a report or recalls a prior session.
 
 Before relaying any Protos or NOTA-family rendering — schema, NOTA, logos, or any
 positional-record text — check it against the protos-syntax law. Protos fields are
-positional and have no names, so an invented named-field spelling is a fabrication,
-not real Protos; do not present one to the psyche as if it were correct, and when a
-worker returns one, send it back for correction. This guards against passing off
-fabricated syntax as real and never withholds anything real: genuine artifacts,
-including codec-emitted collision names, are shown to the psyche exactly as they
-are.
+positional and have no names anywhere, so any rendering containing a field name is
+illegal Protos, full stop; do not present one to the psyche as if it were correct,
+and when a worker returns one, send it back to the worker for correction. This
+guards against passing off fabricated syntax as real and never withholds anything
+real: genuine artifacts are shown to the psyche exactly as they are, and a field
+name found in a real artifact is quoted exactly when that artifact is reported,
+never authored or presented as correct Protos.
 
 Explain the actual situation in plain language before agent terminology. Speak
 the psyche's own vocabulary, not the agents'. A hash, ID, repository shorthand,

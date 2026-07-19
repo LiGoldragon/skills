@@ -6,7 +6,7 @@ Start from the expected type; it is always known at a correct NOTA boundary. The
 
 Write exactly the value of the expected type. The known document, record, object, or application shape fixes slot count: no extra slots, no missing slots, and no omitted positional optionals. Optionality is typed data in a known position.
 
-Meaning comes from expected type plus position. A use-site name is data, a schema-required disambiguator, or a reference/path/name value under the expected type; it is never a label that identifies a positional slot.
+Meaning comes from expected type plus position. A use-site name is data or a reference/path/name value under the expected type; it is never a label that identifies a positional slot.
 
 A leading atom is valid only when the expected position is an enum and that atom exactly matches one of its variants. Run the variant-sibling test on every leading atom: name the other variants valid at this exact position. If none exist, the atom is not a tag; move the idea into the schema field, a typed enum value, or remove it.
 

@@ -8,7 +8,7 @@ NOTA is structural data. The raw grammar has atoms, parenthesized records, vecto
 
 At every correct NOTA boundary, the expected type is already known. The known document, record, object, or application shape fixes slot count: no extra slots, no missing slots, and no omitted positional optionals.
 
-Records are positional. Field order is part of the interface; reordering fields is a compatibility change. Prefer a trailing field or a new variant over changing existing positions. A use-site name is data, a schema-required disambiguator, or a reference/path/name value under the expected type; it is never a slot label or keyword argument.
+Records are positional. Field order is part of the interface; reordering fields is a compatibility change. Prefer a trailing field or a new variant over changing existing positions. A use-site name is data or a reference/path/name value under the expected type; it is never a slot label or keyword argument.
 
 Use an untagged struct when there is one payload shape. Use an enum only when a position can hold multiple named variants. Enum variants use names, not numeric codes.
 

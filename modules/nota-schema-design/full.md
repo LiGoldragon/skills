@@ -8,7 +8,7 @@ At every correct schema boundary, the expected type is already known. Schema, he
 
 Design one explicit type shape for each value shape. Use positional structs when there is one payload shape, and named enum variants when a position can carry multiple alternatives. The known shape fixes slot count: no extra slots, no missing slots, and no disappearing positional optionals.
 
-Struct fields, arguments, generic parameters, and variant payloads are positional. Field names in schema identify positions for authors, generated help, or duplicate-typed disambiguation; values never bind by field name, keyword argument, or named generic argument. Multi-parameter generics apply positionally.
+Struct fields, arguments, generic parameters, and variant payloads are positional. Field names in schema identify positions for authors and generated help; values never bind by field name, keyword argument, or named generic argument. Multi-parameter generics apply positionally.
 
 Use closed typed variants and meta-types for generic definitions. Do not force distinct cases into one parameter soup, and do not create kinds merely by arity. Put arity in delimited payload data when it is real data.
 

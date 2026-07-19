@@ -4,7 +4,7 @@
 
 Model language structure as data first. A form earns syntax only when the data shape, parse shape, and emitted shape are all clear.
 
-For NOTA and schema surfaces, positionality is the golden rule. Expected type plus position identifies every field, argument, and variant payload; use-site names are data or schema-required disambiguators, never slot labels.
+For NOTA and schema surfaces, positionality is the golden rule. Expected type plus position identifies every field, argument, and variant payload; use-site names are data, never slot labels.
 
 Use closed positional forms when shape and count are fixed. If omission, reordering, defaults, or partial updates are real operations, model them as separate typed forms instead of adding keyword binding to a positional call.
 
