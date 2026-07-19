@@ -394,7 +394,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "repository-publication",
         "pi-extension-updates",
         "nota-shape-checklist",
-        "management",
+        "orchestration",
     ] {
         assert!(
             active_skill_identifiers.contains(required_skill),
@@ -408,7 +408,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "beads",
         "human-interaction",
         "agent-feedback-loop",
-        "orchestration",
+        "management",
     ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
@@ -451,6 +451,14 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "bead-weaver",
         "return-to-manager",
         "spirit-submission",
+        "manager-boundary",
+        "manager-intent-classification",
+        "manager-safeguards",
+        "manager-dispatch",
+        "manager-liveness",
+        "manager-decisions",
+        "manager-communication",
+        "manager-synthesis",
     ];
     for module_identifier in role_composition_modules {
         assert_eq!(
@@ -482,16 +490,19 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         ["nota-design"]
     );
-    let management_dependency = module_dependencies
+    let orchestration_dependency = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "management")
-        .expect("management dependency indexed");
-    assert!(
-        management_dependency
+        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
+        .expect("orchestration dependency indexed");
+    assert_eq!(
+        orchestration_dependency
             .dependency_modules
             .payload()
-            .is_empty()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["spirit-query", "nota-design"]
     );
     for nota_module in ["nota-design", "nota-schema-design", "nota-literacy"] {
         let dependency = module_dependencies
@@ -509,7 +520,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         );
     }
     assert!(
-        !management_dependency
+        !orchestration_dependency
             .dependency_modules
             .payload()
             .iter()
@@ -533,14 +544,14 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         [
             (
-                "management",
+                "orchestration",
                 skills::schema::assembly::OutputSurface::ClaudeSkill,
-                vec!["claude-management"]
+                vec!["claude-orchestration"]
             ),
             (
-                "management",
+                "orchestration",
                 skills::schema::assembly::OutputSurface::ClaudeAgent,
-                vec!["claude-management"]
+                vec!["claude-orchestration"]
             ),
             (
                 "agent-feedback-loop",
@@ -576,7 +587,19 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         (
             "manager",
             "role-manager",
-            &["management", "psyche-facing-commitments", "protos-syntax"],
+            &[
+                "orchestration",
+                "manager-boundary",
+                "manager-intent-classification",
+                "manager-safeguards",
+                "manager-dispatch",
+                "manager-liveness",
+                "manager-decisions",
+                "manager-communication",
+                "manager-synthesis",
+                "psyche-facing-commitments",
+                "protos-syntax",
+            ],
         ),
         (
             "generalist",
@@ -740,15 +763,23 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
     let module_dependencies = NotaSource::new(index_text)
         .parse::<ModuleDependencies>()
         .expect("module dependency index parses");
-    let management = module_dependencies
+    let orchestration = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "management")
-        .expect("management dependency indexed");
-    assert!(management.dependency_modules.payload().is_empty());
+        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
+        .expect("orchestration dependency indexed");
+    assert_eq!(
+        orchestration
+            .dependency_modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["spirit-query", "nota-design"]
+    );
     assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
     assert!(
-        !management
+        !orchestration
             .dependency_modules
             .payload()
             .iter()
@@ -1281,115 +1312,152 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 }
 
 #[test]
-fn management_doctrine_contains_required_rules() {
-    let management = include_str!("../modules/management/full.md");
+fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
+    let orchestration = include_str!("../modules/orchestration/full.md");
+    let claude_orchestration = include_str!("../modules/claude-orchestration/full.md");
     let manager_role = include_str!("../roles/manager/full.md");
-    let codex_skill_loading = include_str!("../modules/codex-skill-loading/full.md");
-    for required in [
-        "doubt about intent, authority, safety, or privacy",
-        "reflection and confirmation are not ritual gates.",
-        "Direct known work goes to one specialist.",
-        "Unfamiliar non-trivial work goes first to a fast, cheap",
-        "Tightly coupled cross-specialty work goes to one accountable Generalist.",
-        "Independent work goes to peer specialists in parallel.",
-        "A Generalist may use subagents when useful",
-        "Do not impose a rigid one-level delegation limit.",
-        "Outside this action space, every investigation and operation goes to a subagent.",
-        "Send skill reading and small routine work to a small Scout when no specialist is\nneeded:",
-        "routine work can turn bad, and delegation usually uses Manager context\nmore efficiently.",
-        "does not inspect repositories, commands, links, systems, or skills",
-        "It never records or mutates Spirit.",
-        "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,",
-        "receive explicit approval.",
-        "Include evidence of that exact proposal and\napproval in the fully specified, warranted submission brief;",
-        "return or feedback protocols already present in role packets.",
-        "The manager never spawns a blocking agent.",
-        "Every manager-dispatched agent runs",
-        "in the background. Never use a foreground agent call",
-        "Never use a foreground agent call or wait synchronously for",
-        "defer its dispatch until completion",
-        "notification arrives while keeping psyche chat available for redirection.",
-        "Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or",
-        "hypothetical runaway risk do not justify limits.",
-        "concrete external constraint requires it,",
-        "disclose that constraint before dispatch.",
-        "Do not interrupt or terminate a worker for turn count or silence",
-        "Inspect concrete evidence of blockage first.",
-        "do not fail a read-only Scout for lacking",
-        "changed-file evidence.",
-        "When asked why, lead with the",
-        "causal mechanism.",
-        "Do not substitute apology, self-judgment, or a promise for the",
-        "Treat every tool result as psyche-visible.",
-        "inspect concise status first.",
-        "request the smallest tail that resolves it.",
-        "Do not narrate repeated availability checks.",
-        "The synthesis gate binds from first dispatch until the outstanding-worker set is",
-        "Follow-up dispatches, lane extensions, and resumed workers re-close the",
-        "an interim return earns at most a brief factual note",
-        "never a synthesis installment, a",
-        "the manager does not volunteer elaboration early.",
-        "Deliver the full consolidated synthesis exactly once, after the final worker",
-        "returns, in ordinary English",
-        "Make every psyche-facing question or decision request self-contained.",
-        "in enough substance to answer from chat alone.",
-        "psyche opens a report or recalls a prior session.",
-        "Explain the actual situation in plain language before agent terminology.",
-        "A hash, ID, repository shorthand,\nor agent-coined name is never an explanation.",
-        "materially needed for traceability, after and subordinate to a plain description.",
-        "let compression outrun the psyche's model:",
-        "Use clear plain-text ASCII diagrams in psyche-facing chat, never Mermaid or",
-        "another diagram DSL.",
-        "Keep the explanation understandable directly in plain text;",
-        "graphical syntax is not itself an explanation.",
-        "Mermaid remains available for",
-        "technical artifacts when the target surface separately calls for it.",
-        "When the psyche signals lost understanding, stop advancing and re-ground before",
-        "in the psyche's own terms.",
-        "Name the Session and Lane in PascalCase alphanumeric;",
-        "a hyphenated name forces a translation",
+    let manager_modules = [
+        (
+            "boundary",
+            include_str!("../modules/manager-boundary/full.md"),
+            "Outside this action space, every investigation and operation goes to a subagent.",
+        ),
+        (
+            "intent classification",
+            include_str!("../modules/manager-intent-classification/full.md"),
+            "Matter does not become intent because it is broad, durable, emphatic, or directly",
+        ),
+        (
+            "safeguards",
+            include_str!("../modules/manager-safeguards/full.md"),
+            "A host reboot is forbidden by default.",
+        ),
+        (
+            "dispatch",
+            include_str!("../modules/manager-dispatch/full.md"),
+            "Tightly coupled cross-specialty work goes to one accountable Generalist.",
+        ),
+        (
+            "liveness",
+            include_str!("../modules/manager-liveness/full.md"),
+            "Report a worker as running only on fresh positive evidence",
+        ),
+        (
+            "decisions",
+            include_str!("../modules/manager-decisions/full.md"),
+            "Psyche responses carry graded states, not one yes or no:",
+        ),
+        (
+            "communication",
+            include_str!("../modules/manager-communication/full.md"),
+            "Make every psyche-facing question or decision request self-contained.",
+        ),
+        (
+            "synthesis",
+            include_str!("../modules/manager-synthesis/full.md"),
+            "The synthesis gate binds from first dispatch until the outstanding-worker set is",
+        ),
+    ];
+
+    for heading in [
+        "Rules",
+        "Psyche Boundary",
+        "Inputs",
+        "Action Space",
+        "Curiosity",
+        "Gates",
+        "Planning And Dispatch",
+        "Synthesis",
     ] {
         assert!(
-            management.contains(required),
-            "missing management rule: {required}"
+            orchestration.contains(&format!("## {heading}")),
+            "historical base preserves {heading}"
         );
     }
     for required in [
-        "Keep only psyche conversation, read-only intent grounding\n  where applicable, dispatch, worker outputs, and synthesis.",
-        "Apart from read-only intent grounding, use subagents for every investigation\n  and operation; send skill reading and small routine work to a small Scout.",
-        "Do not load skills directly; dispatch a Scout to read needed instruction and\n  return the applicable rule.",
-        "Never spawn a blocking agent.",
-        "Run every dispatched agent in the background;",
-        "defer dependent dispatch until completion notification",
-        "remain available for psyche redirection.",
+        "The orchestrator is an intent-only lane.",
+        "Treat problem reports and frustration as context, not dispatch authority.",
+        "Use a read-only Spirit query only when existing intent would resolve a material ambiguity",
+        "Use CamelCase Session names and task-specific Lane names.",
+        "Never block it on background work.",
+        "Use a separate auditor only for substantial or consequence-gated completed work",
     ] {
         assert!(
-            manager_role.contains(required),
-            "missing manager role rule: {required}"
+            orchestration.contains(required),
+            "historical rule preserved: {required}"
         );
     }
-    assert!(codex_skill_loading.contains("A pasted `<skill ...>...</skill>` block is complete"));
+    assert!(claude_orchestration.contains("## Clarification UI"));
+    assert!(manager_role.contains("Apply the preloaded orchestration modules together."));
+    for (name, source, required) in manager_modules {
+        assert!(
+            source.contains(required),
+            "{name} retains its manager safeguard"
+        );
+    }
     assert!(
-        codex_skill_loading
-            .contains("Treat a complete pasted skill block as already loaded for this session.")
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/management/full.md")
+            .exists(),
+        "replaced monolithic management source is absent"
     );
-    assert!(!management.contains("orchestrator"));
-    assert!(!management.contains("orchestration"));
-    for operational_detail in [
-        "deploy",
-        "lojix",
-        "launcher",
-        "profile",
-        "Home Manager",
-        "rollback",
+    assert!(
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/claude-management/full.md")
+            .exists(),
+        "replaced Claude companion source is absent"
+    );
+
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("restored orchestration profile generates");
+    for path in [
+        ".pi/agents/manager.md",
+        ".claude/agents/manager.md",
+        ".codex/agents/manager.toml",
     ] {
+        let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
+        for required in [
+            "The orchestrator is an intent-only lane.",
+            "Use `spirit` for read-only intent queries before an intent-grounded judgment",
+            "A host reboot is forbidden by default.",
+            "Report a worker as running only on fresh positive evidence",
+            "Psyche responses carry graded states, not one yes or no:",
+            "field name is\nillegal Protos, full stop",
+            "The synthesis gate binds from first dispatch until the outstanding-worker set is",
+        ] {
+            assert!(packet.contains(required), "{path} retains {required}");
+        }
         assert!(
-            !management
-                .to_lowercase()
-                .contains(&operational_detail.to_lowercase()),
-            "management contains operational detail: {operational_detail}"
+            !packet.contains("@generated"),
+            "{path} has no generated notice"
+        );
+        assert!(
+            !packet.to_lowercase().contains("generated by"),
+            "{path} has no generated notice"
         );
     }
+    assert!(
+        fixture
+            .read_workspace_file(".claude/agents/manager.md")
+            .contains(
+                "Ask clarification in ordinary chat text instead of multiple-choice, picker, or"
+            )
+    );
+    assert!(
+        fixture
+            .read_workspace_file(".agents/skills/orchestration/SKILL.md")
+            .contains("The orchestrator is an intent-only lane.")
+    );
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".agents/skills/management")
+            .exists(),
+        "the replaced management skill output is pruned"
+    );
 }
 
 #[test]
@@ -1423,11 +1491,11 @@ fn generated_manager_and_recorder_packets_preserve_matter_not_intent_classificat
 
 #[test]
 fn host_reboot_requires_specific_psyche_approval() {
-    let management = include_str!("../modules/management/full.md");
+    let safeguards = include_str!("../modules/manager-safeguards/full.md");
     let operations = include_str!("../modules/operating-system-operations/full.md");
 
     for (source_name, source) in [
-        ("management", management),
+        ("manager-safeguards", safeguards),
         ("operating-system-operations", operations),
     ] {
         let normalized_source = source.replace('\n', " ");
@@ -2394,27 +2462,27 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (management management Meta Mechanism [Management skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [management] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (orchestration orchestration Meta Mechanism [Orchestration skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [orchestration] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (management modules/management/full.md [] RuntimeSkill) (claude-management modules/claude-management/full.md [] RuntimeSkill)]\n",
+        "[(worker roles/worker/full.md [] RoleSource) (orchestration modules/orchestration/full.md [] RuntimeSkill) (claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)]\n",
     );
     fixture.write_source_file(
         "manifests/target-module-insertions.nota",
-        "[(management ClaudeSkill [claude-management]) (management ClaudeAgent [claude-management])]\n",
+        "[(orchestration ClaudeSkill [claude-orchestration]) (orchestration ClaudeAgent [claude-orchestration])]\n",
     );
     fixture.write_source_file(
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_source_file(
-        "modules/management/full.md",
-        "# Skill - management\n\n## Shared Rule\n\nShared management.\n",
+        "modules/orchestration/full.md",
+        "# Skill - orchestration\n\n## Shared Rule\n\nShared orchestration.\n",
     );
     fixture.write_source_file(
-        "modules/claude-management/full.md",
+        "modules/claude-orchestration/full.md",
         "# Module - Target reply surface\n\n## Clarification UI\n\nTarget overlay.\n",
     );
 
@@ -2422,24 +2490,24 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
         .generate(GenerationMode::Write)
         .expect("target insertions generate");
 
-    let agents_skill = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
-    assert!(agents_skill.contains("Shared management."));
+    let agents_skill = fixture.read_workspace_file(".agents/skills/orchestration/SKILL.md");
+    assert!(agents_skill.contains("Shared orchestration."));
     assert!(!agents_skill.contains("Target overlay."));
 
-    let claude_skill = fixture.read_workspace_file(".claude/skills/management/SKILL.md");
-    assert!(claude_skill.contains("Shared management."));
+    let claude_skill = fixture.read_workspace_file(".claude/skills/orchestration/SKILL.md");
+    assert!(claude_skill.contains("Shared orchestration."));
     assert!(claude_skill.contains("Target overlay."));
 
     let claude_role = fixture.read_workspace_file(".claude/agents/worker.md");
-    assert!(claude_role.contains("Shared management."));
+    assert!(claude_role.contains("Shared orchestration."));
     assert!(claude_role.contains("Target overlay."));
 
     let codex_role = fixture.read_workspace_file(".codex/agents/worker.toml");
-    assert!(codex_role.contains("Shared management."));
+    assert!(codex_role.contains("Shared orchestration."));
     assert!(!codex_role.contains("Target overlay."));
 
     let pi_role = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi_role.contains("Shared management."));
+    assert!(pi_role.contains("Shared orchestration."));
     assert!(!pi_role.contains("Target overlay."));
 }
 

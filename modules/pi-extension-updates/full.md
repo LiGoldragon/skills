@@ -16,4 +16,4 @@ Carry only a small local behavior with a rationale and witness. Drop it only whe
 
 A fork retires when the upstream target passes every retained witness without local deltas and the consumer can pin upstream directly. Re-audit whenever upstream activity, a deployment failure, or a changed local requirement invalidates the prior comparison.
 
-Use `repository-management`, `version-control`, `feature-development`, `management`, `helper-context-transfer`, and `design-quality` for their owning mechanics. Keep branch recipes and ledger detail out of ordinary dispatch prompts.
+Use `repository-management`, `version-control`, `feature-development`, `orchestration`, `helper-context-transfer`, and `design-quality` for their owning mechanics. Keep branch recipes and ledger detail out of ordinary dispatch prompts.

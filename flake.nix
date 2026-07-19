@@ -236,11 +236,19 @@
             fi
             touch "$out"
           '';
-          stale-management-aliases-removed = pkgs.runCommand "skills-stale-management-aliases-removed" { } ''
-            test ! -e ${cleanSource}/modules/orchestration
-            test ! -e ${cleanSource}/modules/claude-orchestration
-            if grep -R -E '\(orchestration |modules/orchestration|claude-orchestration|Role - orchestrator' ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/roles ${cleanSource}/README.md ${cleanSource}/ARCHITECTURE.md ${cleanSource}/skills.md; then
-              echo "obsolete orchestration skill or orchestrator role aliases remain" >&2
+          restored-orchestration-source = pkgs.runCommand "skills-restored-orchestration-source" { } ''
+            orchestration=${cleanSource}/modules/orchestration/full.md
+            claude_orchestration=${cleanSource}/modules/claude-orchestration/full.md
+            test "$(sha256sum "$orchestration" | cut -d' ' -f1)" = f592f97b1035b88e4c79752174971fe075def3010148d6d8349bdee877b27ec8
+            test "$(sha256sum "$claude_orchestration" | cut -d' ' -f1)" = 5d6441814e2057bffebece7dee221946aa60b3f5cd1000c0563746e1fa684a0f
+            for heading in Rules 'Psyche Boundary' Inputs 'Action Space' Curiosity Gates 'Planning And Dispatch' Synthesis; do
+              grep -Fx "## $heading" "$orchestration" >/dev/null
+            done
+            grep -Fx '## Clarification UI' "$claude_orchestration" >/dev/null
+            test ! -e ${cleanSource}/modules/management
+            test ! -e ${cleanSource}/modules/claude-management
+            if grep -R -E 'modules/management|claude-management|Skill \(management|\(management (ClaudeSkill|ClaudeAgent)' ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/roles ${cleanSource}/README.md ${cleanSource}/ARCHITECTURE.md ${cleanSource}/skills.md; then
+              echo "replaced management source aliases remain" >&2
               exit 1
             fi
             touch "$out"
@@ -284,67 +292,85 @@
             done
             touch "$out"
           '';
-          management-doctrine-guardrails = pkgs.runCommand "skills-management-doctrine-guardrails" { } ''
-            management=${cleanSource}/modules/management/full.md
-            claude_management=${cleanSource}/modules/claude-management/full.md
+          manager-doctrine-guardrails = pkgs.runCommand "skills-manager-doctrine-guardrails" { } ''
+            orchestration=${cleanSource}/modules/orchestration/full.md
+            claude_orchestration=${cleanSource}/modules/claude-orchestration/full.md
+            boundary=${cleanSource}/modules/manager-boundary/full.md
+            intent_classification=${cleanSource}/modules/manager-intent-classification/full.md
+            safeguards=${cleanSource}/modules/manager-safeguards/full.md
+            dispatch=${cleanSource}/modules/manager-dispatch/full.md
+            liveness=${cleanSource}/modules/manager-liveness/full.md
+            decisions=${cleanSource}/modules/manager-decisions/full.md
+            communication=${cleanSource}/modules/manager-communication/full.md
+            synthesis=${cleanSource}/modules/manager-synthesis/full.md
             codex_skill_loading=${cleanSource}/modules/codex-skill-loading/full.md
             manager_role=${cleanSource}/roles/manager/full.md
+            optional_skills=${cleanSource}/manifests/role-optional-skills.nota
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
             target_insertions=${cleanSource}/manifests/target-module-insertions.nota
-            grep -F 'When the request is concrete and doubt is absent, dispatch' "$management" >/dev/null
-            grep -F 'Direct known work goes to one specialist.' "$management" >/dev/null
-            grep -F 'documentation-first' "$management" >/dev/null
-            grep -F 'one accountable Generalist' "$management" >/dev/null
-            grep -F 'peer specialists in parallel' "$management" >/dev/null
-            grep -F 'Do not impose a rigid one-level delegation limit.' "$management" >/dev/null
-            grep -F 'It never records or mutates Spirit.' "$management" >/dev/null
-            grep -F 'the exact proposed Spirit intent wording, scope, and proposed privacy,' "$management" >/dev/null
-            grep -F 'and receive explicit approval.' "$management" >/dev/null
-            grep -F 'Outside this action space, every investigation and operation goes to a subagent.' "$management" >/dev/null
-            grep -F 'Send skill reading and small routine work to a small Scout' "$management" >/dev/null
-            grep -F 'routine work can turn bad, and delegation usually uses Manager context' "$management" >/dev/null
-            grep -F 'Explain the actual situation in plain language before agent terminology.' "$management" >/dev/null
-            grep -F 'A hash, ID, repository shorthand,' "$management" >/dev/null
-            grep -F 'materially needed for traceability, after and subordinate to a plain description.' "$management" >/dev/null
-            grep -F 'Apart from read-only intent grounding, use subagents for every investigation' "$manager_role" >/dev/null
-            grep -F 'Do not load skills directly; dispatch a Scout' "$manager_role" >/dev/null
-            grep -F 'Do not repeat ambient' "$management" >/dev/null
-            grep -F 'The manager never spawns a blocking agent.' "$management" >/dev/null
-            grep -F 'Every manager-dispatched agent runs' "$management" >/dev/null
-            grep -F 'Never use a foreground agent call or wait synchronously' "$management" >/dev/null
-            grep -F 'defer its dispatch until completion' "$management" >/dev/null
-            grep -F 'keeping psyche chat available for redirection.' "$management" >/dev/null
-            grep -F 'Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or' "$management" >/dev/null
-            grep -F 'hypothetical runaway risk do not justify limits.' "$management" >/dev/null
-            grep -F 'concrete external constraint requires it,' "$management" >/dev/null
-            grep -F 'disclose that constraint before dispatch.' "$management" >/dev/null
-            grep -F 'Do not interrupt or terminate a worker for turn count or silence' "$management" >/dev/null
-            grep -F 'Inspect concrete evidence of blockage first.' "$management" >/dev/null
-            grep -F 'do not fail a read-only Scout for lacking' "$management" >/dev/null
-            grep -F 'changed-file evidence.' "$management" >/dev/null
-            grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$management" >/dev/null
-            grep -F 'Never spawn a blocking agent.' "$manager_role" >/dev/null
-            grep -F 'Run every dispatched agent in the background;' "$manager_role" >/dev/null
-            grep -F 'defer dependent dispatch until completion notification' "$manager_role" >/dev/null
-            grep -F 'returns, in ordinary English.' "$management" >/dev/null
-            grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(codex-skill-loading modules/codex-skill-loading/full.md [] RoleComposition)' "$index" >/dev/null
-            grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
-            grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
+            grep -F 'The orchestrator is an intent-only lane.' "$orchestration" >/dev/null
+            grep -F 'Treat problem reports and frustration as context, not dispatch authority.' "$orchestration" >/dev/null
+            grep -F 'Never block it on background work.' "$orchestration" >/dev/null
+            grep -F 'Use a separate auditor only for substantial or consequence-gated completed work' "$orchestration" >/dev/null
+            grep -F 'Matter does not become intent because it is broad, durable, emphatic, or directly' "$intent_classification" >/dev/null
+            grep -F 'reflection and confirmation are not ritual gates.' "$safeguards" >/dev/null
+            grep -F 'A host reboot is forbidden by default.' "$safeguards" >/dev/null
+            grep -F 'explicit, contemporaneous psyche approval specifically for reboot' "$safeguards" >/dev/null
+            grep -F 'Outside this action space, every investigation and operation goes to a subagent.' "$boundary" >/dev/null
+            grep -F 'the exact proposed Spirit intent wording, scope, and proposed privacy,' "$boundary" >/dev/null
+            grep -F 'Direct known work goes to one specialist.' "$dispatch" >/dev/null
+            grep -F 'documentation-first' "$dispatch" >/dev/null
+            grep -F 'one accountable Generalist' "$dispatch" >/dev/null
+            grep -F 'Do not impose a rigid one-level delegation limit.' "$dispatch" >/dev/null
+            grep -F 'Never dispatch an agent whose only job is to wait or poll.' "$liveness" >/dev/null
+            grep -F 'Report a worker as running only on fresh positive evidence' "$liveness" >/dev/null
+            grep -F 'Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or' "$liveness" >/dev/null
+            grep -F 'Psyche responses carry graded states, not one yes or no:' "$decisions" >/dev/null
+            grep -F 'Make every psyche-facing question or decision request self-contained.' "$communication" >/dev/null
+            grep -F 'field name is' "$communication" >/dev/null
+            grep -F 'illegal Protos, full stop' "$communication" >/dev/null
+            grep -F 'Use clear plain-text ASCII diagrams in psyche-facing chat' "$communication" >/dev/null
+            grep -F 'Do not narrate repeated availability checks.' "$communication" >/dev/null
+            grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$synthesis" >/dev/null
+            grep -F 'returns, in ordinary English.' "$synthesis" >/dev/null
+            grep -F 'Apply the preloaded orchestration modules together.' "$manager_role" >/dev/null
+            grep -F '(orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)' "$index" >/dev/null
+            for module in manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis; do
+              grep -F "($module modules/$module/full.md [] RoleComposition)" "$index" >/dev/null
+            done
+            grep -F '(orchestration ClaudeSkill [claude-orchestration])' "$target_insertions" >/dev/null
+            grep -F '(orchestration ClaudeAgent [claude-orchestration])' "$target_insertions" >/dev/null
             grep -F '(agent-feedback-loop CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null
-            grep -F '(Role (manager role-manager [management psyche-facing-commitments]' "$manifest" >/dev/null
-            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
+            grep -F '(Role (manager role-manager [orchestration manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax]' "$manifest" >/dev/null
+            ! grep -F '(manager [spirit-query' "$optional_skills"
+            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_orchestration" >/dev/null
             grep -F 'A pasted `<skill ...>...</skill>` block is complete' "$codex_skill_loading" >/dev/null
             if grep -F 'CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION' ${cleanSource}/src/assembly.rs; then
               echo "Codex skill-read guidance belongs in its source module, not generator code" >&2
               exit 1
             fi
-            if grep -Ei 'deploy|lojix|launcher|profile|home manager|rollback' "$management"; then
-              echo "management must keep operational mechanics in owning doctrine" >&2
-              exit 1
-            fi
+            workspace=$TMPDIR/workspace
+            export SKILLS_SOURCE_ROOT=${cleanSource}
+            export SKILLS_WORKSPACE_ROOT="$workspace"
+            ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
+            ${skillsPackage}/bin/skills ${cleanSource}/skills-check.nota >/dev/null
+            test -f "$workspace/.agents/skills/orchestration/SKILL.md"
+            test -f "$workspace/.claude/skills/orchestration/SKILL.md"
+            test ! -e "$workspace/.agents/skills/management"
+            for packet in "$workspace/.pi/agents/manager.md" "$workspace/.claude/agents/manager.md" "$workspace/.codex/agents/manager.toml"; do
+              grep -F 'The orchestrator is an intent-only lane.' "$packet" >/dev/null
+              grep -F 'Use `spirit` for read-only intent queries before an intent-grounded judgment' "$packet" >/dev/null
+              grep -F 'Matter does not become intent because it is broad, durable, emphatic, or directly' "$packet" >/dev/null
+              grep -F 'Report a worker as running only on fresh positive evidence' "$packet" >/dev/null
+              grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$packet" >/dev/null
+              if grep -Ei '@generated|generated by' "$packet"; then
+                echo "generated manager packet contains a generated-file notice" >&2
+                exit 1
+              fi
+            done
+            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$workspace/.claude/agents/manager.md" >/dev/null
             touch "$out"
           '';
           slim-role-composition = pkgs.runCommand "skills-slim-role-composition" { } ''
@@ -355,7 +381,7 @@
             fi
             grep -F '(Role (intent-recorder role-intent-recorder [spirit-submission]' "$manifest" >/dev/null
             grep -F '[agent-feedback-loop return-to-manager design-authority]' ${cleanSource}/manifests/universal-role-modules.nota >/dev/null
-            grep -F '(Role (manager role-manager [management psyche-facing-commitments]' "$manifest" >/dev/null
+            grep -F '(Role (manager role-manager [orchestration manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax]' "$manifest" >/dev/null
             touch "$out"
           '';
           role-profile-manifests = pkgs.runCommand "skills-role-profile-manifests" { } ''
@@ -379,20 +405,20 @@
               echo "Claude Sonnet roles must not regress to Sonnet 4.6" >&2
               exit 1
             fi
-            grep -F '(manager [spirit-query intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
+            grep -F '(manager [intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
             touch "$out"
           '';
           active-appellations = pkgs.runCommand "skills-active-appellations" { } ''
             manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
-            for required in component-architecture design-quality version-control work-tracking management manager generalist intent-recorder intent-curator repository-closeout tracker-weaver; do
+            for required in component-architecture design-quality version-control work-tracking orchestration manager generalist intent-recorder intent-curator repository-closeout tracker-weaver; do
               grep -F "$required" "$manifest" >/dev/null || {
                 echo "$required must be present in active output manifest" >&2
                 exit 1
               }
               grep -F "$required" "$index" >/dev/null || true
             done
-            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' human-interaction 'Skill (orchestration ' 'Role (orchestrator ' intent-maintainer repo-operator weave-operator; do
+            for retired in component-triad beauty 'Skill (jj ' 'Skill (beads ' human-interaction 'Skill (management ' 'Role (orchestrator ' intent-maintainer repo-operator weave-operator; do
               if grep -F "$retired" "$manifest"; then
                 echo "$retired must not be an active output appellation" >&2
                 exit 1
