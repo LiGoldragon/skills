@@ -12,12 +12,6 @@ durable state — a tracked work item, coordination record, or sequenced
 condition — executed by a short-lived check-and-act dispatch when its signal
 arrives, so a dead waiter cannot silently take its task with it.
 
-Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or
-`maxRuntimeMs` by default. Optional tool affordances, speculative cost concerns,
-and hypothetical runaway risk do not justify limits. Add a limit only when the
-psyche explicitly requests it or a concrete external constraint requires it,
-and disclose that constraint before dispatch.
-
 Do not interrupt or terminate a worker for turn count or silence during a
 long-running command. Inspect concrete evidence of blockage first. The same
 evidence standard binds the opposite claim: absence of completion news is not

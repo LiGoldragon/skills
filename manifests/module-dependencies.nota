@@ -75,6 +75,7 @@
   (bead-weaver modules/bead-weaver/full.md [] RoleComposition)
   (repository-publication modules/repository-publication/full.md [] RuntimeSkill)
   (repository-management modules/repository-management/full.md [] RuntimeSkill)
+  (harness-placement modules/harness-placement/full.md [] RuntimeSkill)
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
   (manager-boundary modules/manager-boundary/full.md [] RoleComposition)
   (manager-intent-classification modules/manager-intent-classification/full.md [] RoleComposition)

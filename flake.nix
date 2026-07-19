@@ -303,6 +303,7 @@
             decisions=${cleanSource}/modules/manager-decisions/full.md
             communication=${cleanSource}/modules/manager-communication/full.md
             synthesis=${cleanSource}/modules/manager-synthesis/full.md
+            harness_placement=${cleanSource}/modules/harness-placement/full.md
             codex_skill_loading=${cleanSource}/modules/codex-skill-loading/full.md
             manager_role=${cleanSource}/roles/manager/full.md
             optional_skills=${cleanSource}/manifests/role-optional-skills.nota
@@ -325,7 +326,14 @@
             grep -F 'Do not impose a rigid one-level delegation limit.' "$dispatch" >/dev/null
             grep -F 'Never dispatch an agent whose only job is to wait or poll.' "$liveness" >/dev/null
             grep -F 'Report a worker as running only on fresh positive evidence' "$liveness" >/dev/null
-            grep -F 'Dispatch workers without `turnBudget`, `toolBudget`, `timeoutMs`, or' "$liveness" >/dev/null
+            for source in "$orchestration" "$boundary" "$intent_classification" "$safeguards" "$dispatch" "$liveness" "$decisions" "$communication" "$synthesis"; do
+              if grep -E 'turnBudget|toolBudget|timeoutMs|maxRuntimeMs' "$source"; then
+                echo "general management/orchestration doctrine must not name harness API fields" >&2
+                exit 1
+              fi
+            done
+            grep -F 'Classify each instruction before placing it.' "$harness_placement" >/dev/null
+            grep -F 'When no matching target-specific surface exists, omit the rule' "$harness_placement" >/dev/null
             grep -F 'Psyche responses carry graded states, not one yes or no:' "$decisions" >/dev/null
             grep -F 'Make every psyche-facing question or decision request self-contained.' "$communication" >/dev/null
             grep -F 'field name is' "$communication" >/dev/null
@@ -336,10 +344,13 @@
             grep -F 'returns, in ordinary English.' "$synthesis" >/dev/null
             grep -F 'Apply the preloaded orchestration modules together.' "$manager_role" >/dev/null
             grep -F '(orchestration modules/orchestration/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(harness-placement modules/harness-placement/full.md [] RuntimeSkill)' "$index" >/dev/null
             grep -F '(claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)' "$index" >/dev/null
             for module in manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis; do
               grep -F "($module modules/$module/full.md [] RoleComposition)" "$index" >/dev/null
             done
+            grep -F '(skill-editor AgentsSkill [harness-placement])' "$target_insertions" >/dev/null
+            grep -F '(skill-editor ClaudeSkill [harness-placement])' "$target_insertions" >/dev/null
             grep -F '(orchestration ClaudeSkill [claude-orchestration])' "$target_insertions" >/dev/null
             grep -F '(orchestration ClaudeAgent [claude-orchestration])' "$target_insertions" >/dev/null
             grep -F '(agent-feedback-loop CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null

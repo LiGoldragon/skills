@@ -1,6 +1,8 @@
 ;; Target-specific module insertion index.
 ;; Each record is: base module id, output surface, inserted module ids.
 [
+  (skill-editor AgentsSkill [harness-placement])
+  (skill-editor ClaudeSkill [harness-placement])
   (orchestration ClaudeSkill [claude-orchestration])
   (orchestration ClaudeAgent [claude-orchestration])
   (agent-feedback-loop CodexAgent [codex-skill-loading])

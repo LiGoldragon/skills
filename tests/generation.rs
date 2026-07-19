@@ -544,6 +544,16 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         [
             (
+                "skill-editor",
+                skills::schema::assembly::OutputSurface::AgentsSkill,
+                vec!["harness-placement"]
+            ),
+            (
+                "skill-editor",
+                skills::schema::assembly::OutputSurface::ClaudeSkill,
+                vec!["harness-placement"]
+            ),
+            (
                 "orchestration",
                 skills::schema::assembly::OutputSurface::ClaudeSkill,
                 vec!["claude-orchestration"]
@@ -685,6 +695,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "edit-coordination-core",
                 "editing-closeout",
                 "skill-source-core",
+                "harness-placement",
             ],
         ),
         (
@@ -843,6 +854,8 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
     let skill_module = include_str!("../modules/skill-editor/full.md");
     let role_module = include_str!("../roles/skill-editor/full.md");
     let skill_source_core = include_str!("../modules/skill-source-core/full.md");
+    let harness_placement = include_str!("../modules/harness-placement/full.md");
+    let skills_repo = include_str!("../skills.md");
 
     for source_text in [skill_module, role_module] {
         assert!(source_text.contains("`LiGoldragon/skills` as the canonical skills source"));
@@ -869,6 +882,120 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
     assert!(skill_source_core.contains("source modules"));
     assert!(skill_source_core.contains("role source modules"));
     assert!(skill_source_core.contains("generated runtime targets"));
+    for required in [
+        "Classify each instruction before placing it.",
+        "General doctrine describes behavior\nindependent of a runtime API.",
+        "target-module-insertions.nota",
+        "When no matching target-specific surface exists, omit the rule",
+    ] {
+        assert!(
+            harness_placement.contains(required),
+            "harness placement teaches {required}"
+        );
+    }
+    for required in [
+        "## Harness placement",
+        "manifests/active-outputs.nota",
+        "manifests/module-dependencies.nota",
+        "manifests/target-module-insertions.nota",
+        "AgentsSkill",
+        "ClaudeSkill",
+        "ClaudeAgent",
+        "CodexAgent",
+        "PiAgent",
+        "It has no active `PiAgent` insertion.",
+        "The generator expands dependencies, then appends matching target modules",
+        "When the required\nsurface does not exist, omit the rule",
+    ] {
+        assert!(
+            skills_repo.contains(required),
+            "skills repository harness-placement documentation includes {required}"
+        );
+    }
+}
+
+#[test]
+fn harness_api_fields_do_not_leak_into_general_management_orchestration_doctrine() {
+    let fields = ["turnBudget", "toolBudget", "timeoutMs", "maxRuntimeMs"];
+    for (name, source) in [
+        (
+            "orchestration",
+            include_str!("../modules/orchestration/full.md"),
+        ),
+        (
+            "manager-boundary",
+            include_str!("../modules/manager-boundary/full.md"),
+        ),
+        (
+            "manager-intent-classification",
+            include_str!("../modules/manager-intent-classification/full.md"),
+        ),
+        (
+            "manager-safeguards",
+            include_str!("../modules/manager-safeguards/full.md"),
+        ),
+        (
+            "manager-dispatch",
+            include_str!("../modules/manager-dispatch/full.md"),
+        ),
+        (
+            "manager-liveness",
+            include_str!("../modules/manager-liveness/full.md"),
+        ),
+        (
+            "manager-decisions",
+            include_str!("../modules/manager-decisions/full.md"),
+        ),
+        (
+            "manager-communication",
+            include_str!("../modules/manager-communication/full.md"),
+        ),
+        (
+            "manager-synthesis",
+            include_str!("../modules/manager-synthesis/full.md"),
+        ),
+    ] {
+        for field in fields {
+            assert!(
+                !source.contains(field),
+                "general {name} doctrine leaks harness API field {field}"
+            );
+        }
+    }
+
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("harness-placement profile generates");
+    for path in [
+        ".agents/skills/orchestration/SKILL.md",
+        ".claude/skills/orchestration/SKILL.md",
+        ".pi/agents/manager.md",
+        ".claude/agents/manager.md",
+        ".codex/agents/manager.toml",
+    ] {
+        let output = fixture.read_workspace_file(path).replace("\\n", "\n");
+        for field in fields {
+            assert!(
+                !output.contains(field),
+                "general generated output {path} leaks harness API field {field}"
+            );
+        }
+    }
+    for path in [
+        ".agents/skills/skill-editor/SKILL.md",
+        ".claude/skills/skill-editor/SKILL.md",
+        ".pi/agents/skill-editor.md",
+        ".claude/agents/skill-editor.md",
+        ".codex/agents/skill-editor.toml",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .contains("Classify each instruction before placing it."),
+            "{path} trains the placement test"
+        );
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]

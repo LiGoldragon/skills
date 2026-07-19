@@ -25,6 +25,35 @@ This repo owns source modules, the active output manifest, the module dependency
 - Update hardcoded generation expectations in `tests/generation.rs` when active module membership, role composition, profiles, optional skills, nested-role relations, or universal role modules intentionally change.
 - `generate-skills` may prune generated harness skill surfaces (`.agents/skills`, `.claude/skills`). Role packet target directories are path-owned rather than directory-owned: stale role cleanup uses `skills/generated-role-outputs.nota` and must preserve files that were not listed as generated role outputs. `check-skills` remains non-writing and reports stale archived/deleted skill outputs with update/regenerate/rerun guidance.
 
+## Harness placement
+
+Classify instruction before placement. General doctrine is independent of a
+runtime API. Harness-specific doctrine depends on one harness's API, wrapper, or
+interaction; concrete API fields belong only in a target module selected for that
+harness, never in a shared base or role-composition module.
+
+`manifests/active-outputs.nota` is authoritative for emitted outputs;
+`manifests/module-dependencies.nota` maps source and dependency expansion; and
+`manifests/target-module-insertions.nota` is authoritative for target modules.
+The active skill targets are `AgentsSkill` at `.agents/skills/<name>/SKILL.md`
+and `ClaudeSkill` at `.claude/skills/<name>/SKILL.md`. The active role targets
+are `ClaudeAgent` at `.claude/agents/<role>.md`, `CodexAgent` at
+`.codex/agents/<role>.toml`, and `PiAgent` at `.pi/agents/<role>.md`.
+
+The current insertion index routes `harness-placement` into the
+`skill-editor` `AgentsSkill` and `ClaudeSkill` outputs, the Claude-specific
+`claude-orchestration` module into `orchestration` on `ClaudeSkill` and
+`ClaudeAgent`, and the Codex-specific `codex-skill-loading` module into
+`agent-feedback-loop` on `CodexAgent`. It has no active `PiAgent` insertion.
+The generator expands dependencies, then appends matching target modules while
+assembling each generated file.
+
+Before adding a harness rule, verify its emitted target and insertion in those
+manifests. After generation, verify that it appears in its scoped target and is
+absent from general outputs; run `check-skills` for drift. When the required
+surface does not exist, omit the rule and return the missing target support as a
+placement gap. Do not invent a target, overlay, or example.
+
 ## See also
 
 - `ARCHITECTURE.md` — generator structure, source surfaces, output targets, and invariants.
