@@ -1,4 +1,4 @@
-# Module - Target reply surface
+# Module — Management reply surface
 
 ## Clarification UI
 

@@ -394,7 +394,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "repository-publication",
         "pi-extension-updates",
         "nota-shape-checklist",
-        "orchestration",
+        "management",
     ] {
         assert!(
             active_skill_identifiers.contains(required_skill),
@@ -408,7 +408,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "beads",
         "human-interaction",
         "agent-feedback-loop",
-        "management",
+        "orchestration",
     ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
@@ -490,13 +490,13 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .collect::<Vec<_>>(),
         ["nota-design"]
     );
-    let orchestration_dependency = module_dependencies
+    let management_dependency = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
-        .expect("orchestration dependency indexed");
+        .find(|dependency| dependency.module_identifier.as_ref() == "management")
+        .expect("management dependency indexed");
     assert_eq!(
-        orchestration_dependency
+        management_dependency
             .dependency_modules
             .payload()
             .iter()
@@ -520,7 +520,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         );
     }
     assert!(
-        !orchestration_dependency
+        !management_dependency
             .dependency_modules
             .payload()
             .iter()
@@ -554,14 +554,14 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 vec!["harness-placement"]
             ),
             (
-                "orchestration",
+                "management",
                 skills::schema::assembly::OutputSurface::ClaudeSkill,
-                vec!["claude-orchestration"]
+                vec!["claude-management"]
             ),
             (
-                "orchestration",
+                "management",
                 skills::schema::assembly::OutputSurface::ClaudeAgent,
-                vec!["claude-orchestration"]
+                vec!["claude-management"]
             ),
             (
                 "agent-feedback-loop",
@@ -598,7 +598,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "manager",
             "role-manager",
             &[
-                "orchestration",
+                "management",
                 "manager-boundary",
                 "manager-intent-classification",
                 "manager-safeguards",
@@ -774,13 +774,13 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
     let module_dependencies = NotaSource::new(index_text)
         .parse::<ModuleDependencies>()
         .expect("module dependency index parses");
-    let orchestration = module_dependencies
+    let management = module_dependencies
         .payload()
         .iter()
-        .find(|dependency| dependency.module_identifier.as_ref() == "orchestration")
-        .expect("orchestration dependency indexed");
+        .find(|dependency| dependency.module_identifier.as_ref() == "management")
+        .expect("management dependency indexed");
     assert_eq!(
-        orchestration
+        management
             .dependency_modules
             .payload()
             .iter()
@@ -790,7 +790,7 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
     );
     assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
     assert!(
-        !orchestration
+        !management
             .dependency_modules
             .payload()
             .iter()
@@ -915,13 +915,10 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
 }
 
 #[test]
-fn harness_api_fields_do_not_leak_into_general_management_orchestration_doctrine() {
+fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
     let fields = ["turnBudget", "toolBudget", "timeoutMs", "maxRuntimeMs"];
     for (name, source) in [
-        (
-            "orchestration",
-            include_str!("../modules/orchestration/full.md"),
-        ),
+        ("management", include_str!("../modules/management/full.md")),
         (
             "manager-boundary",
             include_str!("../modules/manager-boundary/full.md"),
@@ -968,8 +965,8 @@ fn harness_api_fields_do_not_leak_into_general_management_orchestration_doctrine
         .generate_from_repo(GenerationMode::Write)
         .expect("harness-placement profile generates");
     for path in [
-        ".agents/skills/orchestration/SKILL.md",
-        ".claude/skills/orchestration/SKILL.md",
+        ".agents/skills/management/SKILL.md",
+        ".claude/skills/management/SKILL.md",
         ".pi/agents/manager.md",
         ".claude/agents/manager.md",
         ".codex/agents/manager.toml",
@@ -1439,9 +1436,9 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 }
 
 #[test]
-fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
-    let orchestration = include_str!("../modules/orchestration/full.md");
-    let claude_orchestration = include_str!("../modules/claude-orchestration/full.md");
+fn management_doctrine_preserves_base_and_composes_manager_safeguards() {
+    let management = include_str!("../modules/management/full.md");
+    let claude_management = include_str!("../modules/claude-management/full.md");
     let manager_role = include_str!("../roles/manager/full.md");
     let manager_modules = [
         (
@@ -1497,12 +1494,12 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
         "Synthesis",
     ] {
         assert!(
-            orchestration.contains(&format!("## {heading}")),
+            management.contains(&format!("## {heading}")),
             "historical base preserves {heading}"
         );
     }
     for required in [
-        "The orchestrator is an intent-only lane.",
+        "The manager is an intent-only lane.",
         "Treat problem reports and frustration as context, not dispatch authority.",
         "Use a read-only Spirit query only when existing intent would resolve a material ambiguity",
         "Use CamelCase Session names and task-specific Lane names.",
@@ -1510,12 +1507,13 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
         "Use a separate auditor only for substantial or consequence-gated completed work",
     ] {
         assert!(
-            orchestration.contains(required),
+            management.contains(required),
             "historical rule preserved: {required}"
         );
     }
-    assert!(claude_orchestration.contains("## Clarification UI"));
-    assert!(manager_role.contains("Apply the preloaded orchestration modules together."));
+    assert!(claude_management.contains("# Module — Management reply surface"));
+    assert!(claude_management.contains("## Clarification UI"));
+    assert!(manager_role.contains("Apply the preloaded management modules together."));
     assert!(
         include_str!("../modules/manager-dispatch/full.md").contains(
             "the historical CamelCase wording means the\ndaemon-compatible PascalCase alphanumeric form"
@@ -1529,22 +1527,33 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
         );
     }
     assert!(
-        !Path::new(env!("CARGO_MANIFEST_DIR"))
+        Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("modules/management/full.md")
             .exists(),
-        "replaced monolithic management source is absent"
+        "management source remains active"
     );
     assert!(
-        !Path::new(env!("CARGO_MANIFEST_DIR"))
+        Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("modules/claude-management/full.md")
             .exists(),
-        "replaced Claude companion source is absent"
+        "management companion source remains active"
     );
+    for retired_source in [
+        "modules/orchestration/full.md",
+        "modules/claude-orchestration/full.md",
+    ] {
+        assert!(
+            !Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join(retired_source)
+                .exists(),
+            "former identity source is absent: {retired_source}"
+        );
+    }
 
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
-        .expect("restored orchestration profile generates");
+        .expect("restored management profile generates");
     for path in [
         ".pi/agents/manager.md",
         ".claude/agents/manager.md",
@@ -1552,7 +1561,7 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
     ] {
         let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
         for required in [
-            "The orchestrator is an intent-only lane.",
+            "The manager is an intent-only lane.",
             "Use `spirit` for read-only intent queries before an intent-grounded judgment",
             "A host reboot is forbidden by default.",
             "Report a worker as running only on fresh positive evidence",
@@ -1579,19 +1588,19 @@ fn orchestration_doctrine_preserves_base_and_composes_manager_safeguards() {
                 "Ask clarification in ordinary chat text instead of multiple-choice, picker, or"
             )
     );
-    assert!(
-        fixture
-            .read_workspace_file(".agents/skills/orchestration/SKILL.md")
-            .contains("The orchestrator is an intent-only lane.")
-    );
-    assert!(
-        !fixture
-            .workspace
-            .path()
-            .join(".agents/skills/management")
-            .exists(),
-        "the replaced management skill output is pruned"
-    );
+    let management_skill = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
+    assert!(management_skill.contains("name: management"));
+    assert!(management_skill.contains("# management"));
+    assert!(management_skill.contains("The manager is an intent-only lane."));
+    for retired_output in [
+        ".agents/skills/orchestration",
+        ".claude/skills/orchestration",
+    ] {
+        assert!(
+            !fixture.workspace.path().join(retired_output).exists(),
+            "former identity output is pruned: {retired_output}"
+        );
+    }
 }
 
 #[test]
@@ -2596,27 +2605,27 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (orchestration orchestration Meta Mechanism [Orchestration skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [orchestration] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (management management Meta Mechanism [Management skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [management] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (orchestration modules/orchestration/full.md [] RuntimeSkill) (claude-orchestration modules/claude-orchestration/full.md [] RuntimeSkill)]\n",
+        "[(worker roles/worker/full.md [] RoleSource) (management modules/management/full.md [] RuntimeSkill) (claude-management modules/claude-management/full.md [] RuntimeSkill)]\n",
     );
     fixture.write_source_file(
         "manifests/target-module-insertions.nota",
-        "[(orchestration ClaudeSkill [claude-orchestration]) (orchestration ClaudeAgent [claude-orchestration])]\n",
+        "[(management ClaudeSkill [claude-management]) (management ClaudeAgent [claude-management])]\n",
     );
     fixture.write_source_file(
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_source_file(
-        "modules/orchestration/full.md",
-        "# Skill - orchestration\n\n## Shared Rule\n\nShared orchestration.\n",
+        "modules/management/full.md",
+        "# Skill - management\n\n## Shared Rule\n\nShared management.\n",
     );
     fixture.write_source_file(
-        "modules/claude-orchestration/full.md",
+        "modules/claude-management/full.md",
         "# Module - Target reply surface\n\n## Clarification UI\n\nTarget overlay.\n",
     );
 
@@ -2624,24 +2633,24 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
         .generate(GenerationMode::Write)
         .expect("target insertions generate");
 
-    let agents_skill = fixture.read_workspace_file(".agents/skills/orchestration/SKILL.md");
-    assert!(agents_skill.contains("Shared orchestration."));
+    let agents_skill = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
+    assert!(agents_skill.contains("Shared management."));
     assert!(!agents_skill.contains("Target overlay."));
 
-    let claude_skill = fixture.read_workspace_file(".claude/skills/orchestration/SKILL.md");
-    assert!(claude_skill.contains("Shared orchestration."));
+    let claude_skill = fixture.read_workspace_file(".claude/skills/management/SKILL.md");
+    assert!(claude_skill.contains("Shared management."));
     assert!(claude_skill.contains("Target overlay."));
 
     let claude_role = fixture.read_workspace_file(".claude/agents/worker.md");
-    assert!(claude_role.contains("Shared orchestration."));
+    assert!(claude_role.contains("Shared management."));
     assert!(claude_role.contains("Target overlay."));
 
     let codex_role = fixture.read_workspace_file(".codex/agents/worker.toml");
-    assert!(codex_role.contains("Shared orchestration."));
+    assert!(codex_role.contains("Shared management."));
     assert!(!codex_role.contains("Target overlay."));
 
     let pi_role = fixture.read_workspace_file(".pi/agents/worker.md");
-    assert!(pi_role.contains("Shared orchestration."));
+    assert!(pi_role.contains("Shared management."));
     assert!(!pi_role.contains("Target overlay."));
 }
 

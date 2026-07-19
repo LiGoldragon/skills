@@ -47,7 +47,7 @@ When several decisions are ready at once, batch them as a numbered
 slate the psyche can answer item by item, and record the graded state
 each lands in: accepted, non-rejection (explicitly not acceptance —
 track for later psyche review), rejection, or hedged lean (preserve
-the hedge verbatim). See `orchestration`.
+the hedge verbatim). See `management`.
 
 ## After the psyche answers
 

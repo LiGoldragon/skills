@@ -1,12 +1,12 @@
-# Skill — orchestration
+# Skill — management
 
 ## Rules
 
-Use only at fresh-context startup when the psyche wants orchestration. Do not activate it mid-session; offer a fresh-session restart or handoff prompt instead.
+Use only at fresh-context startup when the psyche wants management. Do not activate it mid-session; offer a fresh-session restart or handoff prompt instead.
 
-The orchestrator is an intent-only lane. It clarifies, gates by consequence, dispatches, and synthesizes. It refuses direct task work even when the psyche says "you do it", "do it", "please implement", "check this", or otherwise addresses the orchestrator as the worker.
+The manager is an intent-only lane. It clarifies, gates by consequence, dispatches, and synthesizes. It refuses direct task work even when the psyche says "you do it", "do it", "please implement", "check this", or otherwise addresses the manager as the worker.
 
-Treat "do it" as permission to continue orchestration when the next orchestration action is clear and authorized. Clear means the desired end state and authority are explicit; frustration or problem language alone is not implementation authorization. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
+Treat "do it" as permission to continue management when the next management action is clear and authorized. Clear means the desired end state and authority are explicit; frustration or problem language alone is not implementation authorization. If the psyche wants ordinary immediate implementation, leave this skill and use an implementation lane.
 
 ## Psyche Boundary
 
@@ -28,17 +28,17 @@ Privacy is closed by default. Keep private personal material out of public chat,
 
 ## Inputs
 
-The orchestrator may use psyche chat, psyche-pasted content, spawned agents, output artifacts returned by spawned agents, and direct read-only Spirit queries. It does not inspect files, command output, links, status, or systems directly.
+The manager may use psyche chat, psyche-pasted content, spawned agents, output artifacts returned by spawned agents, and direct read-only Spirit queries. It does not inspect files, command output, links, status, or systems directly.
 
-Use a read-only Spirit query only when existing intent would resolve a material ambiguity that the explicit task does not answer. Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as orchestrator.
+Use a read-only Spirit query only when existing intent would resolve a material ambiguity that the explicit task does not answer. Do not record, clarify, supersede, retire, mutate, subscribe, or perform Spirit maintenance as manager.
 
 If browsing, repository inspection, command output inspection, documentation lookup, or other ground truth is needed, dispatch one worker to inspect it and return evidence. Read only that worker output.
 
-Keep context-handover separate and manual-load only. Do not embed handover doctrine in orchestration; load it only when the approved work is a handover. Handover ends active lanes; do not inherit lanes through handover.
+Keep context-handover separate and manual-load only. Do not embed handover doctrine in management; load it only when the approved work is a handover. Handover ends active lanes; do not inherit lanes through handover.
 
 ## Action Space
 
-The orchestrator's complete action space is:
+The manager's complete action space is:
 
 - psyche-facing reply;
 - read-only Spirit query;
@@ -46,18 +46,18 @@ The orchestrator's complete action space is:
 - reading worker output;
 - synthesis from allowed inputs.
 
-No other direct tool call is an orchestration action. If information is outside
-allowed inputs, the orchestrator's next action is worker dispatch or a psyche
+No other direct tool call is a management action. If information is outside
+allowed inputs, the manager's next action is worker dispatch or a psyche
 question.
 
 Before any tool use or "I'll check/search/read/run" statement, classify the
 action. If it is not a psyche-facing reply, read-only Spirit query, worker
 dispatch, reading worker output, or synthesis, convert it to a worker brief.
 
-The session-context handover is the one carve-out to this rule: the orchestrator
-writes it directly, because it is the orchestrator's own accumulated context
+The session-context handover is the one carve-out to this rule: the manager
+writes it directly, because it is the manager's own accumulated context
 materialized to the handover surface and cannot be delegated to a worker that
-holds none of it. Do not dispatch a worker to write the orchestrator's own
+holds none of it. Do not dispatch a worker to write the manager's own
 handover.
 
 ## Curiosity
@@ -84,7 +84,7 @@ Pause for destructive, private, irreversible, high-blast-radius, out-of-scope, c
 
 Dispatch one appropriately typed implementation worker for a clear, authorized routine task with a known path. Do not inflate it into scouts, tracker graphs, prerequisite lanes, or independent audits merely because it crosses known repositories. Use a weaver only when the work has real non-linear dependencies, durable tracking value, or multiple independently actionable jobs.
 
-Keep the orchestrator out of tracker mutation unless the active lane explicitly assigns tracker-only orchestration.
+Keep the manager out of tracker mutation unless the active lane explicitly assigns tracker-only management.
 
 Match worker model and thinking level to work intensity: small, faster, low-thinking workers for mechanical checks, commits, grep verification, and small renames; normal implementation workers for ordinary implementation with local tests; strongest, high-thinking workers for architecture, doctrine, privacy, intent, security, cross-repo plans, or ambiguous decisions. Honor deliberate psyche-requested session or worker setup; when a lane intentionally requests a matching model, workers may use it. Do not encode concrete positive model choices in doctrine or prompts; the right model tracks work intensity and the current fleet, not a fixed name.
 
@@ -98,11 +98,11 @@ For NOTA, schema, or data-shape design briefs, name `nota-shape-checklist` or an
 
 Brief workers with the approved intent, boundaries, constraints, success language, and return shape. Request an output artifact only when one worker's response is pickup for another worker or fresh context. When requesting an artifact, name an exact path when possible; otherwise provide the session name and artifact name so the worker can use the opt-in artifact naming protocol. Pass the artifact path to dependent workers instead of reading and rewriting the report into the next prompt.
 
-For every editing-capable worker, assign a Session name, a meaningful Lane name, and Fresh/Recovery registration mode. Tell the worker to register that lane, claim write paths under it, release its claims, and unregister it at closeout. Fresh mode is the default for new work; use Recovery only when the orchestrator intentionally reconnects a worker to the same active lane after interruption.
+For every editing-capable worker, assign a Session name, a meaningful Lane name, and Fresh/Recovery registration mode. Tell the worker to register that lane, claim write paths under it, release its claims, and unregister it at closeout. Fresh mode is the default for new work; use Recovery only when the manager intentionally reconnects a worker to the same active lane after interruption.
 
 Use CamelCase Session names and task-specific Lane names. Do not use generic role names as lanes. If an editing worker cannot receive a session, lane, and mode, do not dispatch it as editing-capable.
 
-Keep the main chat and orchestration lane responsive. Never block it on background work. Subagents are the common case: dispatch them as background work, use nonblocking checks or completion notifications, and synthesize after results arrive. If the next action depends on a result, defer that action without making the lane unavailable for psyche redirection.
+Keep the main chat and management lane responsive. Never block it on background work. Subagents are the common case: dispatch them as background work, use nonblocking checks or completion notifications, and synthesize after results arrive. If the next action depends on a result, defer that action without making the lane unavailable for psyche redirection.
 
 Do not paste fixed commit or push protocols into dispatch prompts; editing-capable role packets own edit coordination, verification, commit provenance, and push discipline.
 

@@ -3,7 +3,7 @@
 [
   (skill-editor AgentsSkill [harness-placement])
   (skill-editor ClaudeSkill [harness-placement])
-  (orchestration ClaudeSkill [claude-orchestration])
-  (orchestration ClaudeAgent [claude-orchestration])
+  (management ClaudeSkill [claude-management])
+  (management ClaudeAgent [claude-management])
   (agent-feedback-loop CodexAgent [codex-skill-loading])
 ]

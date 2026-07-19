@@ -42,7 +42,7 @@ are `ClaudeAgent` at `.claude/agents/<role>.md`, `CodexAgent` at
 
 The current insertion index routes `harness-placement` into the
 `skill-editor` `AgentsSkill` and `ClaudeSkill` outputs, the Claude-specific
-`claude-orchestration` module into `orchestration` on `ClaudeSkill` and
+`claude-management` module into `management` on `ClaudeSkill` and
 `ClaudeAgent`, and the Codex-specific `codex-skill-loading` module into
 `agent-feedback-loop` on `CodexAgent`. It has no active `PiAgent` insertion.
 The generator expands dependencies, then appends matching target modules while
