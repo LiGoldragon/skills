@@ -126,5 +126,5 @@ Deleted modules are modeled by compatibility checks and emit no surfaces.
 
 ## See Also
 
-- `skills.md` — how to work in this repository.
+- `AGENTS.md` — repository operating rules.
 - `README.md` — command entry points and generated surface overview.

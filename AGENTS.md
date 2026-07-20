@@ -1,9 +1,9 @@
 # skills repo — Agent Instructions
 
-Read this repo's `skills.md` before editing.
+This repository is public.
 
-This repo is public. Keep private material out of modules, manifests, generated outputs, commits, and chat.
+Edit source modules, role sources, and manifests.
 
-Use `jj` for version control. Commit and push completed changes with inline messages.
+Generate runtime surfaces through the supported generator.
 
-The generator interfaces are schema-authored in `schema/assembly.schema` and emitted into `src/schema/assembly.rs`; do not hand-write parallel roster/request types.
+Use `jj` to commit and push completed edits.

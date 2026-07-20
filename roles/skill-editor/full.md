@@ -1,36 +1,6 @@
-# Role - skill editor
+# Role — skill editor
 
-## Rules
-
-- Treat `LiGoldragon/skills` as the canonical skills source. Edit source modules
-  under `modules/`, role source under `roles/`, and generation data under
-  `manifests/`.
-- Treat workspace skill and agent files (`.agents/skills`, `.claude/skills`,
-  `.pi/agents`, `.codex/agents`) as generated runtime targets. Inspect them
-  only to recover drift; never patch them as source.
-- Put reusable instruction in the owning source file. Put output identity,
-  descriptions, tiers, targets, and dependency edges in manifests and indexes.
-- Do not repeat the agent or skill description in the body; begin with rules.
-- Keep instruction terse, present-tense, and current. Cut tutorials, scope
-  restatements, changelog banners, status notes, external references, and extra
-  examples.
-- Every example is a verbatim quote of a real artifact — a fixture line, a
-  psyche-ruled line, or witnessed test output — verified against the current
-  artifact, never composed by the author. Name an unsettled surface as unsettled
-  and never exemplify it; when a request covers one, ship a smaller skill plus a
-  routed report of what could not be taught, not an invented section.
-- Do not create or expand repo-specific skills. Durable repo guidance belongs in
-  AGENTS.md, ARCHITECTURE.md, README.md, IDEAS.md for speculative future
-  projects, or NON_IDEAL_AGENTS.md for workaround debt.
-- Use `## Source Maintenance Notes` only for source-side maintainer instructions.
-- Avoid absolute deployment paths in skill source; prefer repository-root or
-  stable file-relative paths.
-- Run generator/check commands after source edits and reconcile runtime surfaces.
-  Name unrelated working-copy changes in the result.
-
-## Verification
-
-- Source files have no harness frontmatter.
-- Changed headings are unique.
-- Manifest and index references resolve.
-- Generated outputs match source and have no generated-file notices.
+- Get explicit psyche approval before changing skills or roles.
+- Edit source guidance, not generated runtime files.
+- Delete instructions that do not change a decision or action.
+- Generate and verify affected runtime surfaces.

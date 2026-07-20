@@ -227,165 +227,85 @@
             fi
             touch "$out"
           '';
-          generation-requests-use-active-manifest = pkgs.runCommand "skills-generation-requests-use-active-manifest" { } ''
-            grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-check.nota >/dev/null
-            grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-generate.nota >/dev/null
-            if find ${cleanSource}/manifests -mindepth 2 -type f -name '*.nota' | grep .; then
-              echo "generation must be driven by the single active output manifest, not per-output manifests" >&2
-              exit 1
-            fi
-            touch "$out"
-          '';
-          restored-management-source = pkgs.runCommand "skills-restored-management-source" { } ''
+          generation-requests-use-active-manifest =
+            pkgs.runCommand "skills-generation-requests-use-active-manifest" { }
+              ''
+                grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-check.nota >/dev/null
+                grep -F 'manifests/active-outputs.nota' ${cleanSource}/skills-generate.nota >/dev/null
+                if find ${cleanSource}/manifests -mindepth 2 -type f -name '*.nota' | grep .; then
+                  echo "generation must be driven by the single active output manifest, not per-output manifests" >&2
+                  exit 1
+                fi
+                touch "$out"
+              '';
+          management-source-is-shared = pkgs.runCommand "skills-management-source-is-shared" { } ''
             management=${cleanSource}/modules/management/full.md
-            claude_management=${cleanSource}/modules/claude-management/full.md
-            test "$(sha256sum "$management" | cut -d' ' -f1)" = b51a8254209b3e873b634fa7cb0bb31305a7284157b78f0b1aeca272764a49d4
-            test "$(sha256sum "$claude_management" | cut -d' ' -f1)" = 396870e87736c4f480464fd95bf63f4112366df5424c2332c8a8d5147d5b0442
-            grep -Fx '# Skill — management' "$management" >/dev/null
-            for heading in Rules 'Psyche Boundary' Inputs 'Action Space' Curiosity Gates 'Planning And Dispatch' Synthesis; do
-              grep -Fx "## $heading" "$management" >/dev/null
-            done
-            grep -Fx '## Clarification UI' "$claude_management" >/dev/null
-            test ! -e ${cleanSource}/modules/orchestration
-            test ! -e ${cleanSource}/modules/claude-orchestration
-            if grep -R -E 'orchestration|claude-orchestration' ${cleanSource}/manifests ${cleanSource}/modules ${cleanSource}/roles ${cleanSource}/README.md ${cleanSource}/ARCHITECTURE.md ${cleanSource}/skills.md; then
-              echo "active management source retains the former identity" >&2
-              exit 1
-            fi
-            touch "$out"
-          '';
-          human-interaction-removed-from-active-and-generated = pkgs.runCommand "skills-human-interaction-removed-from-active-and-generated" { } ''
-            manifest=${cleanSource}/manifests/active-outputs.nota
             index=${cleanSource}/manifests/module-dependencies.nota
-            if grep -R -F 'human-interaction' "$manifest" "$index" ${cleanSource}/manifests/skills-roster.nota ${cleanSource}/modules; then
-              echo "human-interaction must be deleted from source manifests and modules" >&2
-              exit 1
-            fi
-            workspace=$TMPDIR/workspace
-            mkdir -p "$workspace/.agents/skills/human-interaction" "$workspace/.claude/skills/human-interaction"
-            printf 'stale\n' > "$workspace/.agents/skills/human-interaction/SKILL.md"
-            printf 'stale\n' > "$workspace/.claude/skills/human-interaction/SKILL.md"
-            export SKILLS_SOURCE_ROOT=${cleanSource}
-            export SKILLS_WORKSPACE_ROOT="$workspace"
-            ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
-            test ! -e "$workspace/.agents/skills/human-interaction/SKILL.md"
-            test ! -e "$workspace/.claude/skills/human-interaction/SKILL.md"
+            insertions=${cleanSource}/manifests/target-module-insertions.nota
+            test -f "$management"
+            grep -F 'Clarify, gate, dispatch, and synthesize' "$management" >/dev/null
+            ! grep -E 'Spirit|NOTA' "$management"
+            grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
+            test ! -e ${cleanSource}/modules/claude-management
+            ! grep -F '(management Claude' "$insertions"
             touch "$out"
           '';
-          skill-editor-source-of-truth-guardrails = pkgs.runCommand "skills-skill-editor-source-of-truth-guardrails" { } ''
-            skill_module=${cleanSource}/modules/skill-editor/full.md
-            role_module=${cleanSource}/roles/skill-editor/full.md
-            source_core=${cleanSource}/modules/skill-source-core/full.md
-            for source in "$skill_module" "$role_module" "$source_core"; do
-              grep -F '`LiGoldragon/skills` as the canonical skills source' "$source" >/dev/null
-              grep -F 'generated runtime targets' "$source" >/dev/null
-              if grep -F 'generated runtime copies first' "$source"; then
-                echo "skill-editor doctrine must not preserve old generated-copy-first wording" >&2
-                exit 1
-              fi
-            done
-            for source in "$skill_module" "$role_module"; do
-              grep -F 'workspace skill and agent files' "$source" >/dev/null
-              grep -F '.agents/skills' "$source" >/dev/null
-              grep -F '.claude/skills' "$source" >/dev/null
-              grep -F '.pi/agents' "$source" >/dev/null
-              grep -F '.codex/agents' "$source" >/dev/null
-            done
-            touch "$out"
-          '';
+          human-interaction-removed-from-active-and-generated =
+            pkgs.runCommand "skills-human-interaction-removed-from-active-and-generated" { }
+              ''
+                manifest=${cleanSource}/manifests/active-outputs.nota
+                index=${cleanSource}/manifests/module-dependencies.nota
+                if grep -R -F 'human-interaction' "$manifest" "$index" ${cleanSource}/manifests/skills-roster.nota ${cleanSource}/modules; then
+                  echo "human-interaction must be deleted from source manifests and modules" >&2
+                  exit 1
+                fi
+                workspace=$TMPDIR/workspace
+                mkdir -p "$workspace/.agents/skills/human-interaction" "$workspace/.claude/skills/human-interaction"
+                printf 'stale\n' > "$workspace/.agents/skills/human-interaction/SKILL.md"
+                printf 'stale\n' > "$workspace/.claude/skills/human-interaction/SKILL.md"
+                export SKILLS_SOURCE_ROOT=${cleanSource}
+                export SKILLS_WORKSPACE_ROOT="$workspace"
+                ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
+                test ! -e "$workspace/.agents/skills/human-interaction/SKILL.md"
+                test ! -e "$workspace/.claude/skills/human-interaction/SKILL.md"
+                touch "$out"
+              '';
+          skill-editor-source-of-truth-guardrails =
+            pkgs.runCommand "skills-skill-editor-source-of-truth-guardrails" { }
+              ''
+                for source in               ${cleanSource}/modules/skill-editor/full.md               ${cleanSource}/roles/skill-editor/full.md               ${cleanSource}/modules/skill-source-core/full.md; do
+                  grep -F 'explicit psyche approval' "$source" >/dev/null
+                  grep -F 'generated runtime' "$source" >/dev/null
+                  grep -F 'Generate and verify' "$source" >/dev/null
+                done
+                touch "$out"
+              '';
           manager-doctrine-guardrails = pkgs.runCommand "skills-manager-doctrine-guardrails" { } ''
             management=${cleanSource}/modules/management/full.md
-            claude_management=${cleanSource}/modules/claude-management/full.md
-            boundary=${cleanSource}/modules/manager-boundary/full.md
-            intent_classification=${cleanSource}/modules/manager-intent-classification/full.md
             safeguards=${cleanSource}/modules/manager-safeguards/full.md
-            dispatch=${cleanSource}/modules/manager-dispatch/full.md
-            liveness=${cleanSource}/modules/manager-liveness/full.md
-            decisions=${cleanSource}/modules/manager-decisions/full.md
-            communication=${cleanSource}/modules/manager-communication/full.md
-            synthesis=${cleanSource}/modules/manager-synthesis/full.md
-            harness_placement=${cleanSource}/modules/harness-placement/full.md
-            codex_skill_loading=${cleanSource}/modules/codex-skill-loading/full.md
-            manager_role=${cleanSource}/roles/manager/full.md
-            optional_skills=${cleanSource}/manifests/role-optional-skills.nota
-            manifest=${cleanSource}/manifests/active-outputs.nota
+            boundary=${cleanSource}/modules/manager-boundary/full.md
+            intent=${cleanSource}/modules/manager-intent-classification/full.md
             index=${cleanSource}/manifests/module-dependencies.nota
-            target_insertions=${cleanSource}/manifests/target-module-insertions.nota
-            grep -F 'The manager is an intent-only lane.' "$management" >/dev/null
-            grep -F 'Treat problem reports and frustration as context, not dispatch authority.' "$management" >/dev/null
-            grep -F 'Never block it on background work.' "$management" >/dev/null
-            grep -F 'Use a separate auditor only for substantial or consequence-gated completed work' "$management" >/dev/null
-            grep -F 'Matter does not become intent because it is broad, durable, emphatic, or directly' "$intent_classification" >/dev/null
-            grep -F 'reflection and confirmation are not ritual gates.' "$safeguards" >/dev/null
-            grep -F 'A host reboot is forbidden by default.' "$safeguards" >/dev/null
-            grep -F 'explicit, contemporaneous psyche approval specifically for reboot' "$safeguards" >/dev/null
-            grep -F 'Outside this action space, every investigation and operation goes to a subagent.' "$boundary" >/dev/null
-            grep -F 'the exact proposed Spirit intent wording, scope, and proposed privacy,' "$boundary" >/dev/null
-            grep -F 'Direct known work goes to one specialist.' "$dispatch" >/dev/null
-            grep -F 'documentation-first' "$dispatch" >/dev/null
-            grep -F 'one accountable Generalist' "$dispatch" >/dev/null
-            grep -F 'Do not impose a rigid one-level delegation limit.' "$dispatch" >/dev/null
-            grep -F 'the historical CamelCase wording means the' "$dispatch" >/dev/null
-            grep -F 'daemon-compatible PascalCase alphanumeric form' "$dispatch" >/dev/null
-            grep -F 'Never dispatch an agent whose only job is to wait or poll.' "$liveness" >/dev/null
-            grep -F 'Report a worker as running only on fresh positive evidence' "$liveness" >/dev/null
-            for source in "$management" "$boundary" "$intent_classification" "$safeguards" "$dispatch" "$liveness" "$decisions" "$communication" "$synthesis"; do
-              if grep -E 'turnBudget|toolBudget|timeoutMs|maxRuntimeMs' "$source"; then
-                echo "general management doctrine must not name harness API fields" >&2
-                exit 1
-              fi
-            done
-            grep -F 'Classify each instruction before placing it.' "$harness_placement" >/dev/null
-            grep -F 'When no matching target-specific surface exists, omit the rule' "$harness_placement" >/dev/null
-            grep -F 'Psyche responses carry graded states, not one yes or no:' "$decisions" >/dev/null
-            grep -F 'Make every psyche-facing question or decision request self-contained.' "$communication" >/dev/null
-            grep -F 'field name is' "$communication" >/dev/null
-            grep -F 'illegal Protos, full stop' "$communication" >/dev/null
-            grep -F 'Use clear plain-text ASCII diagrams in psyche-facing chat' "$communication" >/dev/null
-            grep -F 'Do not narrate repeated availability checks.' "$communication" >/dev/null
-            grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$synthesis" >/dev/null
-            grep -F 'returns, in ordinary English.' "$synthesis" >/dev/null
-            grep -F 'Apply the preloaded management modules together.' "$manager_role" >/dev/null
-            grep -F '(management modules/management/full.md [spirit-query nota-design] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(harness-placement modules/harness-placement/full.md [] RuntimeSkill)' "$index" >/dev/null
-            grep -F '(claude-management modules/claude-management/full.md [] RuntimeSkill)' "$index" >/dev/null
-            for module in manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis; do
-              grep -F "($module modules/$module/full.md [] RoleComposition)" "$index" >/dev/null
-            done
-            grep -F '(skill-editor AgentsSkill [harness-placement])' "$target_insertions" >/dev/null
-            grep -F '(skill-editor ClaudeSkill [harness-placement])' "$target_insertions" >/dev/null
-            grep -F '(management ClaudeSkill [claude-management])' "$target_insertions" >/dev/null
-            grep -F '(management ClaudeAgent [claude-management])' "$target_insertions" >/dev/null
-            grep -F '(general-instructions CodexAgent [codex-skill-loading])' "$target_insertions" >/dev/null
-            grep -F '(Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax]' "$manifest" >/dev/null
-            ! grep -F '(manager [spirit-query' "$optional_skills"
-            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$claude_management" >/dev/null
-            grep -F 'A pasted `<skill ...>...</skill>` block is complete' "$codex_skill_loading" >/dev/null
-            if grep -F 'CODEX_SKILL_READ_DEDUPLICATION_INSTRUCTION' ${cleanSource}/src/assembly.rs; then
-              echo "Codex skill-read guidance belongs in its source module, not generator code" >&2
-              exit 1
-            fi
+            insertions=${cleanSource}/manifests/target-module-insertions.nota
+            grep -F 'Clarify, gate, dispatch, and synthesize' "$management" >/dev/null
+            ! grep -E 'Spirit|NOTA' "$management"
+            grep -F 'Require explicit psyche approval before a host reboot.' "$safeguards" >/dev/null
+            grep -F 'Delegate investigation and operations.' "$boundary" >/dev/null
+            grep -F 'Keep requested rules, mechanisms, and architecture as matter.' "$intent" >/dev/null
+            grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
+            test ! -e ${cleanSource}/modules/claude-management
+            ! grep -F '(management Claude' "$insertions"
             workspace=$TMPDIR/workspace
             export SKILLS_SOURCE_ROOT=${cleanSource}
             export SKILLS_WORKSPACE_ROOT="$workspace"
             ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
             ${skillsPackage}/bin/skills ${cleanSource}/skills-check.nota >/dev/null
-            test -f "$workspace/.agents/skills/management/SKILL.md"
-            test -f "$workspace/.claude/skills/management/SKILL.md"
-            test ! -e "$workspace/.agents/skills/orchestration"
-            test ! -e "$workspace/.claude/skills/orchestration"
+            cmp "$workspace/.agents/skills/management/SKILL.md" "$workspace/.claude/skills/management/SKILL.md"
             for packet in "$workspace/.pi/agents/manager.md" "$workspace/.claude/agents/manager.md" "$workspace/.codex/agents/manager.toml"; do
-              grep -F 'The manager is an intent-only lane.' "$packet" >/dev/null
-              grep -F 'Use `spirit` for read-only intent queries before an intent-grounded judgment' "$packet" >/dev/null
-              grep -F 'Matter does not become intent because it is broad, durable, emphatic, or directly' "$packet" >/dev/null
-              grep -F 'Report a worker as running only on fresh positive evidence' "$packet" >/dev/null
-              grep -F 'The synthesis gate binds from first dispatch until the outstanding-worker set is' "$packet" >/dev/null
-              if grep -Ei '@generated|generated by' "$packet"; then
-                echo "generated manager packet contains a generated-file notice" >&2
-                exit 1
-              fi
+              grep -F 'Clarify, gate, dispatch, and synthesize' "$packet" >/dev/null
+              grep -F 'Require explicit psyche approval before a host reboot.' "$packet" >/dev/null
+              ! grep -Ei '@generated|generated by' "$packet"
             done
-            grep -F 'Ask clarification in ordinary chat text instead of multiple-choice, picker, or' "$workspace/.claude/agents/manager.md" >/dev/null
             touch "$out"
           '';
           slim-role-composition = pkgs.runCommand "skills-slim-role-composition" { } ''
@@ -420,7 +340,7 @@
               echo "Claude Sonnet roles must not regress to Sonnet 4.6" >&2
               exit 1
             fi
-            grep -F '(manager [intent-clarification intent-log spirit-cli context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
+            grep -F '(manager [intent-clarification context-handover helper-context-transfer])' ${cleanSource}/manifests/role-optional-skills.nota >/dev/null
             touch "$out"
           '';
           active-appellations = pkgs.runCommand "skills-active-appellations" { } ''

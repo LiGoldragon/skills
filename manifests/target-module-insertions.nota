@@ -3,7 +3,5 @@
 [
   (skill-editor AgentsSkill [harness-placement])
   (skill-editor ClaudeSkill [harness-placement])
-  (management ClaudeSkill [claude-management])
-  (management ClaudeAgent [claude-management])
   (general-instructions CodexAgent [codex-skill-loading])
 ]

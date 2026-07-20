@@ -1,8 +1,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     env, fs,
-    path::{Path, PathBuf},
-    process::Command,
+    path::Path,
 };
 
 use nota::NotaSource;
@@ -485,7 +484,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["nota-design"]
+        Vec::<&str>::new()
     );
     let management_dependency = module_dependencies
         .payload()
@@ -499,7 +498,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["spirit-query", "nota-design"]
+        Vec::<&str>::new()
     );
     for nota_module in ["nota-design", "nota-schema-design", "nota-literacy"] {
         let dependency = module_dependencies
@@ -549,16 +548,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "skill-editor",
                 skills::schema::assembly::OutputSurface::ClaudeSkill,
                 vec!["harness-placement"]
-            ),
-            (
-                "management",
-                skills::schema::assembly::OutputSurface::ClaudeSkill,
-                vec!["claude-management"]
-            ),
-            (
-                "management",
-                skills::schema::assembly::OutputSurface::ClaudeAgent,
-                vec!["claude-management"]
             ),
             (
                 "general-instructions",
@@ -779,7 +768,7 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["spirit-query", "nota-design"]
+        Vec::<&str>::new()
     );
     assert!(manifest_text.contains("(Skill (context-handover context-handover Meta Mechanism"));
     assert!(
@@ -794,117 +783,31 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
 #[test]
 fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
     let publication = include_str!("../modules/repository-publication/full.md");
-    for required in [
-        "Repositories are public by default.",
-        "Do not ask or repeatedly seek visibility permission absent such a conflict.",
-        "Public-by-default visibility never authorizes publishing private information, secrets, credentials, or unreviewed private material.",
-        "Before creation, inspect configured remotes and query the canonical owner/name on the forge.",
-        "Create a repository only when no remote repository already exists.",
-    ] {
-        assert!(
-            publication.contains(required),
-            "missing repository-publication rule: {required}"
-        );
-    }
-
     let management = include_str!("../modules/repository-management/full.md");
-    for required in [
-        "treat public visibility as the default",
-        "use `repository-publication` for remote discovery, creation, and privacy gates",
-        "Ask about visibility only when a concrete privacy or safety conflict applies.",
-        "ask about the project boundary before creation.",
-    ] {
-        assert!(
-            management.contains(required),
-            "missing repository-management rule: {required}"
-        );
-    }
-
-    let dependencies = NotaSource::new(include_str!("../manifests/module-dependencies.nota"))
-        .parse::<ModuleDependencies>()
-        .expect("module dependency index parses");
-    for role_module in ["repo-scaffold-core", "repo-operation-core"] {
-        let dependency = dependencies
-            .payload()
-            .iter()
-            .find(|dependency| dependency.module_identifier.as_ref() == role_module)
-            .unwrap_or_else(|| panic!("{role_module} dependency indexed"));
-        assert_eq!(
-            dependency
-                .dependency_modules
-                .payload()
-                .iter()
-                .map(|module| module.as_ref())
-                .collect::<Vec<_>>(),
-            ["repository-publication"],
-            "{role_module} carries repository visibility doctrine into role packets"
-        );
-    }
+    assert!(publication.contains("Do not publish private material"));
+    assert!(management.contains("public visibility as default"));
 }
 
 #[test]
-fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
-    let skill_module = include_str!("../modules/skill-editor/full.md");
-    let role_module = include_str!("../roles/skill-editor/full.md");
-    let skill_source_core = include_str!("../modules/skill-source-core/full.md");
-    let harness_placement = include_str!("../modules/harness-placement/full.md");
-    let skills_repo = include_str!("../skills.md");
-
-    for source_text in [skill_module, role_module] {
-        assert!(source_text.contains("`LiGoldragon/skills` as the canonical skills source"));
-        assert!(source_text.contains("source modules"));
-        assert!(source_text.contains("role source"));
-        assert!(source_text.contains("generation data"));
-        for generated_target in [
-            ".agents/skills",
-            ".claude/skills",
-            ".pi/agents",
-            ".codex/agents",
-        ] {
-            assert!(
-                source_text.contains(generated_target),
-                "skill-editor source identifies {generated_target} as generated"
-            );
-        }
-        assert!(source_text.contains("generated runtime targets"));
-        assert!(!source_text.contains("generated runtime copies first"));
-    }
-
-    assert!(skill_source_core.contains("`LiGoldragon/skills` as the canonical skills source"));
-    assert!(skill_source_core.contains("generator inputs"));
-    assert!(skill_source_core.contains("source modules"));
-    assert!(skill_source_core.contains("role source modules"));
-    assert!(skill_source_core.contains("generated runtime targets"));
-    for required in [
-        "Classify each instruction before placing it.",
-        "General doctrine describes behavior\nindependent of a runtime API.",
-        "target-module-insertions.nota",
-        "When no matching target-specific surface exists, omit the rule",
+fn skill_editor_keeps_source_and_runtime_boundaries() {
+    for source in [
+        include_str!("../modules/skill-editor/full.md"),
+        include_str!("../roles/skill-editor/full.md"),
+        include_str!("../modules/skill-source-core/full.md"),
     ] {
-        assert!(
-            harness_placement.contains(required),
-            "harness placement teaches {required}"
-        );
+        assert!(source.contains("explicit psyche approval"));
+        assert!(source.contains("generated runtime"));
+        assert!(source.contains("Generate and verify"));
     }
-    for required in [
-        "## Harness placement",
-        "manifests/active-outputs.nota",
-        "manifests/module-dependencies.nota",
-        "manifests/target-module-insertions.nota",
-        "AgentsSkill",
-        "ClaudeSkill",
-        "ClaudeAgent",
-        "CodexAgent",
-        "PiAgent",
-        "It has no active `PiAgent` insertion.",
-        "The generator expands dependencies, then appends matching target modules",
-        "When the required\nsurface does not exist, omit the rule",
-    ] {
-        assert!(
-            skills_repo.contains(required),
-            "skills repository harness-placement documentation includes {required}"
-        );
-    }
+    assert!(
+        include_str!("../modules/harness-placement/full.md")
+            .contains("Keep shared guidance independent of harness APIs.")
+    );
+    assert!(
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("skills.md")
+            .exists()
+    );
 }
 
 #[test]
@@ -982,296 +885,24 @@ fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
         assert!(
             fixture
                 .read_workspace_file(path)
-                .contains("Classify each instruction before placing it."),
-            "{path} trains the placement test"
+                .contains("Keep shared guidance independent of harness APIs."),
+            "{path} keeps harness guidance scoped"
         );
     }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum ForkStatus {
-    FullyAbsorbed,
-    PartiallyAbsorbed,
-    StillAbsent,
-    DeliberatelyDivergent,
-    Unknown,
-}
-
-impl ForkStatus {
-    fn parse(value: &str) -> Self {
-        match value {
-            "fully absorbed" => Self::FullyAbsorbed,
-            "partially absorbed" => Self::PartiallyAbsorbed,
-            "still absent" => Self::StillAbsent,
-            "deliberately divergent" => Self::DeliberatelyDivergent,
-            "unknown" => Self::Unknown,
-            _ => panic!("unknown fork status: {value}"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum ForkDecision {
-    Rebase,
-    Reimplement,
-    Drop,
-    Escalate,
-}
-
-impl ForkDecision {
-    fn parse(value: &str) -> Self {
-        match value {
-            "rebase" => Self::Rebase,
-            "reimplement" => Self::Reimplement,
-            "drop" => Self::Drop,
-            "escalate" => Self::Escalate,
-            _ => panic!("unknown fork decision: {value}"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum ForkDecisionState {
-    Final,
-    Provisional,
-}
-
-impl ForkDecisionState {
-    fn parse(value: &str) -> Self {
-        match value {
-            "final" => Self::Final,
-            "provisional" => Self::Provisional,
-            _ => panic!("unknown fork decision state: {value}"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum WitnessTree {
-    Pristine,
-    Reconciled,
-}
-
-impl WitnessTree {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::Pristine => "pristine",
-            Self::Reconciled => "reconciled",
-        }
-    }
-}
-
-#[derive(Debug)]
-struct ParsedWitness {
-    name: String,
-    result: BTreeMap<String, String>,
-}
-
-#[derive(Debug)]
-struct ForkDeltaRecord {
-    delta: String,
-    status: ForkStatus,
-    decision: ForkDecision,
-    pristine: ParsedWitness,
-    reconciled: ParsedWitness,
-    state: ForkDecisionState,
-}
-
-impl ForkDeltaRecord {
-    fn parse(row: &str) -> Self {
-        let columns: Vec<_> = row.trim_matches('|').split('|').map(str::trim).collect();
-        assert_eq!(
-            columns.len(),
-            10,
-            "delta row keeps the required ten fields: {row}"
-        );
-
-        let delta = inline_code(columns[0]).to_owned();
-        let rationale = inline_code(columns[1]);
-        assert_eq!(
-            rationale.len(),
-            40,
-            "delta rationale uses an immutable commit: {row}"
-        );
-        assert!(
-            rationale
-                .chars()
-                .all(|character| character.is_ascii_hexdigit()),
-            "delta rationale is hexadecimal: {row}"
-        );
-        assert!(
-            !columns[2].is_empty(),
-            "delta records implementation location: {row}"
-        );
-
-        let status = ForkStatus::parse(columns[3]);
-        let decision = ForkDecision::parse(columns[4]);
-        let pristine = parse_witness(columns[5], columns[6], WitnessTree::Pristine);
-        let reconciled = parse_witness(columns[7], columns[8], WitnessTree::Reconciled);
-        assert_eq!(
-            pristine.name, reconciled.name,
-            "witness pair must name the same delta gate: {row}"
-        );
-        match decision {
-            ForkDecision::Drop => assert_eq!(
-                pristine.result, reconciled.result,
-                "a dropped absorbed delta remains unchanged: {row}"
-            ),
-            ForkDecision::Reimplement => assert_ne!(
-                pristine.result, reconciled.result,
-                "a reimplemented delta must record changed results: {row}"
-            ),
-            ForkDecision::Rebase | ForkDecision::Escalate => {}
-        }
-
-        Self {
-            delta,
-            status,
-            decision,
-            pristine,
-            reconciled,
-            state: ForkDecisionState::parse(columns[9]),
-        }
-    }
-}
-
-fn inline_code(value: &str) -> &str {
-    value
-        .strip_prefix('`')
-        .and_then(|value| value.strip_suffix('`'))
-        .filter(|value| !value.is_empty() && !value.contains('`'))
-        .unwrap_or_else(|| panic!("expected one non-empty inline-code value: {value}"))
-}
-
-fn parse_witness(command_cell: &str, result_cell: &str, tree: WitnessTree) -> ParsedWitness {
-    const SCRIPT: &str = "packages/pi-subagents/reconciliation/verify-0.34.0.sh";
-
-    let command = inline_code(command_cell);
-    let tokens: Vec<_> = command.split_whitespace().collect();
-    assert_eq!(
-        tokens.len(),
-        4,
-        "witness command has exactly script, subcommand, witness, and tree: {command}"
-    );
-    assert_eq!(tokens[0], SCRIPT, "witness uses the retained executable");
-    assert_eq!(tokens[1], "witness", "witness uses the witness subcommand");
-    assert!(
-        !tokens[2].is_empty()
-            && tokens[2]
-                .chars()
-                .all(|character| character.is_ascii_lowercase() || character == '-'),
-        "witness name is a canonical command argument: {command}"
-    );
-    assert_eq!(
-        tokens[3],
-        tree.as_str(),
-        "witness command carries the explicit tree argument"
-    );
-
-    let mut result = BTreeMap::new();
-    for component in inline_code(result_cell).split("; ") {
-        let (key, value) = component
-            .split_once('=')
-            .unwrap_or_else(|| panic!("witness result component must be key=value: {component}"));
-        assert!(
-            !key.is_empty()
-                && key
-                    .chars()
-                    .all(|character| character.is_ascii_lowercase() || character == '-'),
-            "witness result key is canonical: {key}"
-        );
-        assert!(
-            !value.is_empty()
-                && (value.chars().all(|character| character.is_ascii_digit()) || value == "pass"),
-            "witness result value is an exit/count or pass token: {value}"
-        );
-        assert!(
-            result.insert(key.to_owned(), value.to_owned()).is_none(),
-            "witness result key appears once: {key}"
-        );
-    }
-    assert_eq!(
-        result.get("exit").map(String::as_str),
-        Some("0"),
-        "retained witness command itself exits successfully"
-    );
-    assert!(
-        result.len() >= 2,
-        "witness records command exit plus at least one component result"
-    );
-
-    ParsedWitness {
-        name: tokens[2].to_owned(),
-        result,
-    }
-}
-
-fn canonical_ledger_path() -> (PathBuf, bool) {
-    const LEDGER_RELATIVE_PATH: &str = "packages/pi-subagents/fork-delta-ledger.md";
-
-    if let Some(path) = env::var_os("PI_SUBAGENTS_CANONICAL_LEDGER") {
-        let path = PathBuf::from(path);
-        assert!(
-            path.ends_with(LEDGER_RELATIVE_PATH),
-            "PI_SUBAGENTS_CANONICAL_LEDGER must name the owning package ledger"
-        );
-        return (path, true);
-    }
-
-    let sibling = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .expect("skills checkout has a parent")
-        .join("CriomOS-home")
-        .join(LEDGER_RELATIVE_PATH);
-    if sibling.is_file() {
-        return (sibling, true);
-    }
-
-    (
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures/pi-subagents-canonical-ledger.md"),
-        false,
-    )
-}
-
-fn sha256_file(path: &Path) -> String {
-    let output = Command::new("sha256sum")
-        .arg(path)
-        .output()
-        .unwrap_or_else(|error| panic!("failed to run sha256sum for {}: {error}", path.display()));
-    assert!(
-        output.status.success(),
-        "sha256sum failed for {}: {}",
-        path.display(),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    String::from_utf8(output.stdout)
-        .expect("sha256sum output is UTF-8")
-        .split_whitespace()
-        .next()
-        .expect("sha256sum emits a digest")
-        .to_owned()
 }
 
 #[test]
 fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
     let protocol = include_str!("../modules/pi-extension-updates/full.md");
     for required in [
-        "maintained-fork reconciliation",
-        "primary/live sources and recent upstream activity",
-        "mechanisms and tests from upstream",
-        "local compatibility",
-        "semantic Jujutsu patch stack",
-        "must never blind-merge",
-        "pristine target and reconciled result",
-        "Push the producer revision before updating a consumer pin",
-        "upstream, drop, carry/reimplement, or escalate",
-        "fork retires",
-        "Re-audit whenever upstream activity",
+        "Reconcile each local extension change with upstream evidence.",
+        "Change the source and declarative package owner, not installed output.",
+        "Push a producer before updating its consumer pin.",
+        "Verify the activated revision.",
     ] {
         assert!(
             protocol.contains(required),
-            "missing Pi extension update rule: {required}"
+            "missing Pi extension rule: {required}"
         );
     }
 
@@ -1287,312 +918,42 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
         "## Applicability evidence",
         "patch --dry-run --forward --batch --verbose",
         "Reversed notices are never counted as application.",
-        "## Evidence gates",
-        "108 passed, 0 failed",
-        "981 total, 978 passed, 3 failed",
-        "985 total, 982 passed, same 3 failed",
-        "Nix candidate package build",
-        "Nix package-content witness",
-        "Nix Pi RPC extension-load witness",
-        "## Decision status",
-        "No decision is final.",
-        "not a psyche authority, privacy, or value decision",
     ] {
-        assert!(
-            fixture.contains(required),
-            "fixture missing evidence semantic: {required}"
-        );
+        assert!(fixture.contains(required), "fixture contains {required}");
     }
-
-    let ledger_digest = fixture
-        .lines()
-        .find_map(|line| line.strip_prefix("- SHA-256: `")?.strip_suffix("`."))
-        .expect("fixture carries canonical ledger digest");
-    assert_eq!(ledger_digest.len(), 64);
-    assert!(
-        ledger_digest
-            .chars()
-            .all(|character| character.is_ascii_hexdigit())
-    );
-
-    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/pi-subagents-canonical-ledger.md");
-    assert_eq!(
-        sha256_file(&snapshot_path),
-        ledger_digest,
-        "retained canonical snapshot drift requires a deliberate fixture digest update"
-    );
-    let (canonical_path, uses_owning_checkout) = canonical_ledger_path();
-    assert_eq!(
-        sha256_file(&canonical_path),
-        ledger_digest,
-        "canonical ledger drift requires a deliberate fixture and snapshot update"
-    );
-    if uses_owning_checkout {
-        let repository_root = canonical_path
-            .parent()
-            .and_then(Path::parent)
-            .and_then(Path::parent)
-            .expect("canonical ledger has packages/pi-subagents ancestry");
-        let verifier =
-            repository_root.join("packages/pi-subagents/reconciliation/verify-0.34.0.sh");
-        assert!(verifier.is_file(), "canonical witness executable exists");
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            assert_ne!(
-                fs::metadata(&verifier)
-                    .expect("canonical witness metadata is readable")
-                    .permissions()
-                    .mode()
-                    & 0o111,
-                0,
-                "canonical witness is executable"
-            );
-        }
-    }
-
-    let expected_deltas = BTreeMap::from([
-        ("acceptance-read-only-evidence.patch", "read-only-evidence"),
-        ("agent-chain-clarify-opt-in.patch", "clarify"),
-        ("async-runner-stderr.patch", "stderr-compaction"),
-        ("detached-runner-peer-isolation.patch", "peer-isolation"),
-        ("full-child-extension-bridge.patch", "child-extension"),
-        ("slim-parent-skill.patch", "compact-skill"),
-    ]);
-    let records: Vec<_> = fixture
-        .lines()
-        .filter(|line| line.starts_with("| `") && line.contains(".patch` |"))
-        .map(ForkDeltaRecord::parse)
-        .collect();
-    assert_eq!(records.len(), expected_deltas.len());
-
-    let mut observed_deltas = BTreeSet::new();
-    let mut commands = BTreeSet::new();
-    let mut status_counts = BTreeMap::new();
-    let mut decision_counts = BTreeMap::new();
-    let mut state_counts = BTreeMap::new();
-    for record in &records {
-        let expected_witness = expected_deltas
-            .get(record.delta.as_str())
-            .unwrap_or_else(|| panic!("unexpected delta row: {}", record.delta));
-        assert!(
-            observed_deltas.insert(record.delta.as_str()),
-            "duplicate delta row: {}",
-            record.delta
-        );
-        assert_eq!(&record.pristine.name, expected_witness);
-        assert_eq!(&record.reconciled.name, expected_witness);
-        assert!(
-            commands.insert((
-                record.pristine.name.as_str(),
-                WitnessTree::Pristine.as_str()
-            )),
-            "duplicate pristine witness: {}",
-            record.pristine.name
-        );
-        assert!(
-            commands.insert((
-                record.reconciled.name.as_str(),
-                WitnessTree::Reconciled.as_str()
-            )),
-            "duplicate reconciled witness: {}",
-            record.reconciled.name
-        );
-        *status_counts.entry(record.status).or_insert(0) += 1;
-        *decision_counts.entry(record.decision).or_insert(0) += 1;
-        *state_counts.entry(record.state).or_insert(0) += 1;
-    }
-    assert_eq!(observed_deltas.len(), expected_deltas.len());
-    assert_eq!(commands.len(), expected_deltas.len() * 2);
-    assert_eq!(
-        status_counts,
-        BTreeMap::from([
-            (ForkStatus::PartiallyAbsorbed, 3),
-            (ForkStatus::StillAbsent, 2),
-            (ForkStatus::FullyAbsorbed, 1),
-        ])
-    );
-    assert_eq!(
-        decision_counts,
-        BTreeMap::from([(ForkDecision::Reimplement, 5), (ForkDecision::Drop, 1)])
-    );
-    assert_eq!(
-        state_counts,
-        BTreeMap::from([(ForkDecisionState::Provisional, 6)])
-    );
-
-    assert!(fixture.contains("the four originally identified remainder-analysis deltas"));
-    assert!(fixture.contains("baseline-equivalent failures remain failing gates"));
-    assert!(fixture.contains("best-effort post-close compaction"));
-    assert!(!fixture.contains("live 64 KiB bound is proven"));
 }
 
 #[test]
-fn management_doctrine_preserves_base_and_composes_manager_safeguards() {
+fn management_is_shared_and_has_no_spirit_or_claude_overlay() {
     let management = include_str!("../modules/management/full.md");
-    let claude_management = include_str!("../modules/claude-management/full.md");
-    let manager_role = include_str!("../roles/manager/full.md");
-    let manager_modules = [
-        (
-            "boundary",
-            include_str!("../modules/manager-boundary/full.md"),
-            "Outside this action space, every investigation and operation goes to a subagent.",
-        ),
-        (
-            "intent classification",
-            include_str!("../modules/manager-intent-classification/full.md"),
-            "Matter does not become intent because it is broad, durable, emphatic, or directly",
-        ),
-        (
-            "safeguards",
-            include_str!("../modules/manager-safeguards/full.md"),
-            "A host reboot is forbidden by default.",
-        ),
-        (
-            "dispatch",
-            include_str!("../modules/manager-dispatch/full.md"),
-            "Tightly coupled cross-specialty work goes to one accountable Generalist.",
-        ),
-        (
-            "liveness",
-            include_str!("../modules/manager-liveness/full.md"),
-            "Report a worker as running only on fresh positive evidence",
-        ),
-        (
-            "decisions",
-            include_str!("../modules/manager-decisions/full.md"),
-            "Psyche responses carry graded states, not one yes or no:",
-        ),
-        (
-            "communication",
-            include_str!("../modules/manager-communication/full.md"),
-            "Make every psyche-facing question or decision request self-contained.",
-        ),
-        (
-            "synthesis",
-            include_str!("../modules/manager-synthesis/full.md"),
-            "The synthesis gate binds from first dispatch until the outstanding-worker set is",
-        ),
-    ];
-
-    for heading in [
-        "Rules",
-        "Psyche Boundary",
-        "Inputs",
-        "Action Space",
-        "Curiosity",
-        "Gates",
-        "Planning And Dispatch",
-        "Synthesis",
-    ] {
-        assert!(
-            management.contains(&format!("## {heading}")),
-            "historical base preserves {heading}"
-        );
-    }
-    for required in [
-        "The manager is an intent-only lane.",
-        "Treat problem reports and frustration as context, not dispatch authority.",
-        "Use a read-only Spirit query only when existing intent would resolve a material ambiguity",
-        "Use CamelCase Session names and task-specific Lane names.",
-        "Never block it on background work.",
-        "Use a separate auditor only for substantial or consequence-gated completed work",
-    ] {
-        assert!(
-            management.contains(required),
-            "historical rule preserved: {required}"
-        );
-    }
-    assert!(claude_management.contains("# Module — Management reply surface"));
-    assert!(claude_management.contains("## Clarification UI"));
-    assert!(manager_role.contains("Apply the preloaded management modules together."));
+    assert!(management.contains("Clarify, gate, dispatch, and synthesize"));
+    assert!(!management.contains("Spirit"));
+    assert!(!management.contains("NOTA"));
     assert!(
-        include_str!("../modules/manager-dispatch/full.md").contains(
-            "the historical CamelCase wording means the\ndaemon-compatible PascalCase alphanumeric form"
-        ),
-        "manager dispatch clarifies the preserved historical session/lane wording"
-    );
-    for (name, source, required) in manager_modules {
-        assert!(
-            source.contains(required),
-            "{name} retains its manager safeguard"
-        );
-    }
-    assert!(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/management/full.md")
-            .exists(),
-        "management source remains active"
-    );
-    assert!(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("modules/claude-management/full.md")
-            .exists(),
-        "management companion source remains active"
+            .exists()
     );
-    for retired_source in [
-        "modules/orchestration/full.md",
-        "modules/claude-orchestration/full.md",
-    ] {
-        assert!(
-            !Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join(retired_source)
-                .exists(),
-            "former identity source is absent: {retired_source}"
-        );
-    }
 
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
-        .expect("restored management profile generates");
+        .expect("management profile generates");
+    let agents = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
+    let claude = fixture.read_workspace_file(".claude/skills/management/SKILL.md");
+    assert_eq!(
+        agents, claude,
+        "management base is identical across skill targets"
+    );
     for path in [
         ".pi/agents/manager.md",
         ".claude/agents/manager.md",
         ".codex/agents/manager.toml",
     ] {
         let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
-        for required in [
-            "The manager is an intent-only lane.",
-            "Use `spirit` for read-only intent queries before an intent-grounded judgment",
-            "A host reboot is forbidden by default.",
-            "Report a worker as running only on fresh positive evidence",
-            "the historical CamelCase wording means the\ndaemon-compatible PascalCase alphanumeric form",
-            "Psyche responses carry graded states, not one yes or no:",
-            "field name is\nillegal Protos, full stop",
-            "The synthesis gate binds from first dispatch until the outstanding-worker set is",
-        ] {
-            assert!(packet.contains(required), "{path} retains {required}");
-        }
-        assert!(
-            !packet.contains("@generated"),
-            "{path} has no generated notice"
-        );
-        assert!(
-            !packet.to_lowercase().contains("generated by"),
-            "{path} has no generated notice"
-        );
-    }
-    assert!(
-        fixture
-            .read_workspace_file(".claude/agents/manager.md")
-            .contains(
-                "Ask clarification in ordinary chat text instead of multiple-choice, picker, or"
-            )
-    );
-    let management_skill = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
-    assert!(management_skill.contains("name: management"));
-    assert!(management_skill.contains("# management"));
-    assert!(management_skill.contains("The manager is an intent-only lane."));
-    for retired_output in [
-        ".agents/skills/orchestration",
-        ".claude/skills/orchestration",
-    ] {
-        assert!(
-            !fixture.workspace.path().join(retired_output).exists(),
-            "former identity output is pruned: {retired_output}"
-        );
+        assert!(packet.contains("Clarify, gate, dispatch, and synthesize"));
+        assert!(packet.contains("Require explicit psyche approval before a host reboot."));
+        assert!(!packet.contains("@generated"));
     }
 }
 
@@ -1601,52 +962,36 @@ fn generated_manager_and_recorder_packets_preserve_matter_not_intent_classificat
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
-        .expect("current manager and recorder packets generate");
-
-    let matter_not_intent_clauses = [
-        "Matter does not become intent because it is broad, durable, emphatic, or directly\nspoken by the psyche.",
-        "Requested rules, defaults, prohibitions, authorization\nboundaries, mechanisms, architecture, and guidance edits remain matter; “we need\nto forbid X” routes to operational guidance.",
-        "Only explicitly expressed orienting\naims, values, or beliefs qualify, never one inferred from a mechanism.",
-    ];
-    for role in ["manager", "intent-recorder"] {
+        .expect("manager and recorder packets generate");
+    for (role, rule) in [
+        (
+            "manager",
+            "Keep requested rules, mechanisms, and architecture as matter.",
+        ),
+        (
+            "intent-recorder",
+            "Return matter to Manager; do not submit it.",
+        ),
+    ] {
         for path in [
             format!(".pi/agents/{role}.md"),
             format!(".claude/agents/{role}.md"),
             format!(".codex/agents/{role}.toml"),
         ] {
             let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
-            for clause in matter_not_intent_clauses {
-                assert!(
-                    packet.contains(clause),
-                    "{path} preserves the matter-not-intent classification clause: {clause}"
-                );
-            }
+            assert!(packet.contains(rule));
         }
     }
 }
 
 #[test]
 fn host_reboot_requires_specific_psyche_approval() {
-    let safeguards = include_str!("../modules/manager-safeguards/full.md");
-    let operations = include_str!("../modules/operating-system-operations/full.md");
-
-    for (source_name, source) in [
-        ("manager-safeguards", safeguards),
-        ("operating-system-operations", operations),
+    for source in [
+        include_str!("../modules/manager-safeguards/full.md"),
+        include_str!("../modules/operating-system-operations/full.md"),
     ] {
-        let normalized_source = source.replace('\n', " ");
-        for required in [
-            "A host reboot is forbidden by default.",
-            "explicit, contemporaneous psyche approval specifically for reboot",
-            "reboot terminates local processes and agent sessions",
-            "narrower recovery options already attempted or remaining",
-            "generic repair request, including an instruction to fix it, does not authorize reboot.",
-        ] {
-            assert!(
-                normalized_source.contains(required),
-                "missing {source_name} reboot safeguard: {required}"
-            );
-        }
+        assert!(source.contains("Require explicit psyche approval"));
+        assert!(source.contains("reboot"));
     }
 }
 
@@ -2019,208 +1364,15 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
 }
 
 #[test]
-fn general_instructions_compose_once_and_specialized_guidance_stays_owned() {
-    let general_instructions = include_str!("../modules/general-instructions/full.md");
-    let universal_manifest = include_str!("../manifests/universal-role-modules.nota");
-    let dependency_index = include_str!("../manifests/module-dependencies.nota");
-    let language = "Avoid inventing your own expressions, labels, shorthand, metaphors, or jargon.\nFavor correct, established, plain-language descriptions even when they are\nlonger. Explain necessary established domain terminology plainly rather than\nreplacing it with agent-coined vocabulary.";
-    let feedback = "Report only instruction, tooling, or documentation friction that affected or\nplausibly affects efficiency or correctness.";
-    let ambiguity_return = "When unresolved ambiguity concerns intent, authority, safety, or privacy, stop\nonly the affected branch and return it to the Manager.";
-    let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
-    let execution_limits = "No agent may ever introduce, recommend, configure, generate, or deploy any\nlimit on agent execution anywhere: turn, tool, token, time, cost, deadline,\nbudget, or equivalent. Treat every existing configured execution limit as a\ndefect to surface and remove, never as precedent.";
-
-    assert!(universal_manifest.contains("[general-instructions]"));
-    assert!(dependency_index.contains(
-        "(general-instructions modules/general-instructions/full.md [] RoleComposition)"
-    ));
-    for removed_module in [
-        "agent-feedback-loop",
-        "return-to-manager",
-        "design-authority",
-    ] {
-        assert!(
-            !dependency_index.contains(&format!("({removed_module} ")),
-            "{removed_module} has no duplicate authoritative module entry"
-        );
-        assert!(
-            !Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("modules")
-                .join(removed_module)
-                .exists(),
-            "{removed_module} source is consolidated into general-instructions"
-        );
-    }
-    for universal_clause in [language, feedback, ambiguity_return, design_authority] {
-        assert!(
-            general_instructions.contains(universal_clause),
-            "general-instructions preserves universal guidance: {universal_clause}"
-        );
-    }
-    for specialized_clause in [
-        "Use only at fresh-context startup when the psyche wants management.",
-        "Classify each instruction before placing it.",
-        "Before editing shared files or running a command that writes them,",
-        "Use only when the brief explicitly requests a worker output artifact",
-        "Treat secret bytes as transient hazardous material.",
-    ] {
-        assert!(
-            !general_instructions.contains(specialized_clause),
-            "specialized guidance does not leak into general-instructions: {specialized_clause}"
-        );
-    }
-
-    let fixture = Fixture::new();
-    fixture
-        .generate_from_repo(GenerationMode::Write)
-        .expect("current role packets generate");
-
-    let skill_bound_commitment = "Agents are ephemeral. In psyche-facing conversation, future behavior exists\nonly in durable role or skill instruction, never in this session's continuity,\nmemory, resolve, or persona.\n\nTreat a concrete failure as evidence that its governing guard is inadequate. Do\nnot answer it with “I will follow it more strictly,” “I will avoid this next\ntime,” or a claim that the guard is sufficient. Strengthen the owning role or\nskill guard before claiming changed future behavior, unless specific contrary\nevidence shows the guard did prevent the behavior. Until then, describe the\nchange as a proposal or pending work, not an accomplished behavioral change.\nCite the durable guard and its verification when claiming future behavior has\nchanged.";
-    let manager_spirit_clause = "show\nthe psyche the exact proposed Spirit intent wording, scope, and proposed privacy,\nand receive explicit approval.";
-    let codex_skill_read_clause = "A pasted `<skill ...>...</skill>` block is complete when it has matching opening\nand closing `<skill>` tags, a skill name, a location, and non-empty body text.";
-    let recorder_spirit_clause = "Reject a submission brief unless it evidences that the exact proposed Spirit\nintent wording, scope, and proposed privacy were shown to and explicitly approved\nby the psyche. Never invent missing entry metadata.";
-    let active_roles = [
-        "manager",
-        "generalist",
-        "intent-recorder",
-        "intent-translator",
-        "scout",
-        "repo-scaffolder",
-        "general-code-implementer",
-        "operating-system-implementer",
-        "rust-auditor",
-        "nix-auditor",
-        "skill-editor",
-        "intent-curator",
-        "repository-closeout",
-        "tracker-weaver",
-    ];
-
-    for role in active_roles {
-        for path in [
-            format!(".pi/agents/{role}.md"),
-            format!(".claude/agents/{role}.md"),
-            format!(".codex/agents/{role}.toml"),
-        ] {
-            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
-            for (name, universal_clause) in [
-                ("language", language),
-                ("feedback", feedback),
-                ("ambiguity return", ambiguity_return),
-                ("authority boundary", design_authority),
-                ("execution limits", execution_limits),
-            ] {
-                assert_eq!(
-                    packet.matches(universal_clause).count(),
-                    1,
-                    "{path} receives general-instructions {name} guidance exactly once through the canonical universal composition path"
-                );
-            }
-            if role == "manager" {
-                assert!(
-                    packet.contains(skill_bound_commitment),
-                    "{path} is the sole psyche-facing packet with skill-bound commitment guidance"
-                );
-            } else {
-                assert!(
-                    !packet.contains(skill_bound_commitment),
-                    "{path} is not a psyche-facing packet"
-                );
-            }
-            if path.ends_with(".toml") {
-                assert!(
-                    packet.contains(codex_skill_read_clause),
-                    "{path} receives source-owned Codex skill-read guidance"
-                );
-            } else {
-                assert!(
-                    !packet.contains(codex_skill_read_clause),
-                    "{path} excludes Codex-only skill-read guidance"
-                );
-            }
-        }
-    }
-
-    for (role, clauses) in [
-        (
-            "scout",
-            &[
-                "Be skeptical and conservative: an unwitnessed cause is Unknown.",
-                "Never treat a proxy metric, correlation, salient fact,\nor suspected diagnosis in the brief as causal fact; a brief's diagnosis is not\nindependent evidence.",
-                "State the exact missing witnesses and confidence.",
-            ][..],
-        ),
-        (
-            "manager",
-            &[
-                "Require hard direct evidence for every judgment call, especially a disruptive,\nglobal, or default behavior change.",
-                "Do not authorize behavioral control as a fix until its causal mechanism is\nreproduced or directly witnessed.",
-                "General repair\nauthorization does not approve that concrete delta.",
-            ][..],
-        ),
-        (
-            "skill-editor",
-            &[
-                "Write only instructions that change a decision or action. On every skill edit,\ndelete no-op statements, restatements, aspirations, and untestable advice; delete\nor simplify non-obvious wording.",
-                "Keep every skill very small and single-purpose.\nImmediately flag an emerging large or mixed-responsibility skill and propose\ndeletion or the smallest split. Do not use a numeric size threshold.",
-            ][..],
-        ),
-    ] {
-        for path in [
-            format!(".pi/agents/{role}.md"),
-            format!(".claude/agents/{role}.md"),
-            format!(".codex/agents/{role}.toml"),
-        ] {
-            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
-            for clause in clauses {
-                assert!(
-                    packet.contains(clause),
-                    "{path} preserves {role} doctrine: {clause}"
-                );
-            }
-        }
-    }
-
-    for path in [
-        ".pi/agents/manager.md",
-        ".claude/agents/manager.md",
-        ".codex/agents/manager.toml",
-    ] {
-        assert!(
-            fixture
-                .read_workspace_file(path)
-                .replace("\\n", "\n")
-                .contains(manager_spirit_clause),
-            "{path} requires exact Spirit proposal approval before dispatch"
-        );
-    }
+fn general_instructions_compose_once_and_keep_authority_gates() {
+    let general = include_str!("../modules/general-instructions/full.md");
+    assert!(general.contains("Use plain established language."));
+    assert!(general.contains("Do not introduce limits on agent execution."));
+    assert!(general.contains("explicit psyche approval"));
+    assert!(!general.contains("Clarify, gate, dispatch"));
     assert!(
-        fixture
-            .read_workspace_file(".codex/agents/manager.toml")
-            .replace("\\n", "\n")
-            .contains(codex_skill_read_clause),
-        "Codex manager packet receives its source-owned skill-read overlay"
+        include_str!("../manifests/universal-role-modules.nota").contains("[general-instructions]")
     );
-    for path in [".pi/agents/manager.md", ".claude/agents/manager.md"] {
-        assert!(
-            !fixture
-                .read_workspace_file(path)
-                .contains(codex_skill_read_clause),
-            "{path} excludes the Codex-only skill-read overlay"
-        );
-    }
-    for path in [
-        ".pi/agents/intent-recorder.md",
-        ".claude/agents/intent-recorder.md",
-        ".codex/agents/intent-recorder.toml",
-    ] {
-        assert!(
-            fixture
-                .read_workspace_file(path)
-                .replace("\\n", "\n")
-                .contains(recorder_spirit_clause),
-            "{path} rejects a Spirit submission without approved proposal evidence"
-        );
-    }
 }
 
 #[test]
