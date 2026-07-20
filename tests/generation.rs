@@ -1708,6 +1708,33 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
 }
 
 #[test]
+fn generation_rejects_configured_execution_limit_fields_in_agent_packets() {
+    let fixture = Fixture::new();
+    fixture.write_role_generation_sources();
+    fixture.write_source_file(
+        "roles/worker/full.md",
+        "# Role - worker\n\n## Contract\n\ntimeoutMs: 1\n",
+    );
+    fixture.write_source_file(
+        "modules/shared/full.md",
+        "# Module - shared\n\n## Shared Rule\n\nShared rule.\n",
+    );
+    fixture.write_source_file(
+        "modules/feature/full.md",
+        "# Module - feature\n\n## Feature Rule\n\nFeature rule.\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("execution-limit field rejects agent packet generation");
+
+    assert!(matches!(
+        error,
+        Error::GeneratedAgentExecutionLimit { field_name, .. } if field_name == "timeoutMs"
+    ));
+}
+
+#[test]
 fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
     let fixture = Fixture::new();
     fixture.write_source_file(
@@ -2000,6 +2027,7 @@ fn general_instructions_compose_once_and_specialized_guidance_stays_owned() {
     let feedback = "Report only instruction, tooling, or documentation friction that affected or\nplausibly affects efficiency or correctness.";
     let ambiguity_return = "When unresolved ambiguity concerns intent, authority, safety, or privacy, stop\nonly the affected branch and return it to the Manager.";
     let design_authority = "Agents may investigate and propose major design changes and decide narrow\nimplementation details inside an explicitly accepted design.";
+    let execution_limits = "No agent may ever introduce, recommend, configure, generate, or deploy any\nlimit on agent execution anywhere: turn, tool, token, time, cost, deadline,\nbudget, or equivalent. Treat every existing configured execution limit as a\ndefect to surface and remove, never as precedent.";
 
     assert!(universal_manifest.contains("[general-instructions]"));
     assert!(dependency_index.contains(
@@ -2079,6 +2107,7 @@ fn general_instructions_compose_once_and_specialized_guidance_stays_owned() {
                 ("feedback", feedback),
                 ("ambiguity return", ambiguity_return),
                 ("authority boundary", design_authority),
+                ("execution limits", execution_limits),
             ] {
                 assert_eq!(
                     packet.matches(universal_clause).count(),
@@ -2106,6 +2135,46 @@ fn general_instructions_compose_once_and_specialized_guidance_stays_owned() {
                 assert!(
                     !packet.contains(codex_skill_read_clause),
                     "{path} excludes Codex-only skill-read guidance"
+                );
+            }
+        }
+    }
+
+    for (role, clauses) in [
+        (
+            "scout",
+            &[
+                "Be skeptical and conservative: an unwitnessed cause is Unknown.",
+                "Never treat a proxy metric, correlation, salient fact,\nor suspected diagnosis in the brief as causal fact; a brief's diagnosis is not\nindependent evidence.",
+                "State the exact missing witnesses and confidence.",
+            ][..],
+        ),
+        (
+            "manager",
+            &[
+                "Require hard direct evidence for every judgment call, especially a disruptive,\nglobal, or default behavior change.",
+                "Do not authorize behavioral control as a fix until its causal mechanism is\nreproduced or directly witnessed.",
+                "General repair\nauthorization does not approve that concrete delta.",
+            ][..],
+        ),
+        (
+            "skill-editor",
+            &[
+                "Write only instructions that change a decision or action. On every skill edit,\ndelete no-op statements, restatements, aspirations, and untestable advice; delete\nor simplify non-obvious wording.",
+                "Keep every skill very small and single-purpose.\nImmediately flag an emerging large or mixed-responsibility skill and propose\ndeletion or the smallest split. Do not use a numeric size threshold.",
+            ][..],
+        ),
+    ] {
+        for path in [
+            format!(".pi/agents/{role}.md"),
+            format!(".claude/agents/{role}.md"),
+            format!(".codex/agents/{role}.toml"),
+        ] {
+            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
+            for clause in clauses {
+                assert!(
+                    packet.contains(clause),
+                    "{path} preserves {role} doctrine: {clause}"
                 );
             }
         }

@@ -12,9 +12,9 @@
   descriptions, tiers, targets, and dependency edges in manifests and indexes.
 - Do not repeat the manifest/frontmatter description in the body; when metadata
   names the scope, the body starts with rules.
-- Keep instruction terse, present-tense, and current. Cut tutorials, scope
-  restatements, changelog banners, status notes, external references, and extra
-  examples. Before adding text, reuse or reword compatible existing instruction.
+- Write only instructions that change a decision or action. Delete no-op
+  statements, restatements, aspirations, and untestable advice. On every skill
+  edit, delete or simplify non-obvious wording; use short, simple, direct language.
 - Every example is a verbatim quote of a real artifact — a fixture line, a
   psyche-ruled line, or witnessed test output — verified against the current
   artifact, never composed by the author. Examples are positive only: a wrong or
@@ -24,15 +24,14 @@
   skill plus a routed report of what could not be taught, not an invented section.
 - Inline material every branch needs. Move branch-only detail into sibling
   reference files and point only from the branch that uses it.
-- Delete any sentence whose removal would not change observable agent behavior
-  in that skill context.
+- Keep every skill very small and single-purpose. Immediately flag an emerging
+  large or mixed-responsibility skill and propose deletion or the smallest split.
+  Do not use a numeric size threshold.
 - Sharpen completion criteria before splitting a phase. Split into a helper,
   skill, or lane only when agents still rush the sharpened phase.
 - Prefer deterministic generator or manifest routing when the right target,
   skill, or module is knowable; do not make the model choose predictable
   doctrine.
-- Keep one capability per skill; split distinct capabilities instead of mixing
-  them.
 - Prefer canonical positive forms. A rejected or illegal form is never
   exemplified; describe it in prose only, and only when omission would create an
   immediate risk.
@@ -57,6 +56,5 @@
 - Changed headings are unique.
 - Manifest and index references resolve.
 - Generated outputs match source and have no generated-file notices.
-- `skill-editor` remains under 120 lines and contains no local paths, URLs,
-  cross-reference sections, artifact citations, status notes, or body wording that
-  restates its description.
+- `skill-editor` contains no local paths, URLs, cross-reference sections,
+  artifact citations, status notes, or body wording that restates its description.

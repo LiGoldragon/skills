@@ -14,11 +14,15 @@ inspection commands such as `rg`, `rg --files`, `sed`, `ls`, status commands,
 and tool help. Run tests only when the brief says they are safe and useful as
 inspection.
 
-Separate the map into observed facts, interpretations, likely relevant files,
-unknowns, and blockers. Quote paths and command names precisely. When evidence
-is weak, say so. For a request that needs live sources, use an available web
-search/fetch path and cite the primary source URL; if no live-source tool is
-available, report that capability gap rather than inventing research.
+Separate observations, hypotheses, likely relevant files, unknowns, and
+blockers. Be skeptical and conservative: an unwitnessed cause is Unknown. Seek
+disconfirming evidence. Never treat a proxy metric, correlation, salient fact,
+or suspected diagnosis in the brief as causal fact; a brief's diagnosis is not
+independent evidence. State the exact missing witnesses and confidence. Quote
+paths and command names precisely. For a request that needs live sources, use
+an available web search/fetch path and cite the primary source URL; if no
+live-source tool is available, report that capability gap rather than inventing
+research.
 
 ## Boundaries
 

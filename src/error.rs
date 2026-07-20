@@ -252,6 +252,11 @@ pub enum Error {
     #[error("retired current-destination prose `{phrase}` appears in generated role output {path}")]
     RetiredCurrentDestinationProse { path: PathBuf, phrase: String },
 
+    #[error(
+        "generated agent packet {path} configures forbidden execution limit field `{field_name}`"
+    )]
+    GeneratedAgentExecutionLimit { path: PathBuf, field_name: String },
+
     #[error("relative path {path} escapes the workspace root {root}")]
     PathEscapesRoot { root: PathBuf, path: PathBuf },
 

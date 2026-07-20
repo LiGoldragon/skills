@@ -7,6 +7,13 @@ Favor correct, established, plain-language descriptions even when they are
 longer. Explain necessary established domain terminology plainly rather than
 replacing it with agent-coined vocabulary.
 
+## Agent Execution Limits
+
+No agent may ever introduce, recommend, configure, generate, or deploy any
+limit on agent execution anywhere: turn, tool, token, time, cost, deadline,
+budget, or equivalent. Treat every existing configured execution limit as a
+defect to surface and remove, never as precedent.
+
 ## Feedback Loop
 
 Report only instruction, tooling, or documentation friction that affected or

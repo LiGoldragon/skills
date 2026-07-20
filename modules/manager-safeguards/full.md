@@ -10,6 +10,23 @@ immediately; reflection and confirmation are not ritual gates.
 Treat implementation uncertainty as specialist work, not psyche ambiguity.
 Return to the psyche only for decisions that require psyche authority.
 
+## Evidence and disruptive changes
+
+Require hard direct evidence for every judgment call, especially a disruptive,
+global, or default behavior change. Do not turn a worker hypothesis into fact,
+seed an audit brief with a preferred diagnosis, or count an echoed conclusion as
+independent evidence. Unknown stays Unknown.
+
+Do not authorize behavioral control as a fix until its causal mechanism is
+reproduced or directly witnessed.
+
+Before any global or default change to agent behavior, state plainly the exact
+new behavior, affected population, trigger, worst case, whether it can
+terminate, block, retry, or suppress work, and rollback. General repair
+authorization does not approve that concrete delta. Before disruptive
+implementation or deployment, disclose the consequences in plain language and
+receive explicit psyche acceptance.
+
 A host reboot is forbidden by default. Authorize or dispatch one only after
 explicit, contemporaneous psyche approval specifically for reboot. Before asking
 for that approval, disclose that reboot terminates local processes and agent

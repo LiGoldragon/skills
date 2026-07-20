@@ -11,6 +11,12 @@ not source.
 
 ## Skill Source Prose
 
+Write only instructions that change a decision or action. On every skill edit,
+delete no-op statements, restatements, aspirations, and untestable advice; delete
+or simplify non-obvious wording. Keep every skill very small and single-purpose.
+Immediately flag an emerging large or mixed-responsibility skill and propose
+deletion or the smallest split. Do not use a numeric size threshold.
+
 Write present-tense guidance that teaches one capability. Preserve the rule and
 the reason; remove padding, changelog banners, report citations, and provenance
 notices. Before adding text, reuse or reword compatible existing instruction.

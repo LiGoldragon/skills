@@ -34,6 +34,18 @@ const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] = &[
     "workspace essence",
     "workspace intent",
 ];
+const EXECUTION_LIMIT_FIELD_PARTS: &[&str] = &["budget", "deadline", "limit", "timeout"];
+const EXECUTION_LIMIT_MAXIMUMS: &[&str] = &[
+    "cost",
+    "iteration",
+    "output",
+    "retry",
+    "runtime",
+    "time",
+    "token",
+    "tool",
+    "turn",
+];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandLine {
@@ -2060,6 +2072,50 @@ impl<'a> RetiredCurrentDestinationProse<'a> {
     }
 }
 
+fn validate_agent_execution_limits(output_path: &WorkspacePath, packet: &str) -> Result<()> {
+    for line in packet.lines() {
+        let Some(field_name) = configured_field_name(line) else {
+            continue;
+        };
+        if is_execution_limit_field(field_name) {
+            return Err(Error::GeneratedAgentExecutionLimit {
+                path: output_path.full_path(),
+                field_name: field_name.to_owned(),
+            });
+        }
+    }
+    Ok(())
+}
+
+fn configured_field_name(line: &str) -> Option<&str> {
+    let line = line.trim();
+    let delimiter = line.find([':', '='])?;
+    let (field_name, value) = line.split_at(delimiter);
+    let field_name = field_name.trim();
+    let value = value[1..].trim();
+    (!field_name.is_empty()
+        && !value.is_empty()
+        && field_name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-')))
+    .then_some(field_name)
+}
+
+fn is_execution_limit_field(field_name: &str) -> bool {
+    let normalized: String = field_name
+        .bytes()
+        .filter(u8::is_ascii_alphanumeric)
+        .map(|byte| byte.to_ascii_lowercase() as char)
+        .collect();
+    EXECUTION_LIMIT_FIELD_PARTS
+        .iter()
+        .any(|part| normalized.contains(part))
+        || (normalized.starts_with("max")
+            && EXECUTION_LIMIT_MAXIMUMS
+                .iter()
+                .any(|maximum| normalized.contains(maximum)))
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ManifestAssembler {
     source_root: PathBuf,
@@ -2125,6 +2181,7 @@ impl ManifestAssembler {
         }
         if self.manifest.output_surface.is_role() {
             RetiredCurrentDestinationProse::new(output_path.clone(), &rendered).validate()?;
+            validate_agent_execution_limits(output_path, &rendered)?;
         }
         Ok(rendered)
     }
@@ -2142,7 +2199,12 @@ impl ManifestAssembler {
             RetiredCurrentDestinationProse::new(output_path.clone(), &developer_instructions)
                 .validate()?;
         }
-        RoleToml::new(&self.manifest.frontmatter, developer_instructions).render()
+        let rendered =
+            RoleToml::new(&self.manifest.frontmatter, developer_instructions).render()?;
+        if self.manifest.output_surface.is_role() {
+            validate_agent_execution_limits(output_path, &rendered)?;
+        }
+        Ok(rendered)
     }
 
     fn markdown_fragments(&self) -> Result<Vec<MarkdownFragment>> {
