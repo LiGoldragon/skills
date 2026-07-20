@@ -49,6 +49,14 @@
   RoleOptionalSkills (Vector RoleOptionalSkill)
   RoleOptionalSkill { OutputIdentifier OptionalSkills }
   OptionalSkills (Vector OutputIdentifier)
+  PiRoleExecutionBudgets (Vector PiRoleExecutionBudget)
+  PiRoleExecutionBudget { OutputIdentifier PiTurnBudget PiAllToolBudget }
+  PiTurnBudget { PiTurnLimit PiGraceTurns }
+  PiTurnLimit Integer {| Display PartialEq PartialOrd |}
+  PiGraceTurns Integer {| Display PartialEq PartialOrd |}
+  PiAllToolBudget { PiToolSoftLimit PiToolHardLimit }
+  PiToolSoftLimit Integer {| Display PartialEq PartialOrd |}
+  PiToolHardLimit Integer {| Display PartialEq PartialOrd |}
   NestedRoleRelations (Vector NestedRoleRelation)
   NestedRoleRelation { OutputIdentifier NestedRoleMinimumModels AllowedLeafRoles }
   NestedRoleMinimumModels (Vector NestedRoleMinimumModel)

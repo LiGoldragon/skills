@@ -18,9 +18,9 @@ use crate::{
         ModelEffortStrength, ModelIdentifier, ModelStrength, ModuleDependencies, ModuleDependency,
         ModuleIdentifier, ModuleKind, ModuleLifecycle, ModulePath, Modules, NestedRoleMinimumModel,
         NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier, OutputKind, OutputPath,
-        OutputSurface, RoleModelAssignment, RoleModelAssignments, RoleOptionalSkills,
-        RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion,
-        TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        OutputSurface, PiRoleExecutionBudgets, RoleModelAssignment, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster,
+        TargetModuleInsertion, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
     },
     trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
@@ -237,6 +237,11 @@ impl GenerationSource {
             SourceFile::new(self.source_root.clone(), role_optional_skills_path)
                 .read_optional()?
                 .unwrap_or_else(|| RoleOptionalSkills::new(Vec::new()));
+        let pi_role_execution_budgets_path = manifest_directory.join("role-execution-budgets.nota");
+        let pi_role_execution_budgets: PiRoleExecutionBudgets =
+            SourceFile::new(self.source_root.clone(), pi_role_execution_budgets_path)
+                .read_optional()?
+                .unwrap_or_else(|| PiRoleExecutionBudgets::new(Vec::new()));
         let nested_role_relations_path = manifest_directory.join("nested-role-relations.nota");
         let nested_role_relations: NestedRoleRelations =
             SourceFile::new(self.source_root.clone(), nested_role_relations_path)
@@ -251,6 +256,7 @@ impl GenerationSource {
                 model_catalog,
                 role_model_assignments,
                 role_optional_skills,
+                pi_role_execution_budgets,
                 nested_role_relations,
             },
         )
@@ -390,6 +396,7 @@ impl RoleMetadataIndex {
         model_catalog: ModelCatalog,
         role_model_assignments: RoleModelAssignments,
         role_optional_skills: RoleOptionalSkills,
+        pi_role_execution_budgets: PiRoleExecutionBudgets,
         nested_role_relations: NestedRoleRelations,
     ) -> Result<Self> {
         let active_roles: BTreeMap<OutputIdentifier, ActiveRole> = active_outputs
@@ -415,6 +422,8 @@ impl RoleMetadataIndex {
         let assignments = RoleModelAssignmentIndex::new(role_model_assignments, &active_roles)?;
         let optional_skills =
             RoleOptionalSkillIndex::new(role_optional_skills, &active_roles, &active_skills)?;
+        let pi_execution_budgets =
+            PiRoleExecutionBudgetIndex::new(pi_role_execution_budgets, &active_roles)?;
         let mut entries = BTreeMap::new();
         for role_identifier in active_roles.into_keys() {
             let assignment = assignments.entries.get(&role_identifier).ok_or_else(|| {
@@ -429,11 +438,13 @@ impl RoleMetadataIndex {
                     role_identifier: role_identifier.as_ref().to_owned(),
                 })?;
             let profile = catalog.profile(role_identifier.as_ref(), assignment)?;
+            let pi_execution_budget = pi_execution_budgets.entries.get(&role_identifier).cloned();
             entries.insert(
                 role_identifier,
                 RoleMetadata {
                     profile,
                     optional_skills: optional.clone(),
+                    pi_execution_budget,
                 },
             );
         }
@@ -460,6 +471,7 @@ impl RoleMetadataIndex {
 struct RoleMetadata {
     profile: RoleModelProfile,
     optional_skills: OptionalSkills,
+    pi_execution_budget: Option<PiExecutionBudget>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1006,6 +1018,102 @@ impl RoleOptionalSkillIndex {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct PiExecutionBudget {
+    turn_limit: u64,
+    grace_turns: u64,
+    tool_soft_limit: u64,
+    tool_hard_limit: u64,
+}
+
+impl PiExecutionBudget {
+    fn turn_budget_frontmatter(&self) -> String {
+        format!(
+            r#"{{"maxTurns":{},"graceTurns":{}}}"#,
+            self.turn_limit, self.grace_turns
+        )
+    }
+
+    fn tool_budget_frontmatter(&self) -> String {
+        format!(
+            r#"{{"soft":{},"hard":{},"block":"*"}}"#,
+            self.tool_soft_limit, self.tool_hard_limit
+        )
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct PiRoleExecutionBudgetIndex {
+    entries: BTreeMap<OutputIdentifier, PiExecutionBudget>,
+}
+
+impl PiRoleExecutionBudgetIndex {
+    fn new(
+        budgets: PiRoleExecutionBudgets,
+        active_roles: &BTreeMap<OutputIdentifier, ActiveRole>,
+    ) -> Result<Self> {
+        let mut entries = BTreeMap::new();
+        for budget in budgets.into_payload() {
+            let role_identifier = budget.output_identifier.clone();
+            let role = active_roles.get(&role_identifier).ok_or_else(|| {
+                Error::StalePiRoleExecutionBudget {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                }
+            })?;
+            if !role
+                .role_target_surfaces
+                .payload()
+                .contains(&RoleTargetSurface::PiAgent)
+            {
+                return Err(Error::PiExecutionBudgetWithoutPiTarget {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            let turn_limit = *budget.pi_turn_budget.pi_turn_limit.payload();
+            let grace_turns = *budget.pi_turn_budget.pi_grace_turns.payload();
+            let tool_soft_limit = *budget.pi_all_tool_budget.pi_tool_soft_limit.payload();
+            let tool_hard_limit = *budget.pi_all_tool_budget.pi_tool_hard_limit.payload();
+            if turn_limit == 0 {
+                return Err(Error::InvalidPiTurnLimit {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            if tool_soft_limit == 0 {
+                return Err(Error::InvalidPiToolSoftLimit {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            if tool_hard_limit == 0 {
+                return Err(Error::InvalidPiToolHardLimit {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            if tool_soft_limit > tool_hard_limit {
+                return Err(Error::PiToolSoftLimitExceedsHardLimit {
+                    role_identifier: role_identifier.as_ref().to_owned(),
+                });
+            }
+            if entries
+                .insert(
+                    role_identifier.clone(),
+                    PiExecutionBudget {
+                        turn_limit,
+                        grace_turns,
+                        tool_soft_limit,
+                        tool_hard_limit,
+                    },
+                )
+                .is_some()
+            {
+                return Err(Error::DuplicatePiRoleExecutionBudget {
+                    role_identifier: role_identifier.into_payload(),
+                });
+            }
+        }
+        Ok(Self { entries })
+    }
+}
+
 impl EffortLevel {
     fn as_str(&self) -> &'static str {
         match self {
@@ -1021,6 +1129,7 @@ struct RoleMetadataSources {
     model_catalog: ModelCatalog,
     role_model_assignments: RoleModelAssignments,
     role_optional_skills: RoleOptionalSkills,
+    pi_role_execution_budgets: PiRoleExecutionBudgets,
     nested_role_relations: NestedRoleRelations,
 }
 
@@ -1047,6 +1156,7 @@ impl GenerationConfiguration {
             role_metadata_sources.model_catalog,
             role_metadata_sources.role_model_assignments,
             role_metadata_sources.role_optional_skills,
+            role_metadata_sources.pi_role_execution_budgets,
             role_metadata_sources.nested_role_relations,
         )?;
         Ok(Self {
@@ -1365,6 +1475,7 @@ impl ActiveRole {
                     output_surface,
                     &target_profile,
                     &metadata.optional_skills,
+                    metadata.pi_execution_budget.as_ref(),
                     nested_role.is_some(),
                     &allowed_child_role_identifiers,
                 ),
@@ -1426,6 +1537,7 @@ impl ActiveRole {
         output_surface: OutputSurface,
         profile: &TargetModelProfile,
         optional_skills: &OptionalSkills,
+        pi_execution_budget: Option<&PiExecutionBudget>,
         is_nested_role: bool,
         allowed_child_role_identifiers: &[OutputIdentifier],
     ) -> Frontmatter {
@@ -1466,6 +1578,16 @@ impl ActiveRole {
                     frontmatter_key: FrontmatterKey::new("thinking"),
                     frontmatter_value: FrontmatterValue::new(profile.effort_level.as_str()),
                 });
+                if let Some(budget) = pi_execution_budget {
+                    entries.push(FrontmatterEntry {
+                        frontmatter_key: FrontmatterKey::new("turnBudget"),
+                        frontmatter_value: FrontmatterValue::new(budget.turn_budget_frontmatter()),
+                    });
+                    entries.push(FrontmatterEntry {
+                        frontmatter_key: FrontmatterKey::new("toolBudget"),
+                        frontmatter_value: FrontmatterValue::new(budget.tool_budget_frontmatter()),
+                    });
+                }
                 entries.push(FrontmatterEntry {
                     frontmatter_key: FrontmatterKey::new("projectRoleIdentity"),
                     frontmatter_value: FrontmatterValue::new(self.output_identifier.as_ref()),

@@ -11,9 +11,9 @@ use skills::{
     schema::assembly::{
         ActiveOutputs, EffortLevel, EmissionPolicy, GenerationMode, GenerationRequest,
         ManifestPath, ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle,
-        NestedRoleRelations, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
-        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
-        WorkspaceRoot,
+        NestedRoleRelations, PiRoleExecutionBudgets, RoleModelAssignments, RoleOptionalSkills,
+        RoleTargetSurface, SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface,
+        UniversalRoleModules, WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
@@ -903,6 +903,54 @@ fn skill_editor_doctrine_names_canonical_source_and_generated_targets() {
         assert!(
             skills_repo.contains(required),
             "skills repository harness-placement documentation includes {required}"
+        );
+    }
+}
+
+#[test]
+fn generalist_pi_execution_budgets_are_scoped_to_the_pi_packet() {
+    let budgets = NotaSource::new(include_str!("../manifests/role-execution-budgets.nota"))
+        .parse::<PiRoleExecutionBudgets>()
+        .expect("Pi role execution-budget manifest parses");
+    assert_eq!(budgets.payload().len(), 1);
+    let generalist = budgets
+        .payload()
+        .iter()
+        .find(|budget| budget.output_identifier.as_ref() == "generalist")
+        .expect("Generalist has Pi execution budgets");
+    assert_eq!(*generalist.pi_turn_budget.pi_turn_limit.payload(), 12);
+    assert_eq!(*generalist.pi_turn_budget.pi_grace_turns.payload(), 2);
+    assert_eq!(
+        *generalist.pi_all_tool_budget.pi_tool_soft_limit.payload(),
+        24
+    );
+    assert_eq!(
+        *generalist.pi_all_tool_budget.pi_tool_hard_limit.payload(),
+        30
+    );
+
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current manifests generate");
+    let generalist_pi = fixture.read_workspace_file(".pi/agents/generalist.md");
+    assert!(generalist_pi.contains("turnBudget: '{\"maxTurns\":12,\"graceTurns\":2}'"));
+    assert!(generalist_pi.contains("toolBudget: '{\"soft\":24,\"hard\":30,\"block\":\"*\"}'"));
+
+    for path in [
+        ".claude/agents/generalist.md",
+        ".codex/agents/generalist.toml",
+        ".pi/agents/manager.md",
+        ".pi/agents/general-code-implementer.md",
+    ] {
+        let packet = fixture.read_workspace_file(path);
+        assert!(
+            !packet.contains("turnBudget"),
+            "{path} has no Pi turn budget"
+        );
+        assert!(
+            !packet.contains("toolBudget"),
+            "{path} has no Pi tool budget"
         );
     }
 }
