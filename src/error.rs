@@ -122,29 +122,6 @@ pub enum Error {
         role_surface: String,
     },
 
-    #[error("Pi execution-budget metadata names inactive role `{role_identifier}`")]
-    StalePiRoleExecutionBudget { role_identifier: String },
-
-    #[error("role `{role_identifier}` is listed more than once in Pi execution-budget metadata")]
-    DuplicatePiRoleExecutionBudget { role_identifier: String },
-
-    #[error("role `{role_identifier}` has Pi execution-budget metadata but no PiAgent target")]
-    PiExecutionBudgetWithoutPiTarget { role_identifier: String },
-
-    #[error("Pi execution budget for role `{role_identifier}` must set a turn limit >= 1")]
-    InvalidPiTurnLimit { role_identifier: String },
-
-    #[error("Pi execution budget for role `{role_identifier}` must set a soft tool limit >= 1")]
-    InvalidPiToolSoftLimit { role_identifier: String },
-
-    #[error("Pi execution budget for role `{role_identifier}` must set a hard tool limit >= 1")]
-    InvalidPiToolHardLimit { role_identifier: String },
-
-    #[error(
-        "Pi execution budget for role `{role_identifier}` must set soft tool limit <= hard tool limit"
-    )]
-    PiToolSoftLimitExceedsHardLimit { role_identifier: String },
-
     #[error("nested role `{role_identifier}` is listed more than once")]
     DuplicateNestedRoleRelation { role_identifier: String },
 

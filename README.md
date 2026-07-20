@@ -32,8 +32,7 @@ doctrine lives in `modules/general-instructions/full.md` and is composed through
 `manifests/target-module-insertions.nota`. Canonical model support lives in
 `manifests/model-catalog.nota`; every active role has one profile in
 `manifests/role-model-assignments.nota` and one optional-skill list in
-`manifests/role-optional-skills.nota`. Pi-only role execution budgets live in
-`manifests/role-execution-budgets.nota`. Typed nested-role minimum models and
+`manifests/role-optional-skills.nota`. Typed nested-role minimum models and
 exclusive leaf-role edges live in `manifests/nested-role-relations.nota`. The
 CLI consumes these inputs for normal generation. The compatibility roster at
 `manifests/skills-roster.nota` remains parseable for legacy checks and
