@@ -2,6 +2,8 @@
 
 ## Rules
 
+- Get psyche approval before every skill edit.
+- Delete text that adds no action or decision.
 - Treat `LiGoldragon/skills` as the canonical skills source. Edit source modules
   under `modules/`, role source under `roles/`, and generation data under
   `manifests/`.
