@@ -213,7 +213,7 @@ pub enum Error {
     #[error("duplicate markdown heading `{heading}` in {path}")]
     DuplicateHeading { path: PathBuf, heading: String },
 
-    #[error("markdown output {path} must contain exactly one level-one title; found {count}")]
+    #[error("markdown output {path} may contain at most one level-one title; found {count}")]
     InvalidTitleCount { path: PathBuf, count: usize },
 
     #[error("markdown heading jumps from level {previous} to {current} in {path}: `{heading}`")]

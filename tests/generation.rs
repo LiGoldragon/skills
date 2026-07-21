@@ -187,6 +187,46 @@ fn generation_does_not_rebase_link_syntax_inside_code_spans() {
 }
 
 #[test]
+fn generation_allows_zero_or_one_title_and_rejects_multiple_titles() {
+    let zero_title = Fixture::new();
+    zero_title.write_default_roster();
+    zero_title.write_source_file("modules/example/full.md", "No title.\n");
+    zero_title
+        .generate(GenerationMode::Write)
+        .expect("zero titles generate");
+    assert_eq!(
+        zero_title.read_workspace_file(".agents/skills/example/SKILL.md"),
+        "---\nname: example\ndescription: 'Example skill.'\n---\n\nNo title.\n"
+    );
+
+    let one_title = Fixture::new();
+    one_title.write_default_roster();
+    one_title.write_source_file(
+        "modules/example/full.md",
+        "# Skill — example\n\nOne title.\n",
+    );
+    one_title
+        .generate(GenerationMode::Write)
+        .expect("one title generates");
+    assert!(
+        one_title
+            .read_workspace_file(".agents/skills/example/SKILL.md")
+            .contains("# example\n\nOne title.\n")
+    );
+
+    let multiple_titles = Fixture::new();
+    multiple_titles.write_default_roster();
+    multiple_titles.write_source_file("modules/example/full.md", "# First\n\n# Second\n");
+    let error = multiple_titles
+        .generate(GenerationMode::Write)
+        .expect_err("multiple titles fail");
+    assert!(
+        matches!(error, Error::InvalidTitleCount { count: 2, .. }),
+        "{error:?}"
+    );
+}
+
+#[test]
 fn generation_fails_on_duplicate_headings() {
     let fixture = Fixture::new();
     fixture.write_default_roster();
@@ -799,6 +839,12 @@ fn skill_editor_keeps_source_and_runtime_boundaries() {
         assert!(source.contains("generated runtime"));
         assert!(source.contains("Generate and verify"));
     }
+    for source in [
+        include_str!("../modules/skill-editor/full.md"),
+        include_str!("../roles/skill-editor/full.md"),
+    ] {
+        assert!(source.contains("Do not repeat the skill name as the first heading."));
+    }
     assert!(
         include_str!("../modules/harness-placement/full.md")
             .contains("Keep shared guidance independent of harness APIs.")
@@ -926,14 +972,17 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 #[test]
 fn management_is_shared_and_has_no_claude_overlay() {
     let management = include_str!("../modules/management/full.md");
-    let approved_rules = [
-        "Never do task work. Delegate it; if delegation fails, stop.",
-        "A question authorizes an answer, not a change.",
-    ];
-    for rule in approved_rules {
-        assert!(management.contains(rule), "management preserves {rule}");
-    }
-    assert!(!management.contains("do not perform task work"));
+    let expected_management = "Align with the psyche’s vision.\nAsk the psyche *until the vision is clear.*\nAsk one clear question at a time.\nUse subagents for all task work; if delegation fails, stop.\nRead relevant skills directly.\nRun subagents asynchronously.\nKeep observations, hypotheses, and unknowns separate.\nKeep unknown causes unknown.\nSeek disconfirming evidence.\nDo not seed audits with suspected conclusions.\nDo not treat repeated claims as independent evidence.\nBefore disruptive work, state exactly what will change and what can break.\nGet psyche approval before disruptive work.\nGet psyche approval before every skill edit.\nA question authorizes an answer, not a change.\n";
+    assert_eq!(
+        management, expected_management,
+        "management matches approved source"
+    );
+    let approved_rules = management.lines().collect::<Vec<_>>();
+    assert_eq!(approved_rules.len(), 15, "management has 15 directives");
+    assert!(
+        !management.contains('#'),
+        "management has no markdown heading"
+    );
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("modules/claude-management/full.md")
@@ -956,7 +1005,7 @@ fn management_is_shared_and_has_no_claude_overlay() {
         ".codex/agents/manager.toml",
     ] {
         let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
-        for rule in approved_rules {
+        for &rule in &approved_rules {
             assert!(packet.contains(rule), "{path} preserves {rule}");
         }
         assert!(packet.contains("Require explicit psyche approval before a host reboot."));

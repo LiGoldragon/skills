@@ -810,7 +810,7 @@ impl HeadingText {
             }
             previous = heading.level;
         }
-        if title_count == 1 {
+        if title_count <= 1 {
             Ok(())
         } else {
             Err(Error::InvalidTitleCount {
