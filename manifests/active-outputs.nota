@@ -82,7 +82,7 @@
   (Role (operating-system-implementer role-operating-system-implementer [edit-coordination-core editing-closeout code-implementation-core nix-core operating-system-operations nixos-vm-testing non-ideal-registry] [|Implements system changes.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (rust-auditor role-rust-auditor [edit-coordination-core editing-closeout rust-core architectural-truth-tests non-ideal-registry] [|Reviews Rust changes.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (nix-auditor role-nix-auditor [edit-coordination-core editing-closeout nix-core nixos-vm-testing non-ideal-registry] [|Reviews Nix changes.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (skill-editor role-skill-editor [edit-coordination-core editing-closeout skill-source-core harness-placement] [|Maintains skill source.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (skill-editor role-skill-editor [] [|Maintains skill source.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (intent-curator role-intent-curator [edit-coordination-core editing-closeout intent-core] [|Maintains approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (repository-closeout role-repository-closeout [edit-coordination-core editing-closeout repo-operation-core] [|Closes validated repositories.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (tracker-weaver role-tracker-weaver [edit-coordination-core editing-closeout bead-weaver] [|Advances authorized tracker work.|] [ClaudeAgent CodexAgent PiAgent]))

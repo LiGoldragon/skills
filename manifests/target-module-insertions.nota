@@ -1,7 +1,5 @@
 ;; Target-specific module insertion index.
 ;; Each record is: base module id, output surface, inserted module ids.
 [
-  (skill-editor AgentsSkill [harness-placement])
-  (skill-editor ClaudeSkill [harness-placement])
   (general-instructions CodexAgent [codex-skill-loading])
 ]

@@ -290,11 +290,18 @@
           skill-editor-source-of-truth-guardrails =
             pkgs.runCommand "skills-skill-editor-source-of-truth-guardrails" { }
               ''
-                for source in               ${cleanSource}/modules/skill-editor/full.md               ${cleanSource}/roles/skill-editor/full.md               ${cleanSource}/modules/skill-source-core/full.md; do
-                  grep -F 'explicit psyche approval' "$source" >/dev/null
-                  grep -F 'generated runtime' "$source" >/dev/null
-                  grep -F 'Generate and verify' "$source" >/dev/null
-                done
+                expected=$TMPDIR/skill-editor.md
+                printf '%s\n' \
+                  'Keep skills small, composable, and action-changing.' \
+                  'Make a skill only when the same guidance is needed across repositories.' \
+                  'Reject operational guidance and repository-specific facts.' \
+                  'Remove anything repeated, unverified, outdated, or already done without the skill.' \
+                  'Use headings only when they aid navigation; never repeat the skill name.' \
+                  > "$expected"
+                cmp "$expected" ${cleanSource}/modules/skill-editor/full.md
+                cmp "$expected" ${cleanSource}/roles/skill-editor/full.md
+                grep -F '(Role (skill-editor role-skill-editor []' ${cleanSource}/manifests/active-outputs.nota >/dev/null
+                ! grep -F '(skill-editor ' ${cleanSource}/manifests/target-module-insertions.nota
                 touch "$out"
               '';
           manager-doctrine-guardrails = pkgs.runCommand "skills-manager-doctrine-guardrails" { } ''

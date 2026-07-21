@@ -578,23 +578,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                     .collect::<Vec<_>>()
             ))
             .collect::<Vec<_>>(),
-        [
-            (
-                "skill-editor",
-                skills::schema::assembly::OutputSurface::AgentsSkill,
-                vec!["harness-placement"]
-            ),
-            (
-                "skill-editor",
-                skills::schema::assembly::OutputSurface::ClaudeSkill,
-                vec!["harness-placement"]
-            ),
-            (
-                "general-instructions",
-                skills::schema::assembly::OutputSurface::CodexAgent,
-                vec!["codex-skill-loading"]
-            ),
-        ]
+        [(
+            "general-instructions",
+            skills::schema::assembly::OutputSurface::CodexAgent,
+            vec!["codex-skill-loading"]
+        ),]
     );
     assert_eq!(
         universal_role_modules
@@ -710,16 +698,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 "non-ideal-registry",
             ],
         ),
-        (
-            "skill-editor",
-            "role-skill-editor",
-            &[
-                "edit-coordination-core",
-                "editing-closeout",
-                "skill-source-core",
-                "harness-placement",
-            ],
-        ),
+        ("skill-editor", "role-skill-editor", &[]),
         (
             "intent-curator",
             "role-intent-curator",
@@ -829,26 +808,62 @@ fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
 }
 
 #[test]
-fn skill_editor_keeps_source_and_runtime_boundaries() {
-    for source in [
-        include_str!("../modules/skill-editor/full.md"),
-        include_str!("../roles/skill-editor/full.md"),
-        include_str!("../modules/skill-source-core/full.md"),
+fn skill_editor_is_exactly_minimal_and_has_no_runtime_operations() {
+    const EXPECTED: &str = "Keep skills small, composable, and action-changing.\n\
+Make a skill only when the same guidance is needed across repositories.\n\
+Reject operational guidance and repository-specific facts.\n\
+Remove anything repeated, unverified, outdated, or already done without the skill.\n\
+Use headings only when they aid navigation; never repeat the skill name.\n";
+
+    assert_eq!(include_str!("../modules/skill-editor/full.md"), EXPECTED);
+    assert_eq!(include_str!("../roles/skill-editor/full.md"), EXPECTED);
+
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("minimal Skill Editor generates");
+    for path in [
+        ".agents/skills/skill-editor/SKILL.md",
+        ".claude/skills/skill-editor/SKILL.md",
     ] {
-        assert!(source.contains("explicit psyche approval"));
-        assert!(source.contains("generated runtime"));
-        assert!(source.contains("Generate and verify"));
+        assert_eq!(
+            fixture.read_workspace_file(path),
+            format!(
+                "---\nname: skill-editor\ndescription: 'Skill editor rules.'\n---\n\n{EXPECTED}"
+            ),
+            "{path} is the exact minimal runtime skill"
+        );
     }
-    for source in [
-        include_str!("../modules/skill-editor/full.md"),
-        include_str!("../roles/skill-editor/full.md"),
+    for path in [
+        ".pi/agents/skill-editor.md",
+        ".claude/agents/skill-editor.md",
+        ".codex/agents/skill-editor.toml",
     ] {
-        assert!(source.contains("Do not repeat the skill name as the first heading."));
+        let output = fixture.read_workspace_file(path);
+        let expected = if path.ends_with(".toml") {
+            EXPECTED.replace('\n', "\\n")
+        } else {
+            EXPECTED.to_owned()
+        };
+        assert!(
+            output.contains(&expected),
+            "{path} receives the exact guidance"
+        );
+        for legacy_operation in [
+            "Get explicit psyche approval before changing skills or roles.",
+            "Edit source guidance, not generated runtime files.",
+            "Generate and verify affected runtime surfaces.",
+            "## edit coordination",
+            "## editing closeout",
+            "## skill source",
+            "## harness placement",
+        ] {
+            assert!(
+                !output.contains(legacy_operation),
+                "{path} excludes legacy Skill Editor operation: {legacy_operation}"
+            );
+        }
     }
-    assert!(
-        include_str!("../modules/harness-placement/full.md")
-            .contains("Keep shared guidance independent of harness APIs.")
-    );
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("skills.md")
@@ -929,10 +944,10 @@ fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
         ".codex/agents/skill-editor.toml",
     ] {
         assert!(
-            fixture
+            !fixture
                 .read_workspace_file(path)
                 .contains("Keep shared guidance independent of harness APIs."),
-            "{path} keeps harness guidance scoped"
+            "{path} excludes retired Skill Editor harness operations"
         );
     }
 }
