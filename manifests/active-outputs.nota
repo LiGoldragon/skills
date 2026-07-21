@@ -60,7 +60,6 @@
   (Skill (helper-context-transfer helper-context-transfer Meta Mechanism [|Helper context transfer rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (management management Meta Mechanism [|Management rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (spirit-query spirit-query Meta Topic [|Spirit query rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (context-maintenance context-maintenance Meta Mechanism [|Context maintenance rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (context-handover context-handover Meta Mechanism [|Context handover rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (context-maintenance-deep context-maintenance-deep Meta Mechanism [|Context maintenance deep rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (intent-log intent-log Meta Topic [|Intent log rules.|] [AgentsSkill ClaudeSkill]))

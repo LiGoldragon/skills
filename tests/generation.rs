@@ -250,7 +250,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         .expect("roster model parses");
 
     assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 76);
+    assert_eq!(roster.skill_modules.payload().len(), 75);
 
     let active_first_class_modules: Vec<_> = roster
         .skill_modules
@@ -261,7 +261,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 62);
+    assert_eq!(active_first_class_modules.len(), 61);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -384,7 +384,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
         .count();
 
-    assert_eq!(skill_count, 65);
+    assert_eq!(skill_count, 64);
     assert_eq!(role_count, 14);
     assert_eq!(model_catalog.payload().len(), 6);
     assert_eq!(nested_role_relations.payload().len(), 3);
@@ -446,6 +446,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "jj",
         "beads",
         "human-interaction",
+        "context-maintenance",
         "orchestration",
     ] {
         assert!(
@@ -759,7 +760,10 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 }
 
 #[test]
-fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
+fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep_remain() {
+    const HANDOVER_DIRECTIVE: &str =
+        "Write every handover yourself and print it in the response; never delegate it.";
+
     let manifest_text = include_str!("../manifests/active-outputs.nota");
     let index_text = include_str!("../manifests/module-dependencies.nota");
 
@@ -770,6 +774,14 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
             .join("modules/human-interaction/full.md")
             .exists(),
         "human-interaction source module is deleted, not archived"
+    );
+    assert!(!manifest_text.contains("(Skill (context-maintenance "));
+    assert!(!index_text.contains("(context-maintenance "));
+    assert!(
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/context-maintenance/full.md")
+            .exists(),
+        "context-maintenance source module is deleted, not archived"
     );
 
     let module_dependencies = NotaSource::new(index_text)
@@ -797,6 +809,66 @@ fn human_interaction_is_removed_and_context_handover_stays_manual_load() {
             .iter()
             .any(|module| module.as_ref() == "context-handover")
     );
+    let context_maintenance_deep = module_dependencies
+        .payload()
+        .iter()
+        .find(|dependency| dependency.module_identifier.as_ref() == "context-maintenance-deep")
+        .expect("context-maintenance-deep dependency indexed");
+    assert!(
+        context_maintenance_deep
+            .dependency_modules
+            .payload()
+            .is_empty(),
+        "context-maintenance-deep does not depend on deleted context-maintenance"
+    );
+    assert!(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/context-maintenance-deep/full.md")
+            .exists(),
+        "context-maintenance-deep source remains"
+    );
+    assert!(
+        include_str!("../modules/context-handover/full.md").contains(HANDOVER_DIRECTIVE),
+        "context-handover source carries the approved non-delegation directive"
+    );
+
+    let fixture = Fixture::new();
+    fixture.write_workspace_file(".agents/skills/context-maintenance/SKILL.md", "stale\n");
+    fixture.write_workspace_file(".claude/skills/context-maintenance/SKILL.md", "stale\n");
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current source prunes removed context-maintenance outputs");
+    for stale_path in [
+        ".agents/skills/context-maintenance/SKILL.md",
+        ".claude/skills/context-maintenance/SKILL.md",
+    ] {
+        assert!(
+            !fixture.workspace.path().join(stale_path).exists(),
+            "{stale_path} is pruned"
+        );
+    }
+    for path in [
+        ".agents/skills/context-handover/SKILL.md",
+        ".claude/skills/context-handover/SKILL.md",
+        ".agents/skills/context-maintenance-deep/SKILL.md",
+        ".claude/skills/context-maintenance-deep/SKILL.md",
+    ] {
+        assert!(
+            fixture.workspace.path().join(path).exists(),
+            "{path} remains"
+        );
+    }
+    for path in [
+        ".agents/skills/context-handover/SKILL.md",
+        ".claude/skills/context-handover/SKILL.md",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .contains(HANDOVER_DIRECTIVE),
+            "{path} carries the approved non-delegation directive"
+        );
+    }
 }
 
 #[test]

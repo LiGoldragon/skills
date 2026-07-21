@@ -87,7 +87,6 @@
   (codex-skill-loading modules/codex-skill-loading/full.md [] RoleComposition)
   (spirit-query modules/spirit-query/full.md [] RuntimeSkill)
   (helper-context-transfer modules/helper-context-transfer/full.md [] RuntimeSkill)
-  (context-maintenance modules/context-maintenance/full.md [] RuntimeSkill)
   (context-handover modules/context-handover/full.md [] RuntimeSkill)
   (context-maintenance-deep modules/context-maintenance-deep/full.md [] RuntimeSkill)
   (intent-log modules/intent-log/full.md [] RuntimeSkill)

@@ -69,7 +69,6 @@
     (helper-context-transfer modules/helper-context-transfer/full.md (Active (Meta Mechanism [|Helper context transfer rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (management modules/management/full.md (Active (Meta Mechanism [|Management rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (spirit-query modules/spirit-query/full.md (Active (Meta Topic [|Spirit query rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
-    (context-maintenance modules/context-maintenance/full.md (Active (Meta Mechanism [|Context maintenance rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (context-handover modules/context-handover/full.md (Active (Meta Mechanism [|Context handover rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (context-maintenance-deep modules/context-maintenance-deep/full.md (Active (Meta Mechanism [|Context maintenance deep rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (intent-log modules/intent-log/full.md (Active (Meta Topic [|Intent log rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
