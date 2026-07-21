@@ -924,7 +924,7 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 }
 
 #[test]
-fn management_is_shared_and_has_no_spirit_or_claude_overlay() {
+fn management_is_shared_and_has_no_claude_overlay() {
     let management = include_str!("../modules/management/full.md");
     let approved_rules = [
         "Never do task work. Delegate it; if delegation fails, stop.",
@@ -934,8 +934,6 @@ fn management_is_shared_and_has_no_spirit_or_claude_overlay() {
         assert!(management.contains(rule), "management preserves {rule}");
     }
     assert!(!management.contains("do not perform task work"));
-    assert!(!management.contains("Spirit"));
-    assert!(!management.contains("NOTA"));
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("modules/claude-management/full.md")

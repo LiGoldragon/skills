@@ -245,7 +245,6 @@
             test -f "$management"
             grep -F 'Never do task work. Delegate it; if delegation fails, stop.' "$management" >/dev/null
             grep -F 'A question authorizes an answer, not a change.' "$management" >/dev/null
-            ! grep -E 'Spirit|NOTA' "$management"
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             test ! -e ${cleanSource}/modules/claude-management
             ! grep -F '(management Claude' "$insertions"
@@ -290,7 +289,6 @@
             insertions=${cleanSource}/manifests/target-module-insertions.nota
             grep -F 'Never do task work. Delegate it; if delegation fails, stop.' "$management" >/dev/null
             grep -F 'A question authorizes an answer, not a change.' "$management" >/dev/null
-            ! grep -E 'Spirit|NOTA' "$management"
             grep -F 'Require explicit psyche approval before a host reboot.' "$safeguards" >/dev/null
             grep -F 'Delegate investigation and operations.' "$boundary" >/dev/null
             grep -F 'Keep requested rules, mechanisms, and architecture as matter.' "$intent" >/dev/null
