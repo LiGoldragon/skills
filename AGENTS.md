@@ -2,8 +2,12 @@
 
 This repository is public.
 
-Edit source modules, role sources, and manifests.
+Get explicit psyche approval before changing a skill or role.
 
-Generate runtime surfaces through the supported generator.
+Edit source modules, role sources, and manifests, not generated runtime files.
+
+Put contributor and agent rules here; user guidance in README.md; durable design in ARCHITECTURE.md; temporary agent workarounds in NON_IDEAL_AGENTS.md; and local rationale beside code.
+
+Generate and verify every affected runtime surface.
 
 Use `jj` to commit and push completed edits.
