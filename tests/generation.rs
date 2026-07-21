@@ -761,7 +761,9 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
 #[test]
 fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep_remain() {
-    const HANDOVER: &str = "Never delegate a context handover; write in the response only your understanding of the psyche’s intent and vision that cannot be recovered elsewhere.\n";
+    const HANDOVER: &str = "Write the intent handover yourself in the response; never delegate it.\n\
+Preserve every non-repetitive, load-bearing psyche statement in recognizable language and full resolution, regardless of length.\n\
+Put recoverable work facts in a delegated situation summary.\n";
 
     let manifest_text = include_str!("../manifests/active-outputs.nota");
     let index_text = include_str!("../manifests/module-dependencies.nota");
@@ -883,6 +885,8 @@ fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
 #[test]
 fn skill_editor_is_exactly_minimal_and_has_no_runtime_operations() {
     const EXPECTED: &str = "Keep only unusual guidance that changes agent behavior.\n\
+Keep distinct instructions separate.\n\
+Shorten skills by deleting weak guidance, not by compressing it.\n\
 Make a skill only when the same guidance is needed across repositories.\n\
 Reject operational guidance and repository-specific facts.\n\
 Remove anything repeated, unverified, outdated, or already done without the skill.\n\

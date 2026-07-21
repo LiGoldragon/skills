@@ -1,1 +1,3 @@
-Never delegate a context handover; write in the response only your understanding of the psyche’s intent and vision that cannot be recovered elsewhere.
+Write the intent handover yourself in the response; never delegate it.
+Preserve every non-repetitive, load-bearing psyche statement in recognizable language and full resolution, regardless of length.
+Put recoverable work facts in a delegated situation summary.
