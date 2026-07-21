@@ -22,10 +22,10 @@ workers do not discover doctrine through a runtime index.
 - `modules/<name>/full.md`: source modules for workspace skills.
 - `roles/<name>/full.md`: source modules for generated worker role packets.
 - `skills/archive/`: archived source material with no active emission.
-- `manifests/active-outputs.nota`: active `Skill` and `Role` outputs; presence means active.
-- `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
+- `manifests/active-outputs.nota`: active `Skill`, `FullAgentSkill`, and `FullAgentRole` outputs; presence means active.
+- `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, `RoleComposition`, or `SharedComposition`).
 - `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
-- `manifests/universal-role-modules.nota`: the sole `general-instructions` module included in every generated role packet.
+- `manifests/universal-full-agent-modules.nota`: ordered `SharedComposition` modules included in every full-agent skill and role output.
 - `manifests/model-catalog.nota`: canonical Claude and ChatGPT-family model+effort profiles with explicit total-order strengths.
 - `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
 - `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
@@ -54,40 +54,39 @@ Derived inventory:
 ## Assembly Model
 
 The active source surface is manifest-owned: one active-outputs manifest lists
-generated `Skill` and `Role` outputs, where presence means active; sidecar
-indexes map module identifiers to source paths, dependencies, target overlays,
-and universal role modules. `modules/general-instructions/full.md` is the sole
-source of universal cross-agent role doctrine; role-, skill-, repository-, and
-harness-specific instruction stays in its owning source. Role sidecars assign
-validated model profiles and optional skills. Nested-role relations add
-validated target-relative minimum
-models and exclusive leaf-role delegation without changing Manager's root
-identity. The active manifest decides what emits; the module index decides
-expansion order and module kind.
+generated `Skill`, `FullAgentSkill`, and `FullAgentRole` outputs, where presence
+means active. `Skill` is an ordinary visible skill. `FullAgentSkill` is the
+visible full-agent skill surface, currently only `management`. `FullAgentRole`
+is the role packet surface; every active role uses it. Sidecar indexes map module
+identifiers to source paths, dependencies, target overlays, and universal
+full-agent modules. Role sidecars assign validated model profiles and optional
+skills. Nested-role relations add validated target-relative minimum models and
+exclusive leaf-role delegation without changing Manager's root identity.
 
 Assembly is ordered concatenation of source modules after manifest expansion.
-For skills, the active skill's module expands through the dependency index and
-the generated output surface's target insertions. For roles, the role body is
-emitted first, followed by universal role modules, per-role preloaded modules,
-their dependencies, surface-specific insertions, a generated target-relative
-Manager or nested-role roster when applicable, and a generated list of optional
-skills. Optional skill bodies remain outside the packet until loaded. The
-catalog's typed model+effort strength determines the strongest assignment;
-ordinary assignment wins an equal-strength minimum-model tie, and a stronger
-nested minimum prevents downgrade. A generated role packet is the curated runtime
-bundle for normal role work.
+A full-agent skill or role emits its root first, then the ordered universal
+full-agent shared compositions, then role-specific included modules and
+dependencies, generated rosters, and optional skills. Ordinary visible skills
+do not receive universal compositions. Optional skill bodies remain outside the
+packet until loaded. The catalog's typed model+effort strength determines the
+strongest assignment; ordinary assignment wins an equal-strength minimum-model
+tie, and a stronger nested minimum prevents downgrade.
 
 Module dependencies are typed by module identifier rather than inferred from
-markdown links or filesystem layout. The dependency index also carries source
-module kind. `RuntimeSkill` modules may emit as first-class skills,
-`RoleSource` modules are role roots, and `RoleComposition` modules are
-generator-only role packet components that may be dependency-expanded into
-roles but cannot be emitted as runtime skills. Target insertions are data, not
-model choice: a base module, output surface, and inserted module list determine
-which overlay appears in a generated harness surface. Universal role modules
-are data, not repeated role prose; the generator includes them in every role
-packet. Generation metadata such as descriptions, tiers, frontmatter, target
-surfaces, role output identity, model profiles, and optional skills, nested-role edges, and minimum models live in manifests or the
+markdown links or filesystem layout. `RuntimeSkill` modules may emit as
+first-class skills, `RoleSource` modules are role roots, `RoleComposition`
+modules are source-only and role-only, and `SharedComposition` modules are
+source-only components accepted by full-agent skills and roles. A composition
+can never emit standalone. The universal-full-agent manifest accepts only
+`SharedComposition` entries. The generator retains identifier, path, and kind
+through expansion: composition source prose is heading-free and receives a
+deterministic generator-owned level-two heading. Visible skill and role roots
+retain their source-owned root heading and receive no duplicate synthesized
+name heading. Target insertions are data, not model choice: a base module,
+output surface, and inserted module list determine which overlay appears in a
+generated harness surface. Generation metadata such as descriptions, tiers,
+frontmatter, target surfaces, role output identity, model profiles, optional
+skills, nested-role edges, and minimum models live in manifests or the
 compatibility roster.
 
 ## Ownership Boundaries
@@ -107,11 +106,11 @@ Deleted modules are modeled by compatibility checks and emit no surfaces.
 
 - The generator is a Rust CLI.
 - Generator inputs are NOTA where practical, including the active manifest,
-  module dependency index, target module insertion index, and universal role module manifest.
+  module dependency index, target module insertion index, and universal full-agent module manifest.
 - Generator outputs are NOTA where applicable, including generated-role inventory files.
 - Interfaces are schema-authored in `schema/assembly.schema`; Rust schema types are generated, not hand-authored in parallel.
-- Normalization changes only structure required for valid output: one frontmatter block, heading levels, relative links, and duplicate-title handling.
-- Prose is preserved through generation.
+- Normalization changes only structure required for valid output: one frontmatter block, root heading levels, relative links, and duplicate-title handling.
+- Composition prose is preserved through generation; composition headings are generator-owned.
 - Duplicate headings or sections fail generation.
 - Generated outputs carry no provenance headers.
 - Generated outputs are written into consuming workspaces and committed there.

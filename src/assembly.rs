@@ -10,17 +10,17 @@ use crate::{
     error::{Error, Result},
     markdown::{MarkdownAssembly, MarkdownFragment},
     schema::assembly::{
-        ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, ChatGptModelAssignment,
-        ClaudeModelAssignment, EffortLevel, EntryPoint, EntryPointExtra, ExtraSurface, Frontmatter,
-        FrontmatterEntry, FrontmatterKey, FrontmatterValue, GeneratedFile, GeneratedFiles,
-        GeneratedRoleOutputs, GenerationMode, GenerationOutcome, GenerationReport,
-        GenerationRequest, Manifest, ManifestPath, ModelCatalog, ModelCatalogEntry,
-        ModelEffortStrength, ModelIdentifier, ModelStrength, ModuleDependencies, ModuleDependency,
-        ModuleIdentifier, ModuleKind, ModuleLifecycle, ModulePath, Modules, NestedRoleMinimumModel,
-        NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier, OutputKind, OutputPath,
-        OutputSurface, RoleModelAssignment, RoleModelAssignments, RoleOptionalSkills,
-        RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion,
-        TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, AssembledModule, ByteCount,
+        ChatGptModelAssignment, ClaudeModelAssignment, EffortLevel, EntryPoint, EntryPointExtra,
+        ExtraSurface, Frontmatter, FrontmatterEntry, FrontmatterKey, FrontmatterValue,
+        GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode, GenerationOutcome,
+        GenerationReport, GenerationRequest, Manifest, ManifestPath, ModelCatalog,
+        ModelCatalogEntry, ModelEffortStrength, ModelIdentifier, ModelStrength, ModuleDependencies,
+        ModuleDependency, ModuleIdentifier, ModuleKind, ModuleLifecycle, ModulePath, Modules,
+        NestedRoleMinimumModel, NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier,
+        OutputKind, OutputPath, OutputSurface, RoleModelAssignment, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster,
+        TargetModuleInsertion, TargetModuleInsertions, TargetSurface, UniversalFullAgentModules,
     },
     trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
@@ -229,11 +229,12 @@ impl GenerationSource {
             SourceFile::new(self.source_root.clone(), insertion_path)
                 .read_optional()?
                 .unwrap_or_else(|| TargetModuleInsertions::new(Vec::new()));
-        let universal_role_modules_path = manifest_directory.join("universal-role-modules.nota");
-        let universal_role_modules: UniversalRoleModules =
-            SourceFile::new(self.source_root.clone(), universal_role_modules_path)
+        let universal_full_agent_modules_path =
+            manifest_directory.join("universal-full-agent-modules.nota");
+        let universal_full_agent_modules: UniversalFullAgentModules =
+            SourceFile::new(self.source_root.clone(), universal_full_agent_modules_path)
                 .read_optional()?
-                .unwrap_or_else(|| UniversalRoleModules::new(Vec::new()));
+                .unwrap_or_else(|| UniversalFullAgentModules::new(Vec::new()));
         let model_catalog_path = manifest_directory.join("model-catalog.nota");
         let model_catalog: ModelCatalog =
             SourceFile::new(self.source_root.clone(), model_catalog_path)
@@ -258,7 +259,7 @@ impl GenerationSource {
             active_outputs,
             module_dependencies,
             target_module_insertions,
-            universal_role_modules,
+            universal_full_agent_modules,
             RoleMetadataSources {
                 model_catalog,
                 role_model_assignments,
@@ -274,7 +275,34 @@ impl GenerationSource {
             PathBuf::from(self.manifest_path.as_ref()),
         )
         .read()?;
-        Ok(GenerationConfiguration::legacy(roster))
+        let manifest_directory = PathBuf::from(self.manifest_path.as_ref())
+            .parent()
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        let module_dependencies = SourceFile::new(
+            self.source_root.clone(),
+            manifest_directory.join("module-dependencies.nota"),
+        )
+        .read_optional()?
+        .unwrap_or_else(|| roster.module_dependencies());
+        let target_module_insertions = SourceFile::new(
+            self.source_root.clone(),
+            manifest_directory.join("target-module-insertions.nota"),
+        )
+        .read_optional()?
+        .unwrap_or_else(|| TargetModuleInsertions::new(Vec::new()));
+        let universal_full_agent_modules = SourceFile::new(
+            self.source_root.clone(),
+            manifest_directory.join("universal-full-agent-modules.nota"),
+        )
+        .read_optional()?
+        .unwrap_or_else(|| UniversalFullAgentModules::new(Vec::new()));
+        GenerationConfiguration::legacy(
+            roster,
+            module_dependencies,
+            target_module_insertions,
+            universal_full_agent_modules,
+        )
     }
 }
 
@@ -408,18 +436,20 @@ impl RoleMetadataIndex {
             .payload()
             .iter()
             .filter_map(|output| match output {
-                ActiveOutput::Role(role) => Some((role.output_identifier.clone(), role.clone())),
-                ActiveOutput::Skill(_) => None,
+                ActiveOutput::FullAgentRole(role) => {
+                    Some((role.output_identifier.clone(), role.clone()))
+                }
+                ActiveOutput::Skill(_) | ActiveOutput::FullAgentSkill(_) => None,
             })
             .collect();
         let active_skills: BTreeMap<OutputIdentifier, ActiveSkill> = active_outputs
             .payload()
             .iter()
             .filter_map(|output| match output {
-                ActiveOutput::Skill(skill) => {
+                ActiveOutput::Skill(skill) | ActiveOutput::FullAgentSkill(skill) => {
                     Some((skill.output_identifier.clone(), skill.clone()))
                 }
-                ActiveOutput::Role(_) => None,
+                ActiveOutput::FullAgentRole(_) => None,
             })
             .collect();
         let catalog = ModelCatalogIndex::new(model_catalog)?;
@@ -1041,7 +1071,7 @@ struct GenerationConfiguration {
     active_outputs: ActiveOutputs,
     module_dependencies: ModuleDependencies,
     target_module_insertions: TargetModuleInsertions,
-    universal_role_modules: UniversalRoleModules,
+    universal_full_agent_modules: UniversalFullAgentModules,
     role_metadata: Option<RoleMetadataIndex>,
     compatibility_roster: Option<SkillRoster>,
 }
@@ -1051,9 +1081,14 @@ impl GenerationConfiguration {
         active_outputs: ActiveOutputs,
         module_dependencies: ModuleDependencies,
         target_module_insertions: TargetModuleInsertions,
-        universal_role_modules: UniversalRoleModules,
+        universal_full_agent_modules: UniversalFullAgentModules,
         role_metadata_sources: RoleMetadataSources,
     ) -> Result<Self> {
+        let module_index = ModuleIndex::new(
+            module_dependencies.clone(),
+            target_module_insertions.clone(),
+        )?;
+        module_index.validate_universal_full_agent_modules(&universal_full_agent_modules)?;
         let role_metadata = RoleMetadataIndex::new(
             &active_outputs,
             role_metadata_sources.model_catalog,
@@ -1065,21 +1100,31 @@ impl GenerationConfiguration {
             active_outputs,
             module_dependencies,
             target_module_insertions,
-            universal_role_modules,
+            universal_full_agent_modules,
             role_metadata: Some(role_metadata),
             compatibility_roster: None,
         })
     }
 
-    fn legacy(roster: SkillRoster) -> Self {
-        Self {
+    fn legacy(
+        roster: SkillRoster,
+        module_dependencies: ModuleDependencies,
+        target_module_insertions: TargetModuleInsertions,
+        universal_full_agent_modules: UniversalFullAgentModules,
+    ) -> Result<Self> {
+        let module_index = ModuleIndex::new(
+            module_dependencies.clone(),
+            target_module_insertions.clone(),
+        )?;
+        module_index.validate_universal_full_agent_modules(&universal_full_agent_modules)?;
+        Ok(Self {
             active_outputs: roster.active_outputs(),
-            module_dependencies: roster.module_dependencies(),
-            target_module_insertions: TargetModuleInsertions::new(Vec::new()),
-            universal_role_modules: UniversalRoleModules::new(Vec::new()),
+            module_dependencies,
+            target_module_insertions,
+            universal_full_agent_modules,
             role_metadata: None,
             compatibility_roster: Some(roster),
-        }
+        })
     }
 
     fn uses_active_manifest(&self) -> bool {
@@ -1090,13 +1135,14 @@ impl GenerationConfiguration {
         self.compatibility_roster.as_ref()
     }
 
-    fn active_skills(&self) -> Vec<ActiveSkill> {
+    fn active_skills(&self) -> Vec<(ActiveSkill, bool)> {
         self.active_outputs
             .payload()
             .iter()
             .filter_map(|output| match output {
-                ActiveOutput::Skill(skill) => Some(skill.clone()),
-                ActiveOutput::Role(_) => None,
+                ActiveOutput::Skill(skill) => Some((skill.clone(), false)),
+                ActiveOutput::FullAgentSkill(skill) => Some((skill.clone(), true)),
+                ActiveOutput::FullAgentRole(_) => None,
             })
             .collect()
     }
@@ -1106,8 +1152,8 @@ impl GenerationConfiguration {
             .payload()
             .iter()
             .filter_map(|output| match output {
-                ActiveOutput::Role(role) => Some(role.clone()),
-                ActiveOutput::Skill(_) => None,
+                ActiveOutput::FullAgentRole(role) => Some(role.clone()),
+                ActiveOutput::Skill(_) | ActiveOutput::FullAgentSkill(_) => None,
             })
             .collect()
     }
@@ -1118,8 +1164,12 @@ impl GenerationConfiguration {
             self.target_module_insertions.clone(),
         )?;
         let mut manifests = Vec::new();
-        for skill in self.active_skills() {
-            for manifest in skill.first_class_manifests(&module_index)? {
+        for (skill, is_full_agent) in self.active_skills() {
+            for manifest in skill.first_class_manifests(
+                &module_index,
+                &self.universal_full_agent_modules,
+                is_full_agent,
+            )? {
                 manifests.push(manifest);
             }
         }
@@ -1141,7 +1191,7 @@ impl GenerationConfiguration {
             let metadata = role_metadata.metadata(&role.output_identifier)?;
             for manifest in role.manifests(
                 &module_index,
-                &self.universal_role_modules,
+                &self.universal_full_agent_modules,
                 metadata,
                 role_metadata.nested_role(&role.output_identifier),
                 &active_roles,
@@ -1316,15 +1366,38 @@ impl OutputPathIndex {
 }
 
 impl ActiveSkill {
-    fn first_class_manifests(&self, module_index: &ModuleIndex) -> Result<Vec<Manifest>> {
+    fn first_class_manifests(
+        &self,
+        module_index: &ModuleIndex,
+        universal_full_agent_modules: &UniversalFullAgentModules,
+        is_full_agent: bool,
+    ) -> Result<Vec<Manifest>> {
         let mut manifests = Vec::new();
         for surface in self.target_surfaces.payload() {
             let output_surface = OutputSurface::from(surface);
-            let modules = Modules::new(module_index.expanded_paths(
-                std::slice::from_ref(&self.module_identifier),
-                ModuleUse::SkillContent,
+            let mut expansion = ModuleExpansion::new(
+                module_index,
+                if is_full_agent {
+                    ModuleUse::FullAgentSkillContent
+                } else {
+                    ModuleUse::SkillContent
+                },
                 output_surface,
-            )?);
+            );
+            expansion.append(&self.module_identifier)?;
+            if is_full_agent {
+                for module_identifier in universal_full_agent_modules.payload() {
+                    expansion.append_without_target_modules(module_identifier)?;
+                }
+                for module_identifier in universal_full_agent_modules.payload() {
+                    for target_module_identifier in
+                        module_index.target_modules(module_identifier, output_surface)
+                    {
+                        expansion.append(&target_module_identifier)?;
+                    }
+                }
+            }
+            let modules = Modules::new(expansion.into_modules());
             manifests.push(Manifest {
                 output_path: OutputPath::new(
                     output_surface.skill_path(self.output_identifier.as_ref()),
@@ -1353,7 +1426,7 @@ impl ActiveRole {
     fn manifests(
         &self,
         module_index: &ModuleIndex,
-        universal_role_modules: &UniversalRoleModules,
+        universal_full_agent_modules: &UniversalFullAgentModules,
         metadata: &RoleMetadata,
         nested_role: Option<&NestedRoleMetadata>,
         active_roles: &[ActiveRole],
@@ -1383,7 +1456,7 @@ impl ActiveRole {
                 optional_skills: metadata.optional_skills.clone(),
                 modules: Modules::new(self.assembled_modules(
                     module_index,
-                    universal_role_modules,
+                    universal_full_agent_modules,
                     output_surface,
                 )?),
             });
@@ -1418,19 +1491,29 @@ impl ActiveRole {
     fn assembled_modules(
         &self,
         module_index: &ModuleIndex,
-        universal_role_modules: &UniversalRoleModules,
+        universal_full_agent_modules: &UniversalFullAgentModules,
         output_surface: OutputSurface,
-    ) -> Result<Vec<ModulePath>> {
-        let mut expansion =
-            ModuleExpansion::new(module_index, ModuleUse::RoleContent, output_surface);
+    ) -> Result<Vec<AssembledModule>> {
+        let mut expansion = ModuleExpansion::new(
+            module_index,
+            ModuleUse::FullAgentRoleContent,
+            output_surface,
+        );
         expansion.append_role_source(&self.module_identifier)?;
-        for module_identifier in universal_role_modules.payload() {
-            expansion.append(module_identifier)?;
+        for module_identifier in universal_full_agent_modules.payload() {
+            expansion.append_without_target_modules(module_identifier)?;
+        }
+        for module_identifier in universal_full_agent_modules.payload() {
+            for target_module_identifier in
+                module_index.target_modules(module_identifier, output_surface)
+            {
+                expansion.append(&target_module_identifier)?;
+            }
         }
         for module_identifier in self.included_modules.payload() {
             expansion.append(module_identifier)?;
         }
-        Ok(expansion.into_paths())
+        Ok(expansion.into_modules())
     }
 
     fn frontmatter(
@@ -1576,17 +1659,15 @@ impl ModuleIndex {
         })
     }
 
-    fn expanded_paths(
+    fn validate_universal_full_agent_modules(
         &self,
-        module_identifiers: &[ModuleIdentifier],
-        module_use: ModuleUse,
-        output_surface: OutputSurface,
-    ) -> Result<Vec<ModulePath>> {
-        let mut expansion = ModuleExpansion::new(self, module_use, output_surface);
-        for module_identifier in module_identifiers {
-            expansion.append(module_identifier)?;
+        universal_full_agent_modules: &UniversalFullAgentModules,
+    ) -> Result<()> {
+        for module_identifier in universal_full_agent_modules.payload() {
+            self.dependency(module_identifier)?
+                .require_kind(ModuleKind::SharedComposition, "SharedComposition")?;
         }
-        Ok(expansion.into_paths())
+        Ok(())
     }
 
     fn dependency(&self, module_identifier: &ModuleIdentifier) -> Result<&ModuleDependency> {
@@ -1614,23 +1695,31 @@ impl ModuleIndex {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ModuleUse {
     SkillContent,
-    RoleContent,
+    FullAgentSkillContent,
+    FullAgentRoleContent,
 }
 
 impl ModuleUse {
     fn expected_description(&self) -> &'static str {
         match self {
             Self::SkillContent => "RuntimeSkill",
-            Self::RoleContent => "RuntimeSkill or RoleComposition",
+            Self::FullAgentSkillContent => "RuntimeSkill or SharedComposition",
+            Self::FullAgentRoleContent => "RuntimeSkill, RoleComposition, or SharedComposition",
         }
     }
 
     fn accepts(&self, module_kind: ModuleKind) -> bool {
         match self {
             Self::SkillContent => module_kind == ModuleKind::RuntimeSkill,
-            Self::RoleContent => matches!(
+            Self::FullAgentSkillContent => matches!(
                 module_kind,
-                ModuleKind::RuntimeSkill | ModuleKind::RoleComposition
+                ModuleKind::RuntimeSkill | ModuleKind::SharedComposition
+            ),
+            Self::FullAgentRoleContent => matches!(
+                module_kind,
+                ModuleKind::RuntimeSkill
+                    | ModuleKind::RoleComposition
+                    | ModuleKind::SharedComposition
             ),
         }
     }
@@ -1643,7 +1732,7 @@ struct ModuleExpansion<'a> {
     output_surface: OutputSurface,
     resolved: BTreeSet<ModuleIdentifier>,
     visiting: Vec<ModuleIdentifier>,
-    paths: Vec<ModulePath>,
+    modules: Vec<AssembledModule>,
 }
 
 impl<'a> ModuleExpansion<'a> {
@@ -1658,7 +1747,7 @@ impl<'a> ModuleExpansion<'a> {
             output_surface,
             resolved: BTreeSet::new(),
             visiting: Vec::new(),
-            paths: Vec::new(),
+            modules: Vec::new(),
         }
     }
 
@@ -1669,11 +1758,26 @@ impl<'a> ModuleExpansion<'a> {
         let dependency = self.module_index.dependency(module_identifier)?;
         dependency.require_kind(ModuleKind::RoleSource, "RoleSource")?;
         self.resolved.insert(module_identifier.clone());
-        self.paths.push(dependency.module_path.clone());
+        self.modules.push(dependency.assembled_module());
         Ok(())
     }
 
     fn append(&mut self, module_identifier: &ModuleIdentifier) -> Result<()> {
+        self.append_with_target_modules(module_identifier, true)
+    }
+
+    fn append_without_target_modules(
+        &mut self,
+        module_identifier: &ModuleIdentifier,
+    ) -> Result<()> {
+        self.append_with_target_modules(module_identifier, false)
+    }
+
+    fn append_with_target_modules(
+        &mut self,
+        module_identifier: &ModuleIdentifier,
+        include_target_modules: bool,
+    ) -> Result<()> {
         if self.resolved.contains(module_identifier) {
             return Ok(());
         }
@@ -1693,22 +1797,24 @@ impl<'a> ModuleExpansion<'a> {
         dependency.require_accepted(self.module_use)?;
         self.visiting.push(module_identifier.clone());
         for dependency_identifier in dependency.dependency_modules.payload() {
-            self.append(dependency_identifier)?;
+            self.append_with_target_modules(dependency_identifier, include_target_modules)?;
         }
         self.visiting.pop();
         self.resolved.insert(module_identifier.clone());
-        self.paths.push(dependency.module_path.clone());
-        for target_module_identifier in self
-            .module_index
-            .target_modules(module_identifier, self.output_surface)
-        {
-            self.append(&target_module_identifier)?;
+        self.modules.push(dependency.assembled_module());
+        if include_target_modules {
+            for target_module_identifier in self
+                .module_index
+                .target_modules(module_identifier, self.output_surface)
+            {
+                self.append(&target_module_identifier)?;
+            }
         }
         Ok(())
     }
 
-    fn into_paths(self) -> Vec<ModulePath> {
-        self.paths
+    fn into_modules(self) -> Vec<AssembledModule> {
+        self.modules
     }
 }
 
@@ -1723,6 +1829,14 @@ impl TargetModuleInsertion {
 }
 
 impl ModuleDependency {
+    fn assembled_module(&self) -> AssembledModule {
+        AssembledModule {
+            module_identifier: self.module_identifier.clone(),
+            module_path: self.module_path.clone(),
+            module_kind: self.module_kind,
+        }
+    }
+
     fn require_accepted(&self, module_use: ModuleUse) -> Result<()> {
         if module_use.accepts(self.module_kind) {
             Ok(())
@@ -1754,7 +1868,12 @@ impl ModuleKind {
             Self::RuntimeSkill => "RuntimeSkill",
             Self::RoleSource => "RoleSource",
             Self::RoleComposition => "RoleComposition",
+            Self::SharedComposition => "SharedComposition",
         }
+    }
+
+    fn is_composition(&self) -> bool {
+        matches!(self, Self::RoleComposition | Self::SharedComposition)
     }
 }
 
@@ -1785,10 +1904,13 @@ impl SkillModule {
         let ModuleLifecycle::Active(metadata) = &self.module_lifecycle else {
             return None;
         };
-        if self.emission_policy != crate::schema::assembly::EmissionPolicy::FirstClassSkill {
-            return None;
-        }
-        Some(ActiveOutput::Skill(ActiveSkill {
+        let active_output = match self.emission_policy {
+            crate::schema::assembly::EmissionPolicy::FirstClassSkill => ActiveOutput::Skill,
+            crate::schema::assembly::EmissionPolicy::FullAgentSkill => ActiveOutput::FullAgentSkill,
+            crate::schema::assembly::EmissionPolicy::InternalOnly
+            | crate::schema::assembly::EmissionPolicy::NoEmission => return None,
+        };
+        Some(active_output(ActiveSkill {
             output_identifier: crate::schema::assembly::OutputIdentifier::new(
                 self.module_name.as_ref(),
             ),
@@ -1878,7 +2000,11 @@ impl EntryPointExtra {
             output_surface,
             frontmatter: Frontmatter::new(Vec::new()),
             optional_skills: OptionalSkills::new(Vec::new()),
-            modules: Modules::new(vec![ModulePath::new(self.extra_module_path.as_ref())]),
+            modules: Modules::new(vec![AssembledModule {
+                module_identifier: ModuleIdentifier::new(module_name),
+                module_path: ModulePath::new(self.extra_module_path.as_ref()),
+                module_kind: ModuleKind::RuntimeSkill,
+            }]),
         })
     }
 
@@ -2209,10 +2335,14 @@ impl ManifestAssembler {
 
     fn markdown_fragments(&self) -> Result<Vec<MarkdownFragment>> {
         let mut fragments = Vec::new();
-        for module_path in self.manifest.modules.payload() {
-            fragments.push(MarkdownFragment::read(
-                self.module_workspace_path(module_path)?,
-            )?);
+        for module in self.manifest.modules.payload() {
+            let path = self.module_workspace_path(module)?;
+            let fragment = if module.module_kind.is_composition() {
+                MarkdownFragment::read_composition(path, &module.module_identifier)?
+            } else {
+                MarkdownFragment::read(path)?
+            };
+            fragments.push(fragment);
         }
         for text in &self.generated_fragments {
             fragments.push(MarkdownFragment::from_text(
@@ -2246,10 +2376,10 @@ impl ManifestAssembler {
         Ok(fragments)
     }
 
-    fn module_workspace_path(&self, module_path: &ModulePath) -> Result<WorkspacePath> {
+    fn module_workspace_path(&self, module: &AssembledModule) -> Result<WorkspacePath> {
         WorkspacePath::new(
             self.source_root.clone(),
-            PathBuf::from(module_path.as_ref()),
+            PathBuf::from(module.module_path.as_ref()),
         )
     }
 }

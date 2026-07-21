@@ -21,9 +21,10 @@
   FrontmatterKey String {| Display AsRef PartialEq |}
   FrontmatterValue String {| Display AsRef PartialEq |}
   ModulePath Path {| Display AsRef PartialEq |}
-  Modules (Vector ModulePath)
+  AssembledModule { ModuleIdentifier ModulePath ModuleKind }
+  Modules (Vector AssembledModule)
   ActiveOutputs (Vector ActiveOutput)
-  ActiveOutput [(Skill ActiveSkill) (Role ActiveRole)]
+  ActiveOutput [(Skill ActiveSkill) (FullAgentSkill ActiveSkill) (FullAgentRole ActiveRole)]
   ActiveSkill { OutputIdentifier ModuleIdentifier SkillCategory SkillTier SkillDescription TargetSurfaces }
   ActiveRole { OutputIdentifier ModuleIdentifier IncludedModules RoleDescription RoleTargetSurfaces }
   OutputIdentifier String {| Display AsRef PartialEq Ord |}
@@ -55,9 +56,9 @@
   NestedRoleMinimumModel { RoleTargetSurface ModelIdentifier EffortLevel }
   AllowedLeafRoles (Vector OutputIdentifier)
   ModuleDependencies (Vector ModuleDependency)
-  UniversalRoleModules (Vector ModuleIdentifier)
+  UniversalFullAgentModules (Vector ModuleIdentifier)
   ModuleDependency { ModuleIdentifier ModulePath DependencyModules ModuleKind }
-  ModuleKind [RuntimeSkill RoleSource RoleComposition]
+  ModuleKind [RuntimeSkill RoleSource RoleComposition SharedComposition]
   DependencyModules (Vector ModuleIdentifier)
   TargetModuleInsertions (Vector TargetModuleInsertion)
   TargetModuleInsertion { ModuleIdentifier OutputSurface IncludedModules }
@@ -73,7 +74,7 @@
   SkillCategory [Architecture Craft Programming Workflow Meta]
   SkillTier [Apex Keystroke Topic Mechanism]
   SkillDescription String {| Display AsRef PartialEq |}
-  EmissionPolicy [FirstClassSkill InternalOnly NoEmission]
+  EmissionPolicy [FirstClassSkill FullAgentSkill InternalOnly NoEmission]
   TargetSurfaces (Vector TargetSurface)
   TargetSurface [AgentsSkill ClaudeSkill]
   EntryPoints (Vector EntryPoint)
