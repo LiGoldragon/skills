@@ -1,4 +1,4 @@
-Keep skills small, composable, and action-changing.
+Keep only unusual guidance that changes agent behavior.
 Make a skill only when the same guidance is needed across repositories.
 Reject operational guidance and repository-specific facts.
 Remove anything repeated, unverified, outdated, or already done without the skill.

@@ -761,8 +761,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
 #[test]
 fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep_remain() {
-    const HANDOVER_DIRECTIVE: &str =
-        "Write every handover yourself and print it in the response; never delegate it.";
+    const HANDOVER: &str = "Never delegate a context handover; write in the response only your understanding of the psyche’s intent and vision that cannot be recovered elsewhere.\n";
 
     let manifest_text = include_str!("../manifests/active-outputs.nota");
     let index_text = include_str!("../manifests/module-dependencies.nota");
@@ -827,9 +826,10 @@ fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep
             .exists(),
         "context-maintenance-deep source remains"
     );
-    assert!(
-        include_str!("../modules/context-handover/full.md").contains(HANDOVER_DIRECTIVE),
-        "context-handover source carries the approved non-delegation directive"
+    assert_eq!(
+        include_str!("../modules/context-handover/full.md"),
+        HANDOVER,
+        "context-handover source is the approved exact handover guidance"
     );
 
     let fixture = Fixture::new();
@@ -862,11 +862,12 @@ fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep
         ".agents/skills/context-handover/SKILL.md",
         ".claude/skills/context-handover/SKILL.md",
     ] {
-        assert!(
-            fixture
-                .read_workspace_file(path)
-                .contains(HANDOVER_DIRECTIVE),
-            "{path} carries the approved non-delegation directive"
+        assert_eq!(
+            fixture.read_workspace_file(path),
+            format!(
+                "---\nname: context-handover\ndescription: 'Context handover rules.'\n---\n\n{HANDOVER}"
+            ),
+            "{path} is the approved exact handover guidance"
         );
     }
 }
@@ -881,7 +882,7 @@ fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
 
 #[test]
 fn skill_editor_is_exactly_minimal_and_has_no_runtime_operations() {
-    const EXPECTED: &str = "Keep skills small, composable, and action-changing.\n\
+    const EXPECTED: &str = "Keep only unusual guidance that changes agent behavior.\n\
 Make a skill only when the same guidance is needed across repositories.\n\
 Reject operational guidance and repository-specific facts.\n\
 Remove anything repeated, unverified, outdated, or already done without the skill.\n\
