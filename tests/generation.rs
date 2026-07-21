@@ -926,7 +926,14 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 #[test]
 fn management_is_shared_and_has_no_spirit_or_claude_overlay() {
     let management = include_str!("../modules/management/full.md");
-    assert!(management.contains("Clarify, gate, dispatch, and synthesize"));
+    let approved_rules = [
+        "Never do task work. Delegate it; if delegation fails, stop.",
+        "A question authorizes an answer, not a change.",
+    ];
+    for rule in approved_rules {
+        assert!(management.contains(rule), "management preserves {rule}");
+    }
+    assert!(!management.contains("do not perform task work"));
     assert!(!management.contains("Spirit"));
     assert!(!management.contains("NOTA"));
     assert!(
@@ -951,7 +958,9 @@ fn management_is_shared_and_has_no_spirit_or_claude_overlay() {
         ".codex/agents/manager.toml",
     ] {
         let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
-        assert!(packet.contains("Clarify, gate, dispatch, and synthesize"));
+        for rule in approved_rules {
+            assert!(packet.contains(rule), "{path} preserves {rule}");
+        }
         assert!(packet.contains("Require explicit psyche approval before a host reboot."));
         assert!(!packet.contains("@generated"));
     }
