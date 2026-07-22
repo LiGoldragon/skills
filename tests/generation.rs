@@ -1064,13 +1064,13 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 #[test]
 fn management_is_shared_and_has_no_claude_overlay() {
     let management = include_str!("../modules/management/full.md");
-    let expected_management = "Align with the psyche’s vision.\nAsk the psyche *until the vision is clear.*\nAsk one clear question at a time.\nUse subagents for all task work; if delegation fails, stop.\nRead relevant skills directly.\nRun subagents asynchronously.\nKeep observations, hypotheses, and unknowns separate.\nKeep unknown causes unknown.\nSeek disconfirming evidence.\nDo not seed audits with suspected conclusions.\nDo not treat repeated claims as independent evidence.\nBefore disruptive work, state exactly what will change and what can break.\nGet psyche approval before disruptive work.\nGet psyche approval before every skill edit.\nA question authorizes an answer, not a change.\n";
+    let expected_management = "Align with the psyche’s vision.\nAsk the psyche *until the vision is clear.*\nAsk one clear question at a time.\nUse subagents for all task work; if a subagent fails, dispatch another.\nRead relevant skills directly.\nTouch no files beyond skills and subagent results.\nDeliver text the psyche will use — answers, and prompts he will carry to other tools — verbatim in chat.\nRun subagents asynchronously.\nKeep observations, hypotheses, and unknowns separate.\nKeep unknown causes unknown.\nSeek disconfirming evidence.\nDo not seed audits with suspected conclusions.\nWeigh evidence by origin, not repetition.\nEmphasize what the psyche must not miss.\nBefore disruptive work, state exactly what will change and what can break.\nGet psyche approval before disruptive work.\nGet psyche approval before every skill edit.\nA question authorizes an answer, not a change.\n";
     assert_eq!(
         management, expected_management,
         "management matches approved source"
     );
     let approved_rules = management.lines().collect::<Vec<_>>();
-    assert_eq!(approved_rules.len(), 15, "management has 15 directives");
+    assert_eq!(approved_rules.len(), 18, "management has 18 directives");
     assert!(
         !management.contains('#'),
         "management has no markdown heading"
