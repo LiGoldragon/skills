@@ -74,7 +74,7 @@
   (repository-management modules/repository-management/full.md [] RuntimeSkill)
   (harness-placement modules/harness-placement/full.md [] RuntimeSkill)
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
-  (claude-manager-non-fable modules/claude-manager-non-fable/full.md [] RoleComposition)
+  (claude-manager-non-fable modules/claude-manager-non-fable/full.md [] RuntimeSkill)
   (manager-boundary modules/manager-boundary/full.md [] RoleComposition)
   (manager-intent-classification modules/manager-intent-classification/full.md [] RoleComposition)
   (manager-safeguards modules/manager-safeguards/full.md [] RoleComposition)

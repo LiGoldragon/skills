@@ -238,14 +238,17 @@
                 fi
                 touch "$out"
               '';
-          management-source-is-shared = pkgs.runCommand "skills-management-source-is-shared" { } ''
+          management-source-is-target-scoped = pkgs.runCommand "skills-management-source-is-target-scoped" { } ''
             management=${cleanSource}/modules/management/full.md
+            overlay=${cleanSource}/modules/claude-manager-non-fable/full.md
             index=${cleanSource}/manifests/module-dependencies.nota
             insertions=${cleanSource}/manifests/target-module-insertions.nota
             test -f "$management"
+            test -f "$overlay"
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
-            test ! -e ${cleanSource}/modules/claude-management
-            ! grep -F '(management ClaudeSkill' "$insertions"
+            grep -F '(claude-manager-non-fable modules/claude-manager-non-fable/full.md [] RuntimeSkill)' "$index" >/dev/null
+            grep -F '(management ClaudeSkill [claude-manager-non-fable])' "$insertions" >/dev/null
+            ! grep -F '(management ClaudeAgent [claude-manager-non-fable])' "$insertions"
             touch "$out"
           '';
           human-interaction-removed-from-active-and-generated =
@@ -300,15 +303,19 @@
             grep -F 'Delegate investigation and operations.' "$boundary" >/dev/null
             grep -F 'Keep requested rules, mechanisms, and architecture as matter.' "$intent" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
-            test ! -e ${cleanSource}/modules/claude-management
-            ! grep -F '(management ClaudeSkill' "$insertions"
+            overlay=${cleanSource}/modules/claude-manager-non-fable/full.md
+            test -f "$overlay"
+            grep -F '(management ClaudeSkill [claude-manager-non-fable])' "$insertions" >/dev/null
+            ! grep -F '(management ClaudeAgent [claude-manager-non-fable])' "$insertions"
             workspace=$TMPDIR/workspace
             export SKILLS_SOURCE_ROOT=${cleanSource}
             export SKILLS_WORKSPACE_ROOT="$workspace"
             ${skillsPackage}/bin/skills ${cleanSource}/skills-generate.nota >/dev/null
             ${skillsPackage}/bin/skills ${cleanSource}/skills-check.nota >/dev/null
-            cmp "$workspace/.agents/skills/management/SKILL.md" "$workspace/.claude/skills/management/SKILL.md"
-            for packet in "$workspace/.pi/agents/manager.md" "$workspace/.claude/agents/manager.md" "$workspace/.codex/agents/manager.toml"; do
+            grep -Fxf "$overlay" "$workspace/.claude/skills/management/SKILL.md" >/dev/null
+            ! grep -Fxf "$overlay" "$workspace/.agents/skills/management/SKILL.md"
+            test ! -e "$workspace/.claude/agents/manager.md"
+            for packet in "$workspace/.pi/agents/manager.md" "$workspace/.codex/agents/manager.toml"; do
               grep -F 'Use subagents for all task work; if a subagent fails, dispatch another.' "$packet" >/dev/null
               grep -F 'A question authorizes an answer, not a change.' "$packet" >/dev/null
               grep -F 'Require explicit psyche approval before a host reboot.' "$packet" >/dev/null

@@ -489,7 +489,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "rust-discipline",
         "bead-weaver",
         "spirit-submission",
-        "claude-manager-non-fable",
         "manager-boundary",
         "manager-intent-classification",
         "manager-safeguards",
@@ -510,6 +509,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         module_kinds.get("spirit-query"),
         Some(&ModuleKind::RuntimeSkill),
         "spirit-query remains a first-class read-only skill"
+    );
+    assert_eq!(
+        module_kinds.get("claude-manager-non-fable"),
+        Some(&ModuleKind::RuntimeSkill),
+        "Claude-only management overlay can emit to the Claude skill surface"
     );
     assert!(
         !dependency_modules.contains("human-interaction"),
@@ -589,7 +593,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             ),
             (
                 "management",
-                skills::schema::assembly::OutputSurface::ClaudeAgent,
+                skills::schema::assembly::OutputSurface::ClaudeSkill,
                 vec!["claude-manager-non-fable"]
             ),
         ]
@@ -750,11 +754,15 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
                 .collect::<Vec<_>>(),
             *included_modules
         );
-        let expected_surfaces: &[RoleTargetSurface] = &[
-            RoleTargetSurface::ClaudeAgent,
-            RoleTargetSurface::CodexAgent,
-            RoleTargetSurface::PiAgent,
-        ];
+        let expected_surfaces: &[RoleTargetSurface] = if *output_identifier == "manager" {
+            &[RoleTargetSurface::CodexAgent, RoleTargetSurface::PiAgent]
+        } else {
+            &[
+                RoleTargetSurface::ClaudeAgent,
+                RoleTargetSurface::CodexAgent,
+                RoleTargetSurface::PiAgent,
+            ]
+        };
         assert_eq!(role.role_target_surfaces.payload(), expected_surfaces);
         assert!(dependency_modules.contains(module_identifier));
         assert_eq!(
@@ -1044,7 +1052,6 @@ fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
         ".agents/skills/management/SKILL.md",
         ".claude/skills/management/SKILL.md",
         ".pi/agents/manager.md",
-        ".claude/agents/manager.md",
         ".codex/agents/manager.toml",
     ] {
         let output = fixture.read_workspace_file(path).replace("\\n", "\n");
@@ -1104,7 +1111,7 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 }
 
 #[test]
-fn management_is_shared_and_has_no_claude_overlay() {
+fn management_claude_overlay_is_source_driven_and_target_scoped() {
     let management = include_str!("../modules/management/full.md");
     assert!(!management.trim().is_empty(), "management has directives");
     assert!(
@@ -1116,6 +1123,7 @@ fn management_is_shared_and_has_no_claude_overlay() {
             .join("modules/claude-management/full.md")
             .exists()
     );
+    let claude_overlay = include_str!("../modules/claude-manager-non-fable/full.md").trim();
 
     let fixture = Fixture::new();
     fixture
@@ -1123,15 +1131,16 @@ fn management_is_shared_and_has_no_claude_overlay() {
         .expect("management profile generates");
     let agents = fixture.read_workspace_file(".agents/skills/management/SKILL.md");
     let claude = fixture.read_workspace_file(".claude/skills/management/SKILL.md");
-    assert_eq!(
-        agents, claude,
-        "management base is identical across skill targets"
+    assert!(!agents.contains(claude_overlay));
+    assert!(claude.contains(claude_overlay));
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".claude/agents/manager.md")
+            .exists()
     );
-    for path in [
-        ".pi/agents/manager.md",
-        ".claude/agents/manager.md",
-        ".codex/agents/manager.toml",
-    ] {
+    for path in [".pi/agents/manager.md", ".codex/agents/manager.toml"] {
         let packet = fixture.read_workspace_file(path).replace("\\n", "\n");
         assert!(!packet.contains("@generated"));
     }
@@ -1153,11 +1162,14 @@ fn generated_manager_and_recorder_packets_preserve_matter_not_intent_classificat
             "Return matter to Manager; do not submit it.",
         ),
     ] {
-        for path in [
+        let mut paths = vec![
             format!(".pi/agents/{role}.md"),
-            format!(".claude/agents/{role}.md"),
             format!(".codex/agents/{role}.toml"),
-        ] {
+        ];
+        if role != "manager" {
+            paths.push(format!(".claude/agents/{role}.md"));
+        }
+        for path in paths {
             let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
             assert!(packet.contains(rule));
         }
@@ -1479,11 +1491,14 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
             "repository-closeout",
         ]
     );
-    for path in [
-        ".pi/agents/manager.md",
-        ".codex/agents/manager.toml",
-        ".claude/agents/manager.md",
-    ] {
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".claude/agents/manager.md")
+            .exists()
+    );
+    for path in [".pi/agents/manager.md", ".codex/agents/manager.toml"] {
         assert!(
             !roster(path)
                 .iter()
@@ -1525,17 +1540,17 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
     for role in active_roles {
         let pi = fixture.read_workspace_file(&format!(".pi/agents/{role}.md"));
         let codex = fixture.read_workspace_file(&format!(".codex/agents/{role}.toml"));
-        let claude = fixture.read_workspace_file(&format!(".claude/agents/{role}.md"));
         if role == "manager" {
             assert!(pi.contains("model: 'openai-codex/gpt-5.6-sol'\nthinking: high"));
             assert!(codex.contains("model = \"gpt-5.6-sol\""));
-        } else {
-            assert!(!pi.contains("gpt-5.6-sol"), "{role} has no Pi Sol model");
-            assert!(
-                !codex.contains("model = \"gpt-5.6-sol\""),
-                "{role} has no Codex Sol model"
-            );
+            continue;
         }
+        assert!(!pi.contains("gpt-5.6-sol"), "{role} has no Pi Sol model");
+        assert!(
+            !codex.contains("model = \"gpt-5.6-sol\""),
+            "{role} has no Codex Sol model"
+        );
+        let claude = fixture.read_workspace_file(&format!(".claude/agents/{role}.md"));
         assert!(
             !claude.contains("model: fable-5"),
             "{role} has no Claude Fable model"
@@ -1545,10 +1560,18 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
     let claude_manager_module = include_str!("../modules/claude-manager-non-fable/full.md").trim();
     assert!(
         fixture
-            .read_workspace_file(".claude/agents/manager.md")
+            .read_workspace_file(".claude/skills/management/SKILL.md")
             .contains(claude_manager_module)
     );
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".claude/agents/manager.md")
+            .exists()
+    );
     for path in [
+        ".agents/skills/management/SKILL.md",
         ".pi/agents/manager.md",
         ".codex/agents/manager.toml",
         ".claude/agents/generalist.md",

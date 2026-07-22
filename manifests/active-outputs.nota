@@ -70,7 +70,7 @@
   (Skill (main-feature-integration main-feature-integration Workflow Mechanism [|Main feature integration rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (protos-syntax protos-syntax Architecture Topic [|Protos syntax rules.|] [AgentsSkill ClaudeSkill]))
 
-  (Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax] [|Routes intent and work.|] [ClaudeAgent CodexAgent PiAgent]))
+  (Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax] [|Routes intent and work.|] [CodexAgent PiAgent]))
   (Role (generalist role-generalist [edit-coordination-core editing-closeout code-implementation-core non-ideal-registry] [|Owns coupled delivery.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (intent-recorder role-intent-recorder [spirit-submission] [|Submits approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
   (Role (intent-translator role-intent-translator [edit-coordination-core bead-weaver] [|Routes clarified work.|] [ClaudeAgent CodexAgent PiAgent]))
