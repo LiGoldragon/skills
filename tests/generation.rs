@@ -11,7 +11,7 @@ use skills::{
         ActiveOutputs, EffortLevel, EmissionPolicy, GenerationMode, GenerationRequest,
         ManifestPath, ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle,
         NestedRoleRelations, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
-        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalFullAgentModules,
         WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
@@ -261,7 +261,7 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
                 && module.emission_policy == EmissionPolicy::FirstClassSkill
         })
         .collect();
-    assert_eq!(active_first_class_modules.len(), 61);
+    assert_eq!(active_first_class_modules.len(), 59);
     for module in active_first_class_modules {
         assert_eq!(
             module.target_surfaces.payload(),
@@ -320,7 +320,23 @@ fn roster_model_covers_current_skills_without_entrypoint_extras() {
         );
     }
 
-    for deleted_name in ["subagent-session-workflow", "keep-working"] {
+    let full_agent_modules: Vec<_> = roster
+        .skill_modules
+        .payload()
+        .iter()
+        .filter(|module| {
+            matches!(module.module_lifecycle, ModuleLifecycle::Active(_))
+                && module.emission_policy == EmissionPolicy::FullAgentSkill
+        })
+        .map(|module| module.module_name.payload())
+        .collect();
+    assert_eq!(full_agent_modules, ["management"]);
+
+    for deleted_name in [
+        "architecture-editor",
+        "subagent-session-workflow",
+        "keep-working",
+    ] {
         let deleted = roster
             .skill_modules
             .payload()
@@ -351,10 +367,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         NotaSource::new(include_str!("../manifests/target-module-insertions.nota"))
             .parse::<TargetModuleInsertions>()
             .expect("target module insertion index parses");
-    let universal_role_modules =
-        NotaSource::new(include_str!("../manifests/universal-role-modules.nota"))
-            .parse::<UniversalRoleModules>()
-            .expect("universal role module manifest parses");
+    let universal_role_modules = NotaSource::new(include_str!(
+        "../manifests/universal-full-agent-modules.nota"
+    ))
+    .parse::<UniversalFullAgentModules>()
+    .expect("universal role module manifest parses");
     let model_catalog = NotaSource::new(include_str!("../manifests/model-catalog.nota"))
         .parse::<ModelCatalog>()
         .expect("model catalog parses");
@@ -378,14 +395,45 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .iter()
         .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Skill(_)))
         .count();
+    let full_agent_skill_count = active_outputs
+        .payload()
+        .iter()
+        .filter(|output| {
+            matches!(
+                output,
+                skills::schema::assembly::ActiveOutput::FullAgentSkill(_)
+            )
+        })
+        .count();
     let role_count = active_outputs
         .payload()
         .iter()
-        .filter(|output| matches!(output, skills::schema::assembly::ActiveOutput::Role(_)))
+        .filter(|output| {
+            matches!(
+                output,
+                skills::schema::assembly::ActiveOutput::FullAgentRole(_)
+            )
+        })
         .count();
 
-    assert_eq!(skill_count, 64);
+    assert_eq!(skill_count, 62);
+    assert_eq!(full_agent_skill_count, 1);
     assert_eq!(role_count, 14);
+    assert!(active_outputs.payload().iter().all(|output| {
+        matches!(
+            output,
+            skills::schema::assembly::ActiveOutput::Skill(_)
+                | skills::schema::assembly::ActiveOutput::FullAgentSkill(_)
+                | skills::schema::assembly::ActiveOutput::FullAgentRole(_)
+        )
+    }));
+    assert!(active_outputs.payload().iter().any(|output| {
+        matches!(
+            output,
+            skills::schema::assembly::ActiveOutput::FullAgentSkill(skill)
+                if skill.output_identifier.as_ref() == "management"
+        )
+    }));
     assert_eq!(model_catalog.payload().len(), 6);
     assert_eq!(nested_role_relations.payload().len(), 3);
     assert_eq!(role_model_assignments.payload().len(), role_count);
@@ -419,10 +467,11 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .payload()
         .iter()
         .filter_map(|output| match output {
-            skills::schema::assembly::ActiveOutput::Skill(skill) => {
+            skills::schema::assembly::ActiveOutput::Skill(skill)
+            | skills::schema::assembly::ActiveOutput::FullAgentSkill(skill) => {
                 Some(skill.output_identifier.as_ref())
             }
-            skills::schema::assembly::ActiveOutput::Role(_) => None,
+            skills::schema::assembly::ActiveOutput::FullAgentRole(_) => None,
         })
         .collect();
     for required_skill in [
@@ -441,6 +490,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         );
     }
     for deprecated_skill in [
+        "architecture-editor",
         "component-triad",
         "beauty",
         "jj",
@@ -472,12 +522,12 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         .collect();
     let role_composition_modules = [
         "agent-output-protocol",
-        "general-instructions",
         "psyche-facing-commitments",
         "codex-skill-loading",
         "edit-coordination-core",
         "editing-closeout",
         "code-implementation-core",
+        "non-ideal-registry",
         "rust-core",
         "nix-core",
         "intent-core",
@@ -496,6 +546,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "manager-decisions",
         "manager-communication",
         "manager-synthesis",
+        "nixos-vm-testing",
+        "harness-placement",
     ];
     for module_identifier in role_composition_modules {
         assert_eq!(
@@ -504,6 +556,53 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "{module_identifier} is generator-only role composition"
         );
     }
+    for shared_composition in [
+        "general-instructions",
+        "universal-system-awareness",
+        "documentation-placement",
+    ] {
+        assert_eq!(
+            module_kinds.get(shared_composition),
+            Some(&ModuleKind::SharedComposition),
+            "{shared_composition} is a shared full-agent composition"
+        );
+    }
+    let composition_sources = module_dependencies
+        .payload()
+        .iter()
+        .filter(|dependency| {
+            matches!(
+                dependency.module_kind,
+                ModuleKind::RoleComposition | ModuleKind::SharedComposition
+            )
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(composition_sources.len(), 30);
+    for dependency in composition_sources {
+        let source = fs::read_to_string(dependency.module_path.as_ref()).unwrap_or_else(|error| {
+            panic!(
+                "{} source is readable: {error}",
+                dependency.module_identifier.as_ref()
+            )
+        });
+        assert!(
+            !source
+                .lines()
+                .any(|line| line.trim_start().starts_with('#')),
+            "{} composition source is heading-free",
+            dependency.module_identifier.as_ref()
+        );
+        assert!(
+            !source.lines().any(|line| line.starts_with("- ")),
+            "{} composition source has no routine bullet prefix",
+            dependency.module_identifier.as_ref()
+        );
+    }
+    assert_eq!(
+        module_kinds.get("harness-placement"),
+        Some(&ModuleKind::RoleComposition),
+        "harness-placement is no longer an unlisted runtime skill"
+    );
     assert_eq!(
         module_kinds.get("spirit-query"),
         Some(&ModuleKind::RuntimeSkill),
@@ -591,17 +690,22 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             .iter()
             .map(|module| module.as_ref())
             .collect::<Vec<_>>(),
-        ["general-instructions"]
+        [
+            "general-instructions",
+            "universal-system-awareness",
+            "documentation-placement",
+        ]
     );
 
     let active_roles: BTreeMap<&str, _> = active_outputs
         .payload()
         .iter()
         .filter_map(|output| match output {
-            skills::schema::assembly::ActiveOutput::Role(role) => {
+            skills::schema::assembly::ActiveOutput::FullAgentRole(role) => {
                 Some((role.output_identifier.as_ref(), role))
             }
-            skills::schema::assembly::ActiveOutput::Skill(_) => None,
+            skills::schema::assembly::ActiveOutput::Skill(_)
+            | skills::schema::assembly::ActiveOutput::FullAgentSkill(_) => None,
         })
         .collect();
     let expected_roles: &[(&str, &str, &[&str])] = &[
@@ -1151,14 +1255,8 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nGenerated-file notices stay out.\n",
     );
-    fixture.write_source_file(
-        "modules/shared/full.md",
-        "# Module - shared\n\n## Shared Rule\n\nDependency first.\n",
-    );
-    fixture.write_source_file(
-        "modules/feature/full.md",
-        "# Module - feature\n\n## Feature Rule\n\nDependent second.\n",
-    );
+    fixture.write_source_file("modules/shared/full.md", "Dependency first.\n");
+    fixture.write_source_file("modules/feature/full.md", "Dependent second.\n");
 
     fixture
         .generate(GenerationMode::Write)
@@ -1169,13 +1267,13 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
         "---\nname: worker\ndescription: 'Worker role.'\nmodel: claude-test\neffort: high\n---\n\n"
     ));
     assert!(claude.contains("# worker"));
-    assert!(claude.contains("## shared"));
-    assert!(claude.contains("## feature"));
+    assert!(claude.contains("## Shared"));
+    assert!(claude.contains("## Feature"));
     assert!(!claude.contains("Role - worker"));
     assert!(!claude.contains("Module - shared"));
-    assert!(claude.find("# worker") < claude.find("## shared"));
-    assert!(claude.find("## shared") < claude.find("## feature"));
-    assert_eq!(claude.matches("## shared").count(), 1);
+    assert!(claude.find("# worker") < claude.find("## Shared"));
+    assert!(claude.find("## Shared") < claude.find("## Feature"));
+    assert_eq!(claude.matches("## Shared").count(), 1);
     assert_eq!(claude.matches("Dependency first.").count(), 1);
     assert!(!claude.contains("@generated"));
     assert!(!claude.contains("generated by"));
@@ -1186,8 +1284,8 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     assert!(codex.contains("model = \"gpt-test\""));
     assert!(codex.contains("model_reasoning_effort = \"high\""));
     assert!(codex.contains("developer_instructions = \"# worker"));
-    assert!(codex.contains("## shared"));
-    assert!(codex.contains("## feature"));
+    assert!(codex.contains("## Shared"));
+    assert!(codex.contains("## Feature"));
     assert!(!claude.contains("Skill-read de-duplication"));
 
     let pi = fixture.read_workspace_file(".pi/agents/worker.md");
@@ -1208,14 +1306,8 @@ fn generation_rejects_configured_execution_limit_fields_in_agent_packets() {
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\ntimeoutMs: 1\n",
     );
-    fixture.write_source_file(
-        "modules/shared/full.md",
-        "# Module - shared\n\n## Shared Rule\n\nShared rule.\n",
-    );
-    fixture.write_source_file(
-        "modules/feature/full.md",
-        "# Module - feature\n\n## Feature Rule\n\nFeature rule.\n",
-    );
+    fixture.write_source_file("modules/shared/full.md", "Shared rule.\n");
+    fixture.write_source_file("modules/feature/full.md", "Feature rule.\n");
 
     let error = fixture
         .generate(GenerationMode::Write)
@@ -1232,7 +1324,7 @@ fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (manager manager [] [Manager root.] [ClaudeAgent CodexAgent PiAgent])) (Role (shared shared [] [Shared role.] [ClaudeAgent CodexAgent PiAgent])) (Role (pi-only pi-only [] [Pi role.] [PiAgent])) (Role (claude-only claude-only [] [Claude role.] [ClaudeAgent])) (Role (codex-only codex-only [] [Codex role.] [CodexAgent]))]\n",
+        "[(FullAgentRole (manager manager [] [Manager root.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (shared shared [] [Shared role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (pi-only pi-only [] [Pi role.] [PiAgent])) (FullAgentRole (claude-only claude-only [] [Claude role.] [ClaudeAgent])) (FullAgentRole (codex-only codex-only [] [Codex role.] [CodexAgent]))]\n",
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
@@ -1385,11 +1477,12 @@ fn nested_role_schema_preserves_child_rosters_without_model_upgrades() {
         .expect("active outputs parse");
     assert!(active_outputs.payload().iter().all(|output| {
         match output {
-            skills::schema::assembly::ActiveOutput::Role(role) => !role
+            skills::schema::assembly::ActiveOutput::FullAgentRole(role) => !role
                 .output_identifier
                 .as_ref()
                 .starts_with("crucial-greenfield-"),
-            skills::schema::assembly::ActiveOutput::Skill(_) => true,
+            skills::schema::assembly::ActiveOutput::Skill(_)
+            | skills::schema::assembly::ActiveOutput::FullAgentSkill(_) => true,
         }
     }));
 }
@@ -1458,6 +1551,13 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
                 .any(|role| role.starts_with("crucial-greenfield-")),
             "deactivated greenfield roles are absent from {path}"
         );
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .replace("\\n", "\n")
+                .contains("Do not read the generated manager role\npacket merely to discover its roster. Read it only for genuine recovery or when\nthe needed authority is explicitly missing."),
+            "manager packet carries the no-roster-discovery guard: {path}"
+        );
     }
 
     for role in [
@@ -1519,7 +1619,8 @@ fn general_instructions_compose_once_and_keep_authority_gates() {
     assert!(general.contains("explicit psyche approval"));
     assert!(!general.contains("Clarify, gate, dispatch"));
     assert!(
-        include_str!("../manifests/universal-role-modules.nota").contains("[general-instructions]")
+        include_str!("../manifests/universal-full-agent-modules.nota")
+            .contains("[general-instructions universal-system-awareness documentation-placement]")
     );
 }
 
@@ -1683,7 +1784,7 @@ fn role_profiles_and_optional_skills_render_without_preloading_skill_bodies() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (FullAgentRole (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
@@ -1901,7 +2002,7 @@ fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
     let duplicate = Fixture::new();
     duplicate.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill])) (FullAgentRole (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     duplicate.write_source_file(
         "manifests/module-dependencies.nota",
@@ -1923,7 +2024,7 @@ fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
     let incompatible = Fixture::new();
     incompatible.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (example example Craft Topic [Example skill.] [ClaudeSkill])) (Role (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (example example Craft Topic [Example skill.] [ClaudeSkill])) (FullAgentRole (worker worker [] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     incompatible.write_source_file(
         "manifests/module-dependencies.nota",
@@ -1944,30 +2045,28 @@ fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
 }
 
 #[test]
-fn universal_role_modules_expand_into_every_role_packet_without_per_role_manifest_entries() {
+fn universal_full_agent_modules_expand_into_every_full_agent_role_without_per_role_manifest_entries()
+ {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (worker worker [feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(FullAgentRole (worker worker [feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (universal modules/universal/full.md [] RoleComposition) (feature modules/feature/full.md [] RoleComposition)]\n",
+        "[(worker roles/worker/full.md [] RoleSource) (universal modules/universal/full.md [] SharedComposition) (feature modules/feature/full.md [] RoleComposition)]\n",
     );
-    fixture.write_source_file("manifests/universal-role-modules.nota", "[universal]\n");
+    fixture.write_source_file(
+        "manifests/universal-full-agent-modules.nota",
+        "[universal]\n",
+    );
     fixture.write_source_file(
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
-    fixture.write_source_file(
-        "modules/universal/full.md",
-        "# Module - universal\n\n## Universal Rule\n\nUniversal doctrine.\n",
-    );
-    fixture.write_source_file(
-        "modules/feature/full.md",
-        "# Module - feature\n\n## Feature Rule\n\nPer-role doctrine.\n",
-    );
+    fixture.write_source_file("modules/universal/full.md", "Universal doctrine.\n");
+    fixture.write_source_file("modules/feature/full.md", "Per-role doctrine.\n");
 
     fixture
         .generate(GenerationMode::Write)
@@ -2021,7 +2120,7 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (management management Meta Mechanism [Management skill] [AgentsSkill ClaudeSkill])) (Role (worker worker [management] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (management management Meta Mechanism [Management skill] [AgentsSkill ClaudeSkill])) (FullAgentRole (worker worker [management] [Worker role] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
@@ -2087,14 +2186,8 @@ fn role_generation_rejects_retired_current_destination_prose() {
                 "# Role - worker\n\n## Contract\n\nDo not assign current closeout to {phrase}.\n"
             ),
         );
-        fixture.write_source_file(
-            "modules/shared/full.md",
-            "# Module - shared\n\n## Shared Rule\n\nDependency first.\n",
-        );
-        fixture.write_source_file(
-            "modules/feature/full.md",
-            "# Module - feature\n\n## Feature Rule\n\nDependent second.\n",
-        );
+        fixture.write_source_file("modules/shared/full.md", "Dependency first.\n");
+        fixture.write_source_file("modules/feature/full.md", "Dependent second.\n");
 
         let error = fixture
             .generate(GenerationMode::Write)
@@ -2177,7 +2270,7 @@ fn generation_rejects_duplicate_role_output_paths_before_write() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (worker worker [] [Worker role.] [ClaudeAgent ClaudeAgent]))]\n",
+        "[(FullAgentRole (worker worker [] [Worker role.] [ClaudeAgent ClaudeAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
@@ -2251,7 +2344,7 @@ fn generation_rejects_runtime_module_as_role_source() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (worker worker [] [Worker role.] [ClaudeAgent]))]\n",
+        "[(FullAgentRole (worker worker [] [Worker role.] [ClaudeAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
@@ -2283,7 +2376,7 @@ fn generation_rejects_role_required_module_missing_from_dependency_index() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Role (worker worker [spirit-query] [Worker role.] [ClaudeAgent]))]\n",
+        "[(FullAgentRole (worker worker [spirit-query] [Worker role.] [ClaudeAgent]))]\n",
     );
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
@@ -2318,14 +2411,8 @@ fn write_mode_removes_only_inventory_owned_stale_role_outputs() {
         "roles/worker/full.md",
         "# Role - worker\n\n## Contract\n\nBody.\n",
     );
-    fixture.write_source_file(
-        "modules/shared/full.md",
-        "# Module - shared\n\n## Shared Rule\n\nBody.\n",
-    );
-    fixture.write_source_file(
-        "modules/feature/full.md",
-        "# Module - feature\n\n## Feature Rule\n\nBody.\n",
-    );
+    fixture.write_source_file("modules/shared/full.md", "Body.\n");
+    fixture.write_source_file("modules/feature/full.md", "Body.\n");
     fixture.write_workspace_file(
         "skills/generated-role-outputs.nota",
         "[.claude/agents/old.md]\n",
@@ -2504,7 +2591,7 @@ fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
     let fixture = Fixture::new();
     fixture.write_source_file(
         "manifests/active-outputs.nota",
-        "[(Skill (new-skill new-skill Craft Topic [New skill.] [AgentsSkill ClaudeSkill])) (Role (new-worker new-worker [] [New worker.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+        "[(Skill (new-skill new-skill Craft Topic [New skill.] [AgentsSkill ClaudeSkill])) (FullAgentRole (new-worker new-worker [] [New worker.] [ClaudeAgent CodexAgent PiAgent]))]\n",
     );
     fixture.write_role_metadata(&["new-worker"]);
     fixture.write_source_file(
@@ -2593,6 +2680,307 @@ fn trunk_divergence_refuses_regeneration_when_trunk_has_unreached_commits() {
     );
 }
 
+#[test]
+fn full_agent_outputs_receive_universal_compositions_while_ordinary_skills_do_not() {
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("current full-agent source generates");
+
+    let universal_sections = [
+        "## General Instructions",
+        "## Universal System Awareness",
+        "## Documentation Placement",
+    ];
+    for path in [
+        ".agents/skills/management/SKILL.md",
+        ".claude/skills/management/SKILL.md",
+    ] {
+        let output = fixture.read_workspace_file(path);
+        for section in universal_sections {
+            assert_eq!(
+                output.matches(section).count(),
+                1,
+                "{path} has {section} once"
+            );
+        }
+    }
+
+    let active_outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
+        .parse::<ActiveOutputs>()
+        .expect("active manifest parses");
+    for output in active_outputs.payload() {
+        match output {
+            skills::schema::assembly::ActiveOutput::FullAgentRole(role) => {
+                for path in [
+                    format!(".claude/agents/{}.md", role.output_identifier.as_ref()),
+                    format!(".codex/agents/{}.toml", role.output_identifier.as_ref()),
+                    format!(".pi/agents/{}.md", role.output_identifier.as_ref()),
+                ] {
+                    let packet = fixture.read_workspace_file(&path);
+                    for section in universal_sections {
+                        assert_eq!(
+                            packet.matches(section).count(),
+                            1,
+                            "{path} has {section} once"
+                        );
+                    }
+                    assert!(
+                        packet.find("## General Instructions")
+                            < packet.find("## Universal System Awareness")
+                            && packet.find("## Universal System Awareness")
+                                < packet.find("## Documentation Placement"),
+                        "{path} preserves universal full-agent order"
+                    );
+                    if let Some(codex_loading) = packet.find("## Codex Skill Loading") {
+                        assert!(
+                            packet.find("## Documentation Placement") < Some(codex_loading),
+                            "{path} inserts Codex-only doctrine after universal compositions"
+                        );
+                    }
+                }
+            }
+            skills::schema::assembly::ActiveOutput::Skill(skill) => {
+                for path in [
+                    format!(
+                        ".agents/skills/{}/SKILL.md",
+                        skill.output_identifier.as_ref()
+                    ),
+                    format!(
+                        ".claude/skills/{}/SKILL.md",
+                        skill.output_identifier.as_ref()
+                    ),
+                ] {
+                    let packet = fixture.read_workspace_file(&path);
+                    assert!(
+                        !packet.contains("Treat the effective system as Nix-managed by default.")
+                    );
+                    assert!(
+                        !packet.contains("`README.md` contains super-bare agent-oriented usage.")
+                    );
+                }
+            }
+            skills::schema::assembly::ActiveOutput::FullAgentSkill(_) => {}
+        }
+    }
+}
+
+#[test]
+fn full_agent_composition_kinds_are_accepted_only_on_full_agent_surfaces() {
+    let standalone = Fixture::new();
+    standalone.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (ordinary shared Craft Topic [Ordinary skill.] [AgentsSkill]))]\n",
+    );
+    standalone.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(shared modules/shared/full.md [] SharedComposition)]\n",
+    );
+    standalone.write_source_file("modules/shared/full.md", "Shared prose.\n");
+    let error = standalone
+        .generate(GenerationMode::Write)
+        .expect_err("shared composition cannot be a standalone skill");
+    assert!(matches!(
+        error,
+        Error::InvalidModuleKind { ref expected, ref actual, .. }
+            if expected == "RuntimeSkill" && actual == "SharedComposition"
+    ));
+
+    let full_agent = Fixture::new();
+    full_agent.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(FullAgentSkill (management management Meta Mechanism Management [AgentsSkill]))]\n",
+    );
+    full_agent.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(management modules/management/full.md [] RuntimeSkill) (shared modules/shared/full.md [] SharedComposition)]\n",
+    );
+    full_agent.write_source_file("manifests/universal-full-agent-modules.nota", "[shared]\n");
+    full_agent.write_source_file("modules/management/full.md", "Management root.\n");
+    full_agent.write_source_file("modules/shared/full.md", "Shared prose.\n");
+    full_agent
+        .generate(GenerationMode::Write)
+        .expect("shared composition assembles into a full-agent skill");
+    assert!(
+        full_agent
+            .read_workspace_file(".agents/skills/management/SKILL.md")
+            .contains("## Shared\n\nShared prose.")
+    );
+
+    let role = Fixture::new();
+    role.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(FullAgentRole (worker worker [] Worker [ClaudeAgent]))]\n",
+    );
+    role.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RoleSource) (shared modules/shared/full.md [] SharedComposition)]\n",
+    );
+    role.write_source_file("manifests/universal-full-agent-modules.nota", "[shared]\n");
+    role.write_source_file("roles/worker/full.md", "# worker\n\nWorker root.\n");
+    role.write_source_file("modules/shared/full.md", "Shared prose.\n");
+    role.write_role_metadata(&["worker"]);
+    role.generate(GenerationMode::Write)
+        .expect("shared composition assembles into a full-agent role");
+
+    for (kind, expected) in [
+        ("RuntimeSkill", "RuntimeSkill"),
+        ("RoleComposition", "RoleComposition"),
+    ] {
+        let invalid = Fixture::new();
+        invalid.write_source_file(
+            "manifests/active-outputs.nota",
+            "[(FullAgentSkill (management management Meta Mechanism Management [AgentsSkill]))]\n",
+        );
+        invalid.write_source_file(
+            "manifests/module-dependencies.nota",
+            &format!("[(management modules/management/full.md [] RuntimeSkill) (invalid modules/invalid/full.md [] {kind})]\n"),
+        );
+        invalid.write_source_file("manifests/universal-full-agent-modules.nota", "[invalid]\n");
+        let error = invalid
+            .generate(GenerationMode::Write)
+            .expect_err("universal list accepts only shared composition");
+        assert!(matches!(
+            error,
+            Error::InvalidModuleKind { expected: ref found_expected, ref actual, .. }
+                if found_expected == "SharedComposition" && actual == expected
+        ));
+    }
+}
+
+#[test]
+fn composition_sources_are_heading_free_and_generator_headings_preserve_prose() {
+    let invalid = Fixture::new();
+    invalid.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(FullAgentSkill (management management Meta Mechanism Management [AgentsSkill]))]\n",
+    );
+    invalid.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(management modules/management/full.md [] RuntimeSkill) (shared modules/shared/full.md [] SharedComposition)]\n",
+    );
+    invalid.write_source_file("manifests/universal-full-agent-modules.nota", "[shared]\n");
+    invalid.write_source_file("modules/management/full.md", "Management root.\n");
+    invalid.write_source_file(
+        "modules/shared/full.md",
+        "# Source heading\n\nShared prose.\n",
+    );
+    let error = invalid
+        .generate(GenerationMode::Write)
+        .expect_err("composition source headings fail");
+    assert!(matches!(
+        error,
+        Error::CompositionSourceHeading { ref module_identifier, ref heading, .. }
+            if module_identifier == "shared" && heading == "Source heading"
+    ));
+
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(FullAgentRole (worker worker [nixos-vm-testing] Worker [ClaudeAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(worker roles/worker/full.md [] RoleSource) (nixos-vm-testing modules/nixos-vm-testing/full.md [] RoleComposition)]\n",
+    );
+    fixture.write_source_file("roles/worker/full.md", "# worker\n\nWorker root.\n");
+    fixture.write_source_file(
+        "modules/nixos-vm-testing/full.md",
+        "Preserve this prose.\n\n- A meaningful list item.\n\n```text\n# Not a markdown heading\n```\n",
+    );
+    fixture.write_role_metadata(&["worker"]);
+    fixture
+        .generate(GenerationMode::Write)
+        .expect("heading-free composition with meaningful markdown generates");
+    let output = fixture.read_workspace_file(".claude/agents/worker.md");
+    assert_eq!(
+        output.matches("# worker").count(),
+        1,
+        "root heading is not duplicated"
+    );
+    assert!(output.contains("## NixOS VM Testing"));
+    assert!(output.contains("- A meaningful list item."));
+    assert!(output.contains("```text\n# Not a markdown heading\n```"));
+}
+
+#[test]
+fn exact_shared_documentation_and_system_prose_and_architecture_retirement_are_preserved() {
+    assert_eq!(
+        include_str!("../modules/universal-system-awareness/full.md"),
+        "Treat the effective system as Nix-managed by default.\n\nDo not make mutable installed state the fix.\n"
+    );
+    assert_eq!(
+        include_str!("../modules/documentation-placement/full.md"),
+        "`README.md` contains super-bare agent-oriented usage.\n\n`AGENTS.md` helps agents research, audit, implement, and otherwise work with the repository.\n\n`ARCHITECTURE.md` holds invariants that code must enforce and is used for audit and for design before code.\n\n`NON_IDEAL_AGENTS.md` is like `AGENTS.md`, but contains guidance intended to disappear after another system is fixed or improved.\n"
+    );
+    assert!(
+        !Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("modules/architecture-editor/full.md")
+            .exists()
+    );
+    let roster = NotaSource::new(include_str!("../manifests/skills-roster.nota"))
+        .parse::<SkillRoster>()
+        .expect("roster parses");
+    let architecture_editor = roster
+        .skill_modules
+        .payload()
+        .iter()
+        .find(|module| module.module_name.payload() == "architecture-editor")
+        .expect("retired architecture editor is represented for stale cleanup");
+    assert_eq!(
+        architecture_editor.module_lifecycle,
+        ModuleLifecycle::Deleted
+    );
+    assert_eq!(
+        architecture_editor.emission_policy,
+        EmissionPolicy::NoEmission
+    );
+
+    let fixture = Fixture::new();
+    fixture.write_workspace_file(".agents/skills/architecture-editor/SKILL.md", "stale\n");
+    fixture.write_workspace_file(".claude/skills/architecture-editor/SKILL.md", "stale\n");
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("generation prunes retired architecture editor outputs");
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".agents/skills/architecture-editor/SKILL.md")
+            .exists()
+    );
+    assert!(
+        !fixture
+            .workspace
+            .path()
+            .join(".claude/skills/architecture-editor/SKILL.md")
+            .exists()
+    );
+}
+
+#[test]
+fn legacy_roster_full_agent_generation_uses_current_dependency_and_universal_sidecars() {
+    let fixture = Fixture::new();
+    fixture.write_legacy_roster(
+        "(skills/archive [(management modules/management/full.md (Active (Meta Mechanism Management)) FullAgentSkill [AgentsSkill])] [])\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(management modules/management/full.md [] RuntimeSkill) (shared modules/shared/full.md [] SharedComposition)]\n",
+    );
+    fixture.write_source_file("manifests/universal-full-agent-modules.nota", "[shared]\n");
+    fixture.write_source_file("modules/management/full.md", "Management root.\n");
+    fixture.write_source_file("modules/shared/full.md", "Shared prose.\n");
+    fixture
+        .generate_with_manifest(GenerationMode::Write, "manifests/skills-roster.nota")
+        .expect("legacy full-agent roster uses current sidecars");
+    assert!(
+        fixture
+            .read_workspace_file(".agents/skills/management/SKILL.md")
+            .contains("## Shared\n\nShared prose.")
+    );
+}
+
 fn nested_relation_error(relations: &str) -> Error {
     let fixture = Fixture::new();
     fixture.write_nested_validation_sources(relations);
@@ -2632,7 +3020,7 @@ impl Fixture {
     fn write_role_generation_sources(&self) {
         self.write_source_file(
             "manifests/active-outputs.nota",
-            "[(Role (worker worker [shared feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+            "[(FullAgentRole (worker worker [shared feature] [Worker role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
@@ -2644,7 +3032,7 @@ impl Fixture {
     fn write_project_role_contract_sources(&self) {
         self.write_source_file(
             "manifests/active-outputs.nota",
-            "[(Role (planner planner [] [Planner role.] [PiAgent])) (Role (reader reader [] [Reader role.] [PiAgent])) (Role (writer writer [] [Writer role.] [PiAgent]))]\n",
+            "[(FullAgentRole (planner planner [] [Planner role.] [PiAgent])) (FullAgentRole (reader reader [] [Reader role.] [PiAgent])) (FullAgentRole (writer writer [] [Writer role.] [PiAgent]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
@@ -2670,7 +3058,7 @@ impl Fixture {
     fn write_nested_validation_sources(&self, relations: &str) {
         self.write_source_file(
             "manifests/active-outputs.nota",
-            "[(Role (manager manager [] [Manager role.] [ClaudeAgent CodexAgent PiAgent])) (Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (nested-two nested-two [] [Nested two.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent])) (Role (claude-child claude-child [] [Claude child.] [ClaudeAgent]))]\n",
+            "[(FullAgentRole (manager manager [] [Manager role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (nested-two nested-two [] [Nested two.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (claude-child claude-child [] [Claude child.] [ClaudeAgent]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
@@ -2683,7 +3071,7 @@ impl Fixture {
     fn write_cross_model_floor_sources(&self) {
         self.write_source_file(
             "manifests/active-outputs.nota",
-            "[(Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+            "[(FullAgentRole (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
@@ -2716,7 +3104,7 @@ impl Fixture {
     fn write_model_resolution_sources(&self, minimum_effort: &str) {
         self.write_source_file(
             "manifests/active-outputs.nota",
-            "[(Role (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (Role (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
+            "[(FullAgentRole (parent parent [] [Parent role.] [ClaudeAgent CodexAgent PiAgent])) (FullAgentRole (child child [] [Child role.] [ClaudeAgent CodexAgent PiAgent]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",

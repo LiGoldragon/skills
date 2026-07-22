@@ -1,9 +1,9 @@
 ;; Active generated output manifest for SkillDoctrineV2 skill and role packet generation.
 ;; This file lists active outputs only; absence means inactive.
-;; Skill fields: output id, module id, category, tier, description, target surfaces.
-;; Role fields: output id, role source module id, ordered preloaded module ids, description, target surfaces.
+;; Skill and FullAgentSkill fields: output id, module id, category, tier, description, target surfaces.
+;; FullAgentRole fields: output id, role source module id, ordered preloaded module ids, description, target surfaces.
 ;; Model assignments and optional skills live in role-model-assignments.nota and role-optional-skills.nota.
-;; Dependency data lives in module-dependencies.nota; universal role modules live in universal-role-modules.nota.
+;; Dependency data lives in module-dependencies.nota; universal full-agent modules live in universal-full-agent-modules.nota.
 
 [
   (Skill (component-architecture component-architecture Architecture Apex [|Component architecture rules.|] [AgentsSkill ClaudeSkill]))
@@ -42,8 +42,7 @@
   (Skill (session-lanes session-lanes Workflow Mechanism [|Session lanes rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (session-archive-garbage-collection session-archive-garbage-collection Meta Mechanism [|Session archive garbage collection rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (disk-hygiene disk-hygiene Workflow Mechanism [|Disk hygiene rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (architecture-editor architecture-editor Workflow Mechanism [|Architecture editor rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (nota-schema-docs nota-schema-docs Workflow Mechanism [|Nota schema docs rules.|] [AgentsSkill ClaudeSkill]))
+    (Skill (nota-schema-docs nota-schema-docs Workflow Mechanism [|Nota schema docs rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-shape-checklist nota-shape-checklist Workflow Topic [|Nota shape checklist rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-literacy nota-literacy Workflow Topic [|Nota literacy rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-schema-design nota-schema-design Workflow Topic [|Nota schema design rules.|] [AgentsSkill ClaudeSkill]))
@@ -58,7 +57,7 @@
   (Skill (repository-management repository-management Workflow Mechanism [|Repository management rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (skill-editor skill-editor Workflow Mechanism [|Skill editor rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (helper-context-transfer helper-context-transfer Meta Mechanism [|Helper context transfer rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (management management Meta Mechanism [|Management rules.|] [AgentsSkill ClaudeSkill]))
+  (FullAgentSkill (management management Meta Mechanism [|Management rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (spirit-query spirit-query Meta Topic [|Spirit query rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (context-handover context-handover Meta Mechanism [|Context handover rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (context-maintenance-deep context-maintenance-deep Meta Mechanism [|Context maintenance deep rules.|] [AgentsSkill ClaudeSkill]))
@@ -71,18 +70,18 @@
   (Skill (main-feature-integration main-feature-integration Workflow Mechanism [|Main feature integration rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (protos-syntax protos-syntax Architecture Topic [|Protos syntax rules.|] [AgentsSkill ClaudeSkill]))
 
-  (Role (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax] [|Routes intent and work.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (generalist role-generalist [edit-coordination-core editing-closeout code-implementation-core non-ideal-registry] [|Owns coupled delivery.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (intent-recorder role-intent-recorder [spirit-submission] [|Submits approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (intent-translator role-intent-translator [edit-coordination-core bead-weaver] [|Routes clarified work.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (scout role-scout [edit-coordination-core] [|Returns witnessed facts.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (repo-scaffolder role-repo-scaffolder [edit-coordination-core editing-closeout repo-scaffold-core code-implementation-core non-ideal-registry] [|Builds repository structure.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (general-code-implementer role-general-code-implementer [edit-coordination-core editing-closeout code-implementation-core non-ideal-registry] [|Implements accepted changes.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (operating-system-implementer role-operating-system-implementer [edit-coordination-core editing-closeout code-implementation-core nix-core operating-system-operations nixos-vm-testing non-ideal-registry] [|Implements system changes.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (rust-auditor role-rust-auditor [edit-coordination-core editing-closeout rust-core architectural-truth-tests non-ideal-registry] [|Reviews Rust changes.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (nix-auditor role-nix-auditor [edit-coordination-core editing-closeout nix-core nixos-vm-testing non-ideal-registry] [|Reviews Nix changes.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (skill-editor role-skill-editor [] [|Maintains skill source.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (intent-curator role-intent-curator [edit-coordination-core editing-closeout intent-core] [|Maintains approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (repository-closeout role-repository-closeout [edit-coordination-core editing-closeout repo-operation-core] [|Closes validated repositories.|] [ClaudeAgent CodexAgent PiAgent]))
-  (Role (tracker-weaver role-tracker-weaver [edit-coordination-core editing-closeout bead-weaver] [|Advances authorized tracker work.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (manager role-manager [management manager-boundary manager-intent-classification manager-safeguards manager-dispatch manager-liveness manager-decisions manager-communication manager-synthesis psyche-facing-commitments protos-syntax] [|Routes intent and work.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (generalist role-generalist [edit-coordination-core editing-closeout code-implementation-core non-ideal-registry] [|Owns coupled delivery.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (intent-recorder role-intent-recorder [spirit-submission] [|Submits approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (intent-translator role-intent-translator [edit-coordination-core bead-weaver] [|Routes clarified work.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (scout role-scout [edit-coordination-core] [|Returns witnessed facts.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (repo-scaffolder role-repo-scaffolder [edit-coordination-core editing-closeout repo-scaffold-core code-implementation-core non-ideal-registry] [|Builds repository structure.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (general-code-implementer role-general-code-implementer [edit-coordination-core editing-closeout code-implementation-core non-ideal-registry] [|Implements accepted changes.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (operating-system-implementer role-operating-system-implementer [edit-coordination-core editing-closeout code-implementation-core nix-core operating-system-operations nixos-vm-testing non-ideal-registry] [|Implements system changes.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (rust-auditor role-rust-auditor [edit-coordination-core editing-closeout rust-core architectural-truth-tests non-ideal-registry] [|Reviews Rust changes.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (nix-auditor role-nix-auditor [edit-coordination-core editing-closeout nix-core nixos-vm-testing non-ideal-registry] [|Reviews Nix changes.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (skill-editor role-skill-editor [] [|Maintains skill source.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (intent-curator role-intent-curator [edit-coordination-core editing-closeout intent-core] [|Maintains approved intent.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (repository-closeout role-repository-closeout [edit-coordination-core editing-closeout repo-operation-core] [|Closes validated repositories.|] [ClaudeAgent CodexAgent PiAgent]))
+  (FullAgentRole (tracker-weaver role-tracker-weaver [edit-coordination-core editing-closeout bead-weaver] [|Advances authorized tracker work.|] [ClaudeAgent CodexAgent PiAgent]))
 ]
