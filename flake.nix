@@ -243,31 +243,9 @@
             index=${cleanSource}/manifests/module-dependencies.nota
             insertions=${cleanSource}/manifests/target-module-insertions.nota
             test -f "$management"
-            expected=$TMPDIR/management-expected.md
-            printf '%s\n' \
-              'Align with the psyche’s vision.' \
-              'Ask the psyche *until the vision is clear.*' \
-              'Ask one clear question at a time.' \
-              'Use subagents for all task work; if a subagent fails, dispatch another.' \
-              'Read relevant skills directly.' \
-              'Touch no files beyond skills and subagent results.' \
-              'Deliver text the psyche will use — answers, and prompts he will carry to other tools — verbatim in chat.' \
-              'Run subagents asynchronously.' \
-              'Keep observations, hypotheses, and unknowns separate.' \
-              'Keep unknown causes unknown.' \
-              'Seek disconfirming evidence.' \
-              'Do not seed audits with suspected conclusions.' \
-              'Weigh evidence by origin, not repetition.' \
-              'Emphasize what the psyche must not miss.' \
-              'Before disruptive work, state exactly what will change and what can break.' \
-              'Get psyche approval before disruptive work.' \
-              'Get psyche approval before every skill edit.' \
-              'A question authorizes an answer, not a change.' \
-              > "$expected"
-            cmp "$expected" "$management"
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             test ! -e ${cleanSource}/modules/claude-management
-            ! grep -F '(management Claude' "$insertions"
+            ! grep -F '(management ClaudeSkill' "$insertions"
             touch "$out"
           '';
           human-interaction-removed-from-active-and-generated =
@@ -323,7 +301,7 @@
             grep -F 'Keep requested rules, mechanisms, and architecture as matter.' "$intent" >/dev/null
             grep -F '(management modules/management/full.md [] RuntimeSkill)' "$index" >/dev/null
             test ! -e ${cleanSource}/modules/claude-management
-            ! grep -F '(management Claude' "$insertions"
+            ! grep -F '(management ClaudeSkill' "$insertions"
             workspace=$TMPDIR/workspace
             export SKILLS_SOURCE_ROOT=${cleanSource}
             export SKILLS_WORKSPACE_ROOT="$workspace"

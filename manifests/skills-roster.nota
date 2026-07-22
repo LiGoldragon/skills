@@ -34,7 +34,6 @@
     (versioning modules/versioning/full.md (Active (Workflow Keystroke [|Versioning rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (typed-records-over-flags modules/typed-records-over-flags/full.md (Active (Craft Keystroke [|Typed records over flags rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (prose modules/prose/full.md (Active (Craft Topic [|Prose rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
-    (kameo modules/kameo/full.md (Active (Programming Topic [|Kameo rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (rust-discipline modules/rust-discipline/full.md (Active (Programming Topic [|Rust discipline rules.|])) InternalOnly [])
     (rust-methods modules/rust-methods/full.md (Active (Programming Topic [|Rust methods rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])
     (rust-errors modules/rust-errors/full.md (Active (Programming Topic [|Rust errors rules.|])) FirstClassSkill [AgentsSkill ClaudeSkill])

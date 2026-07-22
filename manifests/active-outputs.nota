@@ -25,7 +25,6 @@
   (Skill (versioning versioning Workflow Keystroke [|Versioning rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (typed-records-over-flags typed-records-over-flags Craft Keystroke [|Typed records over flags rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (prose prose Craft Topic [|Prose rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (kameo kameo Programming Topic [|Kameo rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (rust-methods rust-methods Programming Topic [|Rust methods rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (rust-errors rust-errors Programming Topic [|Rust errors rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (rust-storage-and-wire rust-storage-and-wire Programming Topic [|Rust storage and wire rules.|] [AgentsSkill ClaudeSkill]))
