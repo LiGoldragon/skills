@@ -245,19 +245,7 @@ pub struct ModulePath(Path);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct AssembledModule {
-    pub module_identifier: ModuleIdentifier,
-    pub module_path: ModulePath,
-    pub module_kind: ModuleKind,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Modules(Vec<AssembledModule>);
+pub struct Modules(Vec<ModulePath>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -275,8 +263,7 @@ pub struct ActiveOutputs(Vec<ActiveOutput>);
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ActiveOutput {
     Skill(ActiveSkill),
-    FullAgentSkill(ActiveSkill),
-    FullAgentRole(ActiveRole),
+    Role(ActiveRole),
 }
 
 #[rustfmt::skip]
@@ -639,7 +626,7 @@ pub struct ModuleDependencies(Vec<ModuleDependency>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct UniversalFullAgentModules(Vec<ModuleIdentifier>);
+pub struct UniversalRoleModules(Vec<ModuleIdentifier>);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -673,7 +660,6 @@ pub enum ModuleKind {
     RuntimeSkill,
     RoleSource,
     RoleComposition,
-    SharedComposition,
 }
 
 #[rustfmt::skip]
@@ -864,7 +850,6 @@ pub struct SkillDescription(String);
 )]
 pub enum EmissionPolicy {
     FirstClassSkill,
-    FullAgentSkill,
     InternalOnly,
     NoEmission,
 }
@@ -1175,19 +1160,19 @@ impl From<Path> for ModulePath {
 
 #[rustfmt::skip]
 impl Modules {
-    pub fn new(payload: Vec<AssembledModule>) -> Self {
+    pub fn new(payload: Vec<ModulePath>) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &Vec<AssembledModule> {
+    pub fn payload(&self) -> &Vec<ModulePath> {
         &self.0
     }
-    pub fn into_payload(self) -> Vec<AssembledModule> {
+    pub fn into_payload(self) -> Vec<ModulePath> {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<Vec<AssembledModule>> for Modules {
-    fn from(payload: Vec<AssembledModule>) -> Self {
+impl From<Vec<ModulePath>> for Modules {
+    fn from(payload: Vec<ModulePath>) -> Self {
         Self::new(payload)
     }
 }
@@ -1535,7 +1520,7 @@ impl From<Vec<ModuleDependency>> for ModuleDependencies {
 }
 
 #[rustfmt::skip]
-impl UniversalFullAgentModules {
+impl UniversalRoleModules {
     pub fn new(payload: Vec<ModuleIdentifier>) -> Self {
         Self(payload)
     }
@@ -1547,7 +1532,7 @@ impl UniversalFullAgentModules {
     }
 }
 #[rustfmt::skip]
-impl From<Vec<ModuleIdentifier>> for UniversalFullAgentModules {
+impl From<Vec<ModuleIdentifier>> for UniversalRoleModules {
     fn from(payload: Vec<ModuleIdentifier>) -> Self {
         Self::new(payload)
     }
@@ -2199,11 +2184,8 @@ impl ActiveOutput {
     pub fn skill(payload: ActiveSkill) -> Self {
         Self::Skill(payload)
     }
-    pub fn full_agent_skill(payload: ActiveSkill) -> Self {
-        Self::FullAgentSkill(payload)
-    }
-    pub fn full_agent_role(payload: ActiveRole) -> Self {
-        Self::FullAgentRole(payload)
+    pub fn role(payload: ActiveRole) -> Self {
+        Self::Role(payload)
     }
 }
 
@@ -2242,9 +2224,16 @@ impl From<GenerationReport> for GenerationOutcome {
 }
 
 #[rustfmt::skip]
+impl From<ActiveSkill> for ActiveOutput {
+    fn from(payload: ActiveSkill) -> Self {
+        Self::Skill(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ActiveRole> for ActiveOutput {
     fn from(payload: ActiveRole) -> Self {
-        Self::FullAgentRole(payload)
+        Self::Role(payload)
     }
 }
 

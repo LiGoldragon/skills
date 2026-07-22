@@ -44,13 +44,6 @@ pub enum Error {
         actual: String,
     },
 
-    #[error("composition module `{module_identifier}` must be heading-free at {path}: `{heading}`")]
-    CompositionSourceHeading {
-        module_identifier: String,
-        path: PathBuf,
-        heading: String,
-    },
-
     #[error("module dependency cycle: {}", module_identifiers.join(" -> "))]
     ModuleDependencyCycle { module_identifiers: Vec<String> },
 

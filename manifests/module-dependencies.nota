@@ -1,14 +1,13 @@
 ;; Source module index for SkillDoctrineV2 generation.
 ;; Each record is: module id, source path, dependency module ids, module kind.
 ;; RuntimeSkill modules may emit as skills; RoleSource modules are role roots;
-;; RoleComposition modules are generator-only role packet components; SharedComposition
-;; modules are source-only full-agent components shared by full-agent skills and roles.
+;; RoleComposition modules are generator-only role packet components.
 ;; Target-specific module insertion lives in target-module-insertions.nota.
-;; Universal full-agent modules live in universal-full-agent-modules.nota.
+;; Universal role packet modules live in universal-role-modules.nota.
 ;; The active output manifest decides what emits; this file records source module edges and kind.
 [
   (agent-output-protocol modules/agent-output-protocol/full.md [] RoleComposition)
-  (general-instructions modules/general-instructions/full.md [] SharedComposition)
+  (general-instructions modules/general-instructions/full.md [] RoleComposition)
   (psyche-facing-commitments modules/psyche-facing-commitments/full.md [] RoleComposition)
   (spirit-submission modules/spirit-submission/full.md [] RoleComposition)
   (edit-coordination-core modules/edit-coordination-core/full.md [] RoleComposition)
@@ -59,6 +58,7 @@
   (session-lanes modules/session-lanes/full.md [] RuntimeSkill)
   (session-archive-garbage-collection modules/session-archive-garbage-collection/full.md [] RuntimeSkill)
   (disk-hygiene modules/disk-hygiene/full.md [] RuntimeSkill)
+  (architecture-editor modules/architecture-editor/full.md [] RuntimeSkill)
   (nota-schema-docs modules/nota-schema-docs/full.md [] RuntimeSkill)
   (nota-shape-checklist modules/nota-shape-checklist/full.md [] RuntimeSkill)
   (nota-literacy modules/nota-literacy/full.md [nota-shape-checklist] RuntimeSkill)
@@ -73,7 +73,7 @@
   (bead-weaver modules/bead-weaver/full.md [] RoleComposition)
   (repository-publication modules/repository-publication/full.md [] RuntimeSkill)
   (repository-management modules/repository-management/full.md [] RuntimeSkill)
-  (harness-placement modules/harness-placement/full.md [] RoleComposition)
+  (harness-placement modules/harness-placement/full.md [] RuntimeSkill)
   (skill-editor modules/skill-editor/full.md [] RuntimeSkill)
   (manager-boundary modules/manager-boundary/full.md [] RoleComposition)
   (manager-intent-classification modules/manager-intent-classification/full.md [] RoleComposition)
@@ -98,8 +98,6 @@
   (main-feature-integration modules/main-feature-integration/full.md [] RuntimeSkill)
   (protos-syntax modules/protos-syntax/full.md [] RuntimeSkill)
   (nixos-vm-testing modules/nixos-vm-testing/full.md [] RoleComposition)
-  (universal-system-awareness modules/universal-system-awareness/full.md [] SharedComposition)
-  (documentation-placement modules/documentation-placement/full.md [] SharedComposition)
 
   (role-manager roles/manager/full.md [] RoleSource)
   (role-generalist roles/generalist/full.md [] RoleSource)

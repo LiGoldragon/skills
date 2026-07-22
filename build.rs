@@ -21,7 +21,7 @@ impl SchemaBuild {
         println!("cargo:rerun-if-changed=schema/assembly.schema");
         println!("cargo:rerun-if-changed=src/schema/assembly.rs");
 
-        let plan = GenerationPlan::new(&self.crate_root, "skills", "0.3.0")
+        let plan = GenerationPlan::new(&self.crate_root, "skills", "0.2.0")
             .with_module(ModuleEmission::declaration_module("assembly"));
 
         GenerationDriver::new(plan)

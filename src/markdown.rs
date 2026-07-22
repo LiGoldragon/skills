@@ -9,7 +9,7 @@ use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
 
 use crate::{
     error::{Error, Result},
-    schema::assembly::{FrontmatterEntry, ModuleIdentifier, OutputSurface},
+    schema::assembly::{FrontmatterEntry, OutputSurface},
     workspace_path::WorkspacePath,
 };
 
@@ -76,7 +76,6 @@ impl MarkdownAssembly {
 pub struct MarkdownFragment {
     path: WorkspacePath,
     text: String,
-    composition_heading: Option<String>,
 }
 
 impl MarkdownFragment {
@@ -84,41 +83,17 @@ impl MarkdownFragment {
         Self {
             path,
             text: text.into(),
-            composition_heading: None,
         }
     }
 
     pub fn read(path: WorkspacePath) -> Result<Self> {
         let full_path = path.full_path();
         fs::read_to_string(&full_path)
-            .map(|text| Self {
-                path,
-                text,
-                composition_heading: None,
-            })
+            .map(|text| Self { path, text })
             .map_err(|source| Error::ReadFile {
                 path: full_path,
                 source,
             })
-    }
-
-    pub fn read_composition(
-        path: WorkspacePath,
-        module_identifier: &ModuleIdentifier,
-    ) -> Result<Self> {
-        let full_path = path.full_path();
-        let text = fs::read_to_string(&full_path).map_err(|source| Error::ReadFile {
-            path: full_path.clone(),
-            source,
-        })?;
-        CompositionSource::new(module_identifier, &full_path, &text).validate()?;
-        Ok(Self {
-            path,
-            text,
-            composition_heading: Some(
-                HumanizedIdentifier::new(module_identifier.as_ref()).render(),
-            ),
-        })
     }
 
     pub fn normalized_text(
@@ -131,9 +106,6 @@ impl MarkdownFragment {
             MarkdownBody::new(self.path.full_path(), self.text.as_str()).without_frontmatter()?;
         let runtime_body = SourceMaintenanceNotes::new(body).runtime_text();
         let links_rebased = MarkdownLinks::new(&runtime_body, &self.path, output_path).rebased();
-        if let Some(heading) = &self.composition_heading {
-            return Ok(format!("## {heading}\n\n{links_rebased}"));
-        }
         let heading_normalized = HeadingNormalizer::new(links_rebased, index, title).normalized();
         Ok(heading_normalized)
     }
@@ -145,69 +117,6 @@ impl MarkdownFragment {
             .map(SourceMaintenanceNotes::new)
             .map(SourceMaintenanceNotes::runtime_text)
             .and_then(|body| HeadingText::from_markdown(&body).first_title())
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct CompositionSource<'a> {
-    module_identifier: &'a ModuleIdentifier,
-    path: &'a Path,
-    text: &'a str,
-}
-
-impl<'a> CompositionSource<'a> {
-    fn new(module_identifier: &'a ModuleIdentifier, path: &'a Path, text: &'a str) -> Self {
-        Self {
-            module_identifier,
-            path,
-            text,
-        }
-    }
-
-    fn validate(&self) -> Result<()> {
-        let body = MarkdownBody::new(self.path.to_path_buf(), self.text).without_frontmatter()?;
-        let headings = HeadingText::from_markdown(&body);
-        if let Some(heading) = headings.headings.first() {
-            return Err(Error::CompositionSourceHeading {
-                module_identifier: self.module_identifier.as_ref().to_owned(),
-                path: self.path.to_path_buf(),
-                heading: heading.text.clone(),
-            });
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct HumanizedIdentifier<'a> {
-    identifier: &'a str,
-}
-
-impl<'a> HumanizedIdentifier<'a> {
-    fn new(identifier: &'a str) -> Self {
-        Self { identifier }
-    }
-
-    fn render(&self) -> String {
-        self.identifier
-            .split('-')
-            .map(|word| match word {
-                "nixos" => "NixOS".to_owned(),
-                "nota" => "NOTA".to_owned(),
-                "pi" => "Pi".to_owned(),
-                "vm" => "VM".to_owned(),
-                word => {
-                    let mut characters = word.chars();
-                    match characters.next() {
-                        Some(first) => {
-                            first.to_uppercase().collect::<String>() + characters.as_str()
-                        }
-                        None => String::new(),
-                    }
-                }
-            })
-            .collect::<Vec<_>>()
-            .join(" ")
     }
 }
 
