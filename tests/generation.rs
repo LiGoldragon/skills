@@ -1114,9 +1114,20 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 fn management_claude_overlay_is_source_driven_and_target_scoped() {
     let management = include_str!("../modules/management/full.md");
     assert!(!management.trim().is_empty(), "management has directives");
-    assert!(
-        !management.contains('#'),
-        "management has no markdown heading"
+    let headings: Vec<_> = management
+        .lines()
+        .filter_map(|line| line.strip_prefix("## "))
+        .collect();
+    assert_eq!(
+        headings,
+        [
+            "Central",
+            "Basic tenets",
+            "Conversation",
+            "Delegation",
+            "Authority",
+            "Delivery",
+        ]
     );
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
