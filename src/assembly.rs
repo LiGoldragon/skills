@@ -11,16 +11,15 @@ use crate::{
     markdown::{MarkdownAssembly, MarkdownFragment},
     schema::assembly::{
         ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, ChatGptModelAssignment,
-        ClaudeModelAssignment, EffortLevel, EntryPoint, EntryPointExtra, ExtraSurface, Frontmatter,
-        FrontmatterEntry, FrontmatterKey, FrontmatterValue, GeneratedFile, GeneratedFiles,
-        GeneratedRoleOutputs, GenerationMode, GenerationOutcome, GenerationReport,
-        GenerationRequest, Manifest, ManifestPath, ModelCatalog, ModelCatalogEntry,
-        ModelEffortStrength, ModelIdentifier, ModelStrength, ModuleDependencies, ModuleDependency,
-        ModuleIdentifier, ModuleKind, ModuleLifecycle, ModulePath, Modules, NestedRoleMinimumModel,
-        NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier, OutputKind, OutputPath,
-        OutputSurface, RoleModelAssignment, RoleModelAssignments, RoleOptionalSkills,
-        RoleTargetSurface, SkillMetadata, SkillModule, SkillRoster, TargetModuleInsertion,
-        TargetModuleInsertions, TargetSurface, UniversalRoleModules,
+        ClaudeModelAssignment, EffortLevel, Frontmatter, FrontmatterEntry, FrontmatterKey,
+        FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode,
+        GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
+        ModelCatalog, ModelCatalogEntry, ModelEffortStrength, ModelIdentifier, ModelStrength,
+        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModulePath, Modules,
+        NestedRoleMinimumModel, NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier,
+        OutputKind, OutputPath, OutputSurface, RoleModelAssignment, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, TargetModuleInsertion, TargetModuleInsertions,
+        TargetSurface, UniversalRoleModules,
     },
     trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
@@ -206,9 +205,6 @@ impl GenerationSource {
     }
 
     fn read(&self) -> Result<GenerationConfiguration> {
-        if self.manifest_path.as_ref().ends_with("skills-roster.nota") {
-            return self.read_legacy_roster();
-        }
         let active_outputs: ActiveOutputs = SourceFile::new(
             self.source_root.clone(),
             PathBuf::from(self.manifest_path.as_ref()),
@@ -266,15 +262,6 @@ impl GenerationSource {
                 nested_role_relations,
             },
         )
-    }
-
-    fn read_legacy_roster(&self) -> Result<GenerationConfiguration> {
-        let roster: SkillRoster = SourceFile::new(
-            self.source_root.clone(),
-            PathBuf::from(self.manifest_path.as_ref()),
-        )
-        .read()?;
-        Ok(GenerationConfiguration::legacy(roster))
     }
 }
 
@@ -367,24 +354,11 @@ impl GenerationJobs {
             }
             jobs.push(GenerationJob::Manifest(assembler));
         }
-        if self.configuration.uses_active_manifest() {
-            jobs.push(GenerationJob::Rendered(RenderedOutput::new(
-                self.workspace_root.clone(),
-                RoleOutputInventory::relative_path(),
-                self.configuration.role_output_inventory().render(),
-            )?));
-        }
-        if let Some(roster) = self.configuration.compatibility_roster() {
-            for entry_point in roster.entry_points.payload() {
-                for manifest in entry_point.extra_manifests()? {
-                    jobs.push(GenerationJob::Manifest(ManifestAssembler::new(
-                        self.source_root.clone(),
-                        self.workspace_root.clone(),
-                        manifest,
-                    )));
-                }
-            }
-        }
+        jobs.push(GenerationJob::Rendered(RenderedOutput::new(
+            self.workspace_root.clone(),
+            RoleOutputInventory::relative_path(),
+            self.configuration.role_output_inventory().render(),
+        )?));
         OutputPathIndex::new().validate(&jobs)?;
         Ok(jobs)
     }
@@ -1042,8 +1016,7 @@ struct GenerationConfiguration {
     module_dependencies: ModuleDependencies,
     target_module_insertions: TargetModuleInsertions,
     universal_role_modules: UniversalRoleModules,
-    role_metadata: Option<RoleMetadataIndex>,
-    compatibility_roster: Option<SkillRoster>,
+    role_metadata: RoleMetadataIndex,
 }
 
 impl GenerationConfiguration {
@@ -1066,28 +1039,8 @@ impl GenerationConfiguration {
             module_dependencies,
             target_module_insertions,
             universal_role_modules,
-            role_metadata: Some(role_metadata),
-            compatibility_roster: None,
+            role_metadata,
         })
-    }
-
-    fn legacy(roster: SkillRoster) -> Self {
-        Self {
-            active_outputs: roster.active_outputs(),
-            module_dependencies: roster.module_dependencies(),
-            target_module_insertions: TargetModuleInsertions::new(Vec::new()),
-            universal_role_modules: UniversalRoleModules::new(Vec::new()),
-            role_metadata: None,
-            compatibility_roster: Some(roster),
-        }
-    }
-
-    fn uses_active_manifest(&self) -> bool {
-        self.compatibility_roster.is_none()
-    }
-
-    fn compatibility_roster(&self) -> Option<&SkillRoster> {
-        self.compatibility_roster.as_ref()
     }
 
     fn active_skills(&self) -> Vec<ActiveSkill> {
@@ -1134,16 +1087,12 @@ impl GenerationConfiguration {
         let active_roles = self.active_roles();
         let mut manifests = Vec::new();
         for role in &active_roles {
-            let role_metadata = self
-                .role_metadata
-                .as_ref()
-                .expect("active role generation has validated metadata");
-            let metadata = role_metadata.metadata(&role.output_identifier)?;
+            let metadata = self.role_metadata.metadata(&role.output_identifier)?;
             for manifest in role.manifests(
                 &module_index,
                 &self.universal_role_modules,
                 metadata,
-                role_metadata.nested_role(&role.output_identifier),
+                self.role_metadata.nested_role(&role.output_identifier),
                 &active_roles,
             )? {
                 manifests.push(manifest);
@@ -1170,11 +1119,7 @@ impl GenerationConfiguration {
                 })
                 .collect();
         }
-        let Some(nested_role) = self
-            .role_metadata
-            .as_ref()
-            .and_then(|metadata| metadata.nested_role(role_identifier))
-        else {
+        let Some(nested_role) = self.role_metadata.nested_role(role_identifier) else {
             return Vec::new();
         };
         nested_role
@@ -1191,11 +1136,7 @@ impl GenerationConfiguration {
 
     fn generated_role_roster(&self, manifest: &Manifest) -> Option<String> {
         let role_identifier = manifest.role_identifier();
-        let nested = self
-            .role_metadata
-            .as_ref()
-            .and_then(|metadata| metadata.nested_role(&role_identifier))
-            .is_some();
+        let nested = self.role_metadata.nested_role(&role_identifier).is_some();
         if role_identifier.as_ref() != "manager" && !nested {
             return None;
         }
@@ -1239,16 +1180,7 @@ impl GenerationConfiguration {
         for manifest in self.role_manifests()? {
             expected.insert(manifest.output_path.as_ref().to_owned());
         }
-        if self.uses_active_manifest() {
-            expected.insert(RoleOutputInventory::relative_path().into_payload());
-        }
-        if let Some(roster) = &self.compatibility_roster {
-            for entry_point in roster.entry_points.payload() {
-                for output_path in entry_point.extra_paths() {
-                    expected.insert(output_path.into_payload());
-                }
-            }
-        }
+        expected.insert(RoleOutputInventory::relative_path().into_payload());
         Ok(expected)
     }
 }
@@ -1340,12 +1272,16 @@ impl ActiveSkill {
     }
 
     fn frontmatter(&self) -> Frontmatter {
-        SkillMetadata {
-            skill_category: self.skill_category,
-            skill_tier: self.skill_tier,
-            skill_description: self.skill_description.clone(),
-        }
-        .frontmatter(self.output_identifier.as_ref())
+        Frontmatter::new(vec![
+            FrontmatterEntry {
+                frontmatter_key: FrontmatterKey::new("name"),
+                frontmatter_value: FrontmatterValue::new(self.output_identifier.as_ref()),
+            },
+            FrontmatterEntry {
+                frontmatter_key: FrontmatterKey::new("description"),
+                frontmatter_value: FrontmatterValue::new(self.skill_description.as_ref()),
+            },
+        ])
     }
 }
 
@@ -1560,6 +1496,7 @@ impl ModuleIndex {
     ) -> Result<Self> {
         let mut entries = BTreeMap::new();
         for dependency in module_dependencies.into_payload() {
+            dependency.require_flat_source_path()?;
             let module_identifier = dependency.module_identifier.clone();
             if entries
                 .insert(module_identifier.clone(), dependency)
@@ -1723,6 +1660,27 @@ impl TargetModuleInsertion {
 }
 
 impl ModuleDependency {
+    fn require_flat_source_path(&self) -> Result<()> {
+        let identifier = self.module_identifier.as_ref();
+        let expected = if self.module_kind == ModuleKind::RoleSource {
+            format!(
+                "roles/{}.md",
+                identifier.strip_prefix("role-").unwrap_or(identifier)
+            )
+        } else {
+            format!("skills/{identifier}.md")
+        };
+        if self.module_path.as_ref() == expected {
+            Ok(())
+        } else {
+            Err(Error::InvalidModuleSourcePath {
+                module_identifier: identifier.to_owned(),
+                expected,
+                actual: self.module_path.as_ref().to_owned(),
+            })
+        }
+    }
+
     fn require_accepted(&self, module_use: ModuleUse) -> Result<()> {
         if module_use.accepts(self.module_kind) {
             Ok(())
@@ -1758,65 +1716,6 @@ impl ModuleKind {
     }
 }
 
-impl SkillRoster {
-    fn active_outputs(&self) -> ActiveOutputs {
-        ActiveOutputs::new(
-            self.skill_modules
-                .payload()
-                .iter()
-                .filter_map(SkillModule::active_output)
-                .collect(),
-        )
-    }
-
-    fn module_dependencies(&self) -> ModuleDependencies {
-        ModuleDependencies::new(
-            self.skill_modules
-                .payload()
-                .iter()
-                .map(SkillModule::module_dependency)
-                .collect(),
-        )
-    }
-}
-
-impl SkillModule {
-    fn active_output(&self) -> Option<ActiveOutput> {
-        let ModuleLifecycle::Active(metadata) = &self.module_lifecycle else {
-            return None;
-        };
-        if self.emission_policy != crate::schema::assembly::EmissionPolicy::FirstClassSkill {
-            return None;
-        }
-        Some(ActiveOutput::Skill(ActiveSkill {
-            output_identifier: crate::schema::assembly::OutputIdentifier::new(
-                self.module_name.as_ref(),
-            ),
-            module_identifier: ModuleIdentifier::new(self.module_name.as_ref()),
-            skill_category: metadata.skill_category,
-            skill_tier: metadata.skill_tier,
-            skill_description: metadata.skill_description.clone(),
-            target_surfaces: self.target_surfaces.clone(),
-        }))
-    }
-
-    fn module_dependency(&self) -> ModuleDependency {
-        ModuleDependency {
-            module_identifier: ModuleIdentifier::new(self.module_name.as_ref()),
-            module_path: self.module_path.clone(),
-            dependency_modules: crate::schema::assembly::DependencyModules::new(Vec::new()),
-            module_kind: ModuleKind::RuntimeSkill,
-        }
-    }
-
-    fn first_class_paths(&self) -> Vec<OutputPath> {
-        [OutputSurface::AgentsSkill, OutputSurface::ClaudeSkill]
-            .into_iter()
-            .map(|surface| OutputPath::new(surface.skill_path(self.module_name.payload())))
-            .collect()
-    }
-}
-
 impl From<&TargetSurface> for OutputSurface {
     fn from(surface: &TargetSurface) -> Self {
         match surface {
@@ -1836,93 +1735,14 @@ impl From<&RoleTargetSurface> for OutputSurface {
     }
 }
 
-impl SkillMetadata {
-    fn frontmatter(&self, module_name: &str) -> Frontmatter {
-        Frontmatter::new(vec![
-            FrontmatterEntry {
-                frontmatter_key: FrontmatterKey::new("name"),
-                frontmatter_value: FrontmatterValue::new(module_name),
-            },
-            FrontmatterEntry {
-                frontmatter_key: FrontmatterKey::new("description"),
-                frontmatter_value: FrontmatterValue::new(self.skill_description.as_ref()),
-            },
-        ])
-    }
-}
-
-impl EntryPoint {
-    fn extra_manifests(&self) -> Result<Vec<Manifest>> {
-        let mut manifests = Vec::new();
-        for extra in self.entry_point_extras.payload() {
-            manifests.push(extra.manifest(self.module_name.payload())?);
-        }
-        Ok(manifests)
-    }
-
-    fn extra_paths(&self) -> Vec<OutputPath> {
-        self.entry_point_extras
-            .payload()
-            .iter()
-            .map(|extra| extra.output_path(self.module_name.payload()))
-            .collect()
-    }
-}
-
-impl EntryPointExtra {
-    fn manifest(&self, module_name: &str) -> Result<Manifest> {
-        let output_surface = OutputSurface::from(&self.extra_surface);
-        Ok(Manifest {
-            output_path: self.output_path(module_name),
-            output_kind: OutputKind::Markdown,
-            output_surface,
-            frontmatter: Frontmatter::new(Vec::new()),
-            optional_skills: OptionalSkills::new(Vec::new()),
-            modules: Modules::new(vec![ModulePath::new(self.extra_module_path.as_ref())]),
-        })
-    }
-
-    fn output_path(&self, module_name: &str) -> OutputPath {
-        OutputPath::new(OutputSurface::from(&self.extra_surface).extra_path(module_name))
-    }
-}
-
-impl From<&ExtraSurface> for OutputSurface {
-    fn from(surface: &ExtraSurface) -> Self {
-        match surface {
-            ExtraSurface::ClaudeCommand => Self::ClaudeCommand,
-            ExtraSurface::CodexPrompt => Self::CodexPrompt,
-            ExtraSurface::CodexCommand => Self::CodexCommand,
-        }
-    }
-}
-
 impl OutputSurface {
     fn skill_path(&self, module_name: &str) -> String {
         match self {
             Self::AgentsSkill => format!(".agents/skills/{module_name}/SKILL.md"),
             Self::ClaudeSkill => format!(".claude/skills/{module_name}/SKILL.md"),
-            Self::Workspace
-            | Self::ClaudeCommand
-            | Self::CodexPrompt
-            | Self::CodexCommand
-            | Self::ClaudeAgent
-            | Self::CodexAgent
-            | Self::PiAgent => unreachable!("not a first-class skill surface"),
-        }
-    }
-
-    fn extra_path(&self, module_name: &str) -> String {
-        match self {
-            Self::ClaudeCommand => format!(".claude/commands/{module_name}.md"),
-            Self::CodexPrompt => format!(".codex/prompts/{module_name}.md"),
-            Self::CodexCommand => format!(".codex/commands/{module_name}.md"),
-            Self::Workspace
-            | Self::AgentsSkill
-            | Self::ClaudeSkill
-            | Self::ClaudeAgent
-            | Self::CodexAgent
-            | Self::PiAgent => unreachable!("not an entrypoint extra surface"),
+            Self::Workspace | Self::ClaudeAgent | Self::CodexAgent | Self::PiAgent => {
+                unreachable!("not a first-class skill surface")
+            }
         }
     }
 
@@ -1931,12 +1751,9 @@ impl OutputSurface {
             Self::ClaudeAgent => format!(".claude/agents/{role_name}.md"),
             Self::CodexAgent => format!(".codex/agents/{role_name}.toml"),
             Self::PiAgent => format!(".pi/agents/{role_name}.md"),
-            Self::Workspace
-            | Self::AgentsSkill
-            | Self::ClaudeSkill
-            | Self::ClaudeCommand
-            | Self::CodexPrompt
-            | Self::CodexCommand => unreachable!("not a role target surface"),
+            Self::Workspace | Self::AgentsSkill | Self::ClaudeSkill => {
+                unreachable!("not a role target surface")
+            }
         }
     }
 
@@ -1944,12 +1761,9 @@ impl OutputSurface {
         match self {
             Self::CodexAgent => OutputKind::Toml,
             Self::ClaudeAgent | Self::PiAgent => OutputKind::Markdown,
-            Self::Workspace
-            | Self::AgentsSkill
-            | Self::ClaudeSkill
-            | Self::ClaudeCommand
-            | Self::CodexPrompt
-            | Self::CodexCommand => unreachable!("not a role target surface"),
+            Self::Workspace | Self::AgentsSkill | Self::ClaudeSkill => {
+                unreachable!("not a role target surface")
+            }
         }
     }
 
@@ -1958,12 +1772,9 @@ impl OutputSurface {
             Self::ClaudeAgent => RoleTargetSurface::ClaudeAgent,
             Self::CodexAgent => RoleTargetSurface::CodexAgent,
             Self::PiAgent => RoleTargetSurface::PiAgent,
-            Self::Workspace
-            | Self::AgentsSkill
-            | Self::ClaudeSkill
-            | Self::ClaudeCommand
-            | Self::CodexPrompt
-            | Self::CodexCommand => unreachable!("not a role target surface"),
+            Self::Workspace | Self::AgentsSkill | Self::ClaudeSkill => {
+                unreachable!("not a role target surface")
+            }
         }
     }
 
@@ -2481,13 +2292,6 @@ impl WorkspacePruner {
     fn prune(&self) -> Result<()> {
         self.remove_relative_path(".agents/skills")?;
         self.remove_relative_path(".claude/skills")?;
-        if let Some(roster) = self.configuration.compatibility_roster() {
-            for entry_point in roster.entry_points.payload() {
-                for output_path in entry_point.extra_paths() {
-                    self.remove_relative_path(output_path.as_ref())?;
-                }
-            }
-        }
         RoleOutputInventoryFile::new(self.workspace_root.clone())
             .read()?
             .remove_stale(&self.configuration.role_output_inventory(), self)?;
@@ -2541,15 +2345,6 @@ impl StaleOutputScan {
         let expected = self.configuration.expected_outputs()?;
         self.require_no_unexpected_skill_files(".agents/skills", &expected)?;
         self.require_no_unexpected_skill_files(".claude/skills", &expected)?;
-        if let Some(roster) = self.configuration.compatibility_roster() {
-            for module in roster.skill_modules.payload() {
-                for output_path in module.first_class_paths() {
-                    if !expected.contains(output_path.as_ref()) {
-                        self.require_absent(output_path.as_ref())?;
-                    }
-                }
-            }
-        }
         RoleOutputInventoryFile::new(self.workspace_root.clone())
             .read()?
             .validate_no_stale_paths(&self.configuration.role_output_inventory(), self)

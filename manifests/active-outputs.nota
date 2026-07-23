@@ -1,4 +1,4 @@
-;; Active generated output manifest for SkillDoctrineV2 skill and role packet generation.
+;; Active generated output manifest for skill and role packet generation.
 ;; This file lists active outputs only; absence means inactive.
 ;; Skill fields: output id, module id, category, tier, description, target surfaces.
 ;; Role fields: output id, role source module id, ordered preloaded module ids, description, target surfaces.
@@ -41,7 +41,7 @@
   (Skill (session-lanes session-lanes Workflow Mechanism [|Session lanes rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (session-archive-garbage-collection session-archive-garbage-collection Meta Mechanism [|Session archive garbage collection rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (disk-hygiene disk-hygiene Workflow Mechanism [|Disk hygiene rules.|] [AgentsSkill ClaudeSkill]))
-  (Skill (architecture-editor architecture-editor Workflow Mechanism [|Architecture editor rules.|] [AgentsSkill ClaudeSkill]))
+  (Skill (documentation-placement documentation-placement Workflow Mechanism [|Documentation placement rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-schema-docs nota-schema-docs Workflow Mechanism [|Nota schema docs rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-shape-checklist nota-shape-checklist Workflow Topic [|Nota shape checklist rules.|] [AgentsSkill ClaudeSkill]))
   (Skill (nota-literacy nota-literacy Workflow Topic [|Nota literacy rules.|] [AgentsSkill ClaudeSkill]))

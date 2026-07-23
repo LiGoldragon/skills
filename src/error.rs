@@ -37,6 +37,13 @@ pub enum Error {
     #[error("module `{module_identifier}` is missing from module dependencies")]
     MissingModule { module_identifier: String },
 
+    #[error("module `{module_identifier}` source path `{actual}` must be `{expected}`")]
+    InvalidModuleSourcePath {
+        module_identifier: String,
+        expected: String,
+        actual: String,
+    },
+
     #[error("module `{module_identifier}` has kind `{actual}`, expected {expected}")]
     InvalidModuleKind {
         module_identifier: String,

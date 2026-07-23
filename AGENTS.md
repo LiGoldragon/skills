@@ -4,7 +4,7 @@ This repository is public.
 
 Get explicit psyche approval before changing a skill or role.
 
-Edit source modules, role sources, and manifests, not generated runtime files.
+Edit flat skill sources, flat role sources, and manifests, not generated runtime files.
 
 Put contributor and agent rules here; user guidance in README.md; durable design in ARCHITECTURE.md; temporary agent workarounds in NON_IDEAL_AGENTS.md; and local rationale beside code.
 

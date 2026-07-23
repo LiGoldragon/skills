@@ -15,7 +15,7 @@
   ByteCount Integer {| Display PartialEq PartialOrd |}
   Manifest { OutputPath OutputKind OutputSurface Frontmatter OptionalSkills Modules }
   OutputKind [Markdown Nota Toml]
-  OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeCommand CodexPrompt CodexCommand ClaudeAgent CodexAgent PiAgent]
+  OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeAgent CodexAgent PiAgent]
   Frontmatter (Vector FrontmatterEntry)
   FrontmatterEntry { FrontmatterKey FrontmatterValue }
   FrontmatterKey String {| Display AsRef PartialEq |}
@@ -62,24 +62,9 @@
   TargetModuleInsertions (Vector TargetModuleInsertion)
   TargetModuleInsertion { ModuleIdentifier OutputSurface IncludedModules }
   GeneratedRoleOutputs (Vector OutputPath)
-  SkillRoster { ArchiveRoot SkillModules EntryPoints }
-  ArchiveRoot Path {| Display AsRef PartialEq |}
-  SkillModules (Vector SkillModule)
-  SkillModule { ModuleName ModulePath ModuleLifecycle EmissionPolicy TargetSurfaces }
-  ModuleName String {| Display AsRef PartialEq |}
-  ModuleLifecycle [(Active SkillMetadata) (Archived ArchivePath) Deleted]
-  ArchivePath Path {| Display AsRef PartialEq |}
-  SkillMetadata { SkillCategory SkillTier SkillDescription }
   SkillCategory [Architecture Craft Programming Workflow Meta]
   SkillTier [Apex Keystroke Topic Mechanism]
   SkillDescription String {| Display AsRef PartialEq |}
-  EmissionPolicy [FirstClassSkill InternalOnly NoEmission]
   TargetSurfaces (Vector TargetSurface)
   TargetSurface [AgentsSkill ClaudeSkill]
-  EntryPoints (Vector EntryPoint)
-  EntryPoint { ModuleName EntryPointExtras }
-  EntryPointExtras (Vector EntryPointExtra)
-  EntryPointExtra { ExtraSurface ExtraModulePath }
-  ExtraSurface [ClaudeCommand CodexPrompt CodexCommand]
-  ExtraModulePath Path {| Display AsRef PartialEq |}
 }

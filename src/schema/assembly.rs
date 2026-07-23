@@ -188,9 +188,6 @@ pub enum OutputSurface {
     Workspace,
     AgentsSkill,
     ClaudeSkill,
-    ClaudeCommand,
-    CodexPrompt,
-    CodexCommand,
     ClaudeAgent,
     CodexAgent,
     PiAgent,
@@ -703,88 +700,6 @@ pub struct GeneratedRoleOutputs(Vec<OutputPath>);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SkillRoster {
-    pub archive_root: ArchiveRoot,
-    pub skill_modules: SkillModules,
-    pub entry_points: EntryPoints,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ArchiveRoot(Path);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SkillModules(Vec<SkillModule>);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SkillModule {
-    pub module_name: ModuleName,
-    pub module_path: ModulePath,
-    pub module_lifecycle: ModuleLifecycle,
-    pub emission_policy: EmissionPolicy,
-    pub target_surfaces: TargetSurfaces,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ModuleName(String);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum ModuleLifecycle {
-    Active(SkillMetadata),
-    Archived(ArchivePath),
-    Deleted,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ArchivePath(Path);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SkillMetadata {
-    pub skill_category: SkillCategory,
-    pub skill_tier: SkillTier,
-    pub skill_description: SkillDescription,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -838,27 +753,6 @@ pub struct SkillDescription(String);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
-#[derive(
-    rkyv::Archive,
-    rkyv::Serialize,
-    rkyv::Deserialize,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-)]
-pub enum EmissionPolicy {
-    FirstClassSkill,
-    InternalOnly,
-    NoEmission,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct TargetSurfaces(Vec<TargetSurface>);
 
@@ -881,73 +775,6 @@ pub enum TargetSurface {
     AgentsSkill,
     ClaudeSkill,
 }
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct EntryPoints(Vec<EntryPoint>);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct EntryPoint {
-    pub module_name: ModuleName,
-    pub entry_point_extras: EntryPointExtras,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct EntryPointExtras(Vec<EntryPointExtra>);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct EntryPointExtra {
-    pub extra_surface: ExtraSurface,
-    pub extra_module_path: ExtraModulePath,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(
-    rkyv::Archive,
-    rkyv::Serialize,
-    rkyv::Deserialize,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-)]
-pub enum ExtraSurface {
-    ClaudeCommand,
-    CodexPrompt,
-    CodexCommand,
-}
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ExtraModulePath(Path);
 
 #[rustfmt::skip]
 impl SourceRoot {
@@ -1596,82 +1423,6 @@ impl From<Vec<OutputPath>> for GeneratedRoleOutputs {
 }
 
 #[rustfmt::skip]
-impl ArchiveRoot {
-    pub fn new(payload: impl Into<String>) -> Self {
-        Self(payload.into())
-    }
-    pub fn payload(&self) -> &Path {
-        &self.0
-    }
-    pub fn into_payload(self) -> Path {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Path> for ArchiveRoot {
-    fn from(payload: Path) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl SkillModules {
-    pub fn new(payload: Vec<SkillModule>) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Vec<SkillModule> {
-        &self.0
-    }
-    pub fn into_payload(self) -> Vec<SkillModule> {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Vec<SkillModule>> for SkillModules {
-    fn from(payload: Vec<SkillModule>) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl ModuleName {
-    pub fn new(payload: impl Into<String>) -> Self {
-        Self(payload.into())
-    }
-    pub fn payload(&self) -> &String {
-        &self.0
-    }
-    pub fn into_payload(self) -> String {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<String> for ModuleName {
-    fn from(payload: String) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl ArchivePath {
-    pub fn new(payload: impl Into<String>) -> Self {
-        Self(payload.into())
-    }
-    pub fn payload(&self) -> &Path {
-        &self.0
-    }
-    pub fn into_payload(self) -> Path {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Path> for ArchivePath {
-    fn from(payload: Path) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
 impl SkillDescription {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
@@ -1705,63 +1456,6 @@ impl TargetSurfaces {
 #[rustfmt::skip]
 impl From<Vec<TargetSurface>> for TargetSurfaces {
     fn from(payload: Vec<TargetSurface>) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl EntryPoints {
-    pub fn new(payload: Vec<EntryPoint>) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Vec<EntryPoint> {
-        &self.0
-    }
-    pub fn into_payload(self) -> Vec<EntryPoint> {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Vec<EntryPoint>> for EntryPoints {
-    fn from(payload: Vec<EntryPoint>) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl EntryPointExtras {
-    pub fn new(payload: Vec<EntryPointExtra>) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Vec<EntryPointExtra> {
-        &self.0
-    }
-    pub fn into_payload(self) -> Vec<EntryPointExtra> {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Vec<EntryPointExtra>> for EntryPointExtras {
-    fn from(payload: Vec<EntryPointExtra>) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl ExtraModulePath {
-    pub fn new(payload: impl Into<String>) -> Self {
-        Self(payload.into())
-    }
-    pub fn payload(&self) -> &Path {
-        &self.0
-    }
-    pub fn into_payload(self) -> Path {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Path> for ExtraModulePath {
-    fn from(payload: Path) -> Self {
         Self::new(payload)
     }
 }
@@ -2061,69 +1755,6 @@ impl PartialOrd<u64> for ModelStrength {
 }
 
 #[rustfmt::skip]
-impl std::fmt::Display for ArchiveRoot {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-
-#[rustfmt::skip]
-impl AsRef<str> for ArchiveRoot {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-
-#[rustfmt::skip]
-impl PartialEq<&str> for ArchiveRoot {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
-
-#[rustfmt::skip]
-impl std::fmt::Display for ModuleName {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-
-#[rustfmt::skip]
-impl AsRef<str> for ModuleName {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-
-#[rustfmt::skip]
-impl PartialEq<&str> for ModuleName {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
-
-#[rustfmt::skip]
-impl std::fmt::Display for ArchivePath {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-
-#[rustfmt::skip]
-impl AsRef<str> for ArchivePath {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-
-#[rustfmt::skip]
-impl PartialEq<&str> for ArchivePath {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
-
-#[rustfmt::skip]
 impl std::fmt::Display for SkillDescription {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
@@ -2139,27 +1770,6 @@ impl AsRef<str> for SkillDescription {
 
 #[rustfmt::skip]
 impl PartialEq<&str> for SkillDescription {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
-
-#[rustfmt::skip]
-impl std::fmt::Display for ExtraModulePath {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-
-#[rustfmt::skip]
-impl AsRef<str> for ExtraModulePath {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-
-#[rustfmt::skip]
-impl PartialEq<&str> for ExtraModulePath {
     fn eq(&self, other: &&str) -> bool {
         self.payload() == other
     }
@@ -2196,16 +1806,6 @@ impl ModelCatalogEntry {
     }
     pub fn claude(payload: ClaudeModel) -> Self {
         Self::Claude(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl ModuleLifecycle {
-    pub fn active(payload: SkillMetadata) -> Self {
-        Self::Active(payload)
-    }
-    pub fn archived(payload: Path) -> Self {
-        Self::Archived(ArchivePath::new(payload))
     }
 }
 
@@ -2248,19 +1848,5 @@ impl From<ChatGptModel> for ModelCatalogEntry {
 impl From<ClaudeModel> for ModelCatalogEntry {
     fn from(payload: ClaudeModel) -> Self {
         Self::Claude(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl From<SkillMetadata> for ModuleLifecycle {
-    fn from(payload: SkillMetadata) -> Self {
-        Self::Active(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl From<ArchivePath> for ModuleLifecycle {
-    fn from(payload: ArchivePath) -> Self {
-        Self::Archived(payload)
     }
 }

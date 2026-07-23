@@ -8,11 +8,10 @@ use nota::NotaSource;
 use skills::{
     Error,
     schema::assembly::{
-        ActiveOutputs, EffortLevel, EmissionPolicy, GenerationMode, GenerationRequest,
-        ManifestPath, ModelCatalog, ModuleDependencies, ModuleKind, ModuleLifecycle,
-        NestedRoleRelations, RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface,
-        SkillRoster, SourceRoot, TargetModuleInsertions, TargetSurface, UniversalRoleModules,
-        WorkspaceRoot,
+        ActiveOutputs, EffortLevel, GenerationMode, GenerationRequest, ManifestPath, ModelCatalog,
+        ModuleDependencies, ModuleKind, NestedRoleRelations, RoleModelAssignments,
+        RoleOptionalSkills, RoleTargetSurface, SourceRoot, TargetModuleInsertions,
+        UniversalRoleModules, WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
@@ -98,11 +97,11 @@ fn frontmatter_block(packet: &str) -> &str {
 }
 
 #[test]
-fn generation_writes_derived_skill_surfaces_with_roster_frontmatter() {
+fn generation_writes_derived_skill_surfaces_with_manifest_frontmatter() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "---\nname: stale\n---\n\n# Skill — example\n\n## Rule\n\nKeep the prose.\n",
     );
 
@@ -135,9 +134,9 @@ fn generation_writes_derived_skill_surfaces_with_roster_frontmatter() {
 #[test]
 fn generation_allows_fenced_frontmatter_examples_inside_modules() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Rule\n\n```markdown\n---\nname: example\n---\n```\n",
     );
 
@@ -153,9 +152,9 @@ fn generation_allows_fenced_frontmatter_examples_inside_modules() {
 #[test]
 fn generation_rejects_second_unfenced_frontmatter_delimiter_in_skill() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Rule\n\n---\n\nKeep the prose.\n",
     );
 
@@ -172,9 +171,9 @@ fn generation_rejects_second_unfenced_frontmatter_delimiter_in_skill() {
 #[test]
 fn generation_does_not_rebase_link_syntax_inside_code_spans() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Rule\n\nUse `[text](url)` only as a literal example.\n",
     );
 
@@ -189,8 +188,8 @@ fn generation_does_not_rebase_link_syntax_inside_code_spans() {
 #[test]
 fn generation_allows_zero_or_one_title_and_rejects_multiple_titles() {
     let zero_title = Fixture::new();
-    zero_title.write_default_roster();
-    zero_title.write_source_file("modules/example/full.md", "No title.\n");
+    zero_title.write_default_manifest();
+    zero_title.write_source_file("skills/example.md", "No title.\n");
     zero_title
         .generate(GenerationMode::Write)
         .expect("zero titles generate");
@@ -200,11 +199,8 @@ fn generation_allows_zero_or_one_title_and_rejects_multiple_titles() {
     );
 
     let one_title = Fixture::new();
-    one_title.write_default_roster();
-    one_title.write_source_file(
-        "modules/example/full.md",
-        "# Skill — example\n\nOne title.\n",
-    );
+    one_title.write_default_manifest();
+    one_title.write_source_file("skills/example.md", "# Skill — example\n\nOne title.\n");
     one_title
         .generate(GenerationMode::Write)
         .expect("one title generates");
@@ -215,8 +211,8 @@ fn generation_allows_zero_or_one_title_and_rejects_multiple_titles() {
     );
 
     let multiple_titles = Fixture::new();
-    multiple_titles.write_default_roster();
-    multiple_titles.write_source_file("modules/example/full.md", "# First\n\n# Second\n");
+    multiple_titles.write_default_manifest();
+    multiple_titles.write_source_file("skills/example.md", "# First\n\n# Second\n");
     let error = multiple_titles
         .generate(GenerationMode::Write)
         .expect_err("multiple titles fail");
@@ -227,11 +223,40 @@ fn generation_allows_zero_or_one_title_and_rejects_multiple_titles() {
 }
 
 #[test]
+fn generation_rejects_nested_legacy_module_source_paths() {
+    let fixture = Fixture::new();
+    fixture.write_default_manifest();
+    fixture.write_source_file("skills/example.md", "# example\n");
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example modules/example/full.md [] RuntimeSkill)]\n",
+    );
+
+    let error = fixture
+        .generate(GenerationMode::Write)
+        .expect_err("nested legacy source paths are rejected");
+
+    assert!(
+        matches!(
+            error,
+            Error::InvalidModuleSourcePath {
+                ref module_identifier,
+                ref expected,
+                ref actual,
+            } if module_identifier == "example"
+                && expected == "skills/example.md"
+                && actual == "modules/example/full.md"
+        ),
+        "{error:?}"
+    );
+}
+
+#[test]
 fn generation_fails_on_duplicate_headings() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Repeat\n\nFirst.\n\n## Repeat\n\nSecond.\n",
     );
 
@@ -240,102 +265,6 @@ fn generation_fails_on_duplicate_headings() {
         .expect_err("duplicate headings fail");
 
     assert!(matches!(error, Error::DuplicateHeading { .. }), "{error:?}");
-}
-
-#[test]
-fn roster_model_covers_current_skills_without_entrypoint_extras() {
-    let text = include_str!("../manifests/skills-roster.nota");
-    let roster = NotaSource::new(text)
-        .parse::<SkillRoster>()
-        .expect("roster model parses");
-
-    assert_eq!(roster.archive_root.as_ref(), "skills/archive");
-    assert_eq!(roster.skill_modules.payload().len(), 74);
-
-    let active_first_class_modules: Vec<_> = roster
-        .skill_modules
-        .payload()
-        .iter()
-        .filter(|module| {
-            matches!(module.module_lifecycle, ModuleLifecycle::Active(_))
-                && module.emission_policy == EmissionPolicy::FirstClassSkill
-        })
-        .collect();
-    assert_eq!(active_first_class_modules.len(), 60);
-    for module in active_first_class_modules {
-        assert_eq!(
-            module.target_surfaces.payload(),
-            &[TargetSurface::AgentsSkill, TargetSurface::ClaudeSkill]
-        );
-    }
-
-    let active_internal_modules: Vec<_> = roster
-        .skill_modules
-        .payload()
-        .iter()
-        .filter(|module| {
-            matches!(module.module_lifecycle, ModuleLifecycle::Active(_))
-                && module.emission_policy == EmissionPolicy::InternalOnly
-        })
-        .map(|module| module.module_name.payload())
-        .collect();
-    assert_eq!(
-        active_internal_modules,
-        [
-            "architectural-truth-tests",
-            "rust-discipline",
-            "bead-weaver",
-        ]
-    );
-
-    let archived_role_names = [
-        "operator",
-        "designer",
-        "schema-designer",
-        "system-operator",
-        "system-maintainer",
-        "poet",
-        "editor",
-        "assistant",
-        "counselor",
-    ];
-    for role_name in archived_role_names {
-        let module = roster
-            .skill_modules
-            .payload()
-            .iter()
-            .find(|module| module.module_name.payload() == role_name)
-            .expect("role module modeled");
-        assert!(matches!(
-            module.module_lifecycle,
-            ModuleLifecycle::Archived(_)
-        ));
-        assert_eq!(module.emission_policy, EmissionPolicy::NoEmission);
-        assert!(module.target_surfaces.payload().is_empty());
-        let archived_source = fs::read_to_string(format!("skills/archive/{role_name}.md"))
-            .unwrap_or_else(|error| panic!("{role_name} archive source is readable: {error}"));
-        assert!(
-            archived_source.contains("Deprecated: this archived prior-workflow appellation is not a current handoff role or subagent destination."),
-            "{role_name} archive source marks the appellation deprecated"
-        );
-    }
-
-    for deleted_name in ["subagent-session-workflow", "keep-working"] {
-        let deleted = roster
-            .skill_modules
-            .payload()
-            .iter()
-            .find(|module| module.module_name.payload() == deleted_name)
-            .unwrap_or_else(|| panic!("{deleted_name} deleted module modeled"));
-        assert_eq!(deleted.module_lifecycle, ModuleLifecycle::Deleted);
-        assert_eq!(deleted.emission_policy, EmissionPolicy::NoEmission);
-        assert!(deleted.target_surfaces.payload().is_empty());
-    }
-
-    assert!(
-        roster.entry_points.payload().is_empty(),
-        "no entrypoint command/prompt extras are currently generated"
-    );
 }
 
 #[test]
@@ -434,6 +363,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "pi-extension-updates",
         "nota-shape-checklist",
         "management",
+        "documentation-placement",
     ] {
         assert!(
             active_skill_identifiers.contains(required_skill),
@@ -449,6 +379,7 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "context-maintenance",
         "orchestration",
         "kameo",
+        "architecture-editor",
     ] {
         assert!(
             !active_skill_identifiers.contains(deprecated_skill),
@@ -471,6 +402,24 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             )
         })
         .collect();
+    for dependency in module_dependencies.payload() {
+        let identifier = dependency.module_identifier.as_ref();
+        let expected_path = if dependency.module_kind == ModuleKind::RoleSource {
+            format!(
+                "roles/{}.md",
+                identifier.strip_prefix("role-").unwrap_or(identifier)
+            )
+        } else {
+            format!("skills/{identifier}.md")
+        };
+        assert_eq!(dependency.module_path.as_ref(), expected_path);
+        assert!(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join(dependency.module_path.as_ref())
+                .is_file(),
+            "{expected_path} is an active flat source"
+        );
+    }
     let role_composition_modules = [
         "agent-output-protocol",
         "general-instructions",
@@ -774,6 +723,20 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             assert!(dependency_modules.contains(included_module));
         }
     }
+    let indexed_role_sources: BTreeSet<&str> = module_dependencies
+        .payload()
+        .iter()
+        .filter(|dependency| dependency.module_kind == ModuleKind::RoleSource)
+        .map(|dependency| dependency.module_identifier.as_ref())
+        .collect();
+    let active_role_sources: BTreeSet<&str> = active_roles
+        .values()
+        .map(|role| role.module_identifier.as_ref())
+        .collect();
+    assert_eq!(
+        indexed_role_sources, active_role_sources,
+        "only active role sources remain indexed"
+    );
 }
 
 #[test]
@@ -789,7 +752,7 @@ Put recoverable work facts in a delegated situation summary.\n";
     assert!(!index_text.contains("human-interaction"));
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/human-interaction/full.md")
+            .join("skills/human-interaction.md")
             .exists(),
         "human-interaction source module is deleted, not archived"
     );
@@ -797,7 +760,7 @@ Put recoverable work facts in a delegated situation summary.\n";
     assert!(!index_text.contains("(context-maintenance "));
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/context-maintenance/full.md")
+            .join("skills/context-maintenance.md")
             .exists(),
         "context-maintenance source module is deleted, not archived"
     );
@@ -841,12 +804,12 @@ Put recoverable work facts in a delegated situation summary.\n";
     );
     assert!(
         Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/context-maintenance-deep/full.md")
+            .join("skills/context-maintenance-deep.md")
             .exists(),
         "context-maintenance-deep source remains"
     );
     assert_eq!(
-        include_str!("../modules/context-handover/full.md"),
+        include_str!("../skills/context-handover.md"),
         HANDOVER,
         "context-handover source is the approved exact handover guidance"
     );
@@ -896,13 +859,12 @@ fn kameo_skill_is_removed_from_source_and_generated_surfaces() {
     for source in [
         include_str!("../manifests/active-outputs.nota"),
         include_str!("../manifests/module-dependencies.nota"),
-        include_str!("../manifests/skills-roster.nota"),
     ] {
         assert!(!source.contains("kameo"));
     }
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/kameo/full.md")
+            .join("skills/kameo.md")
             .exists()
     );
 
@@ -926,8 +888,8 @@ fn kameo_skill_is_removed_from_source_and_generated_surfaces() {
 
 #[test]
 fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
-    let publication = include_str!("../modules/repository-publication/full.md");
-    let management = include_str!("../modules/repository-management/full.md");
+    let publication = include_str!("../skills/repository-publication.md");
+    let management = include_str!("../skills/repository-management.md");
     assert!(publication.contains("Do not publish private material"));
     assert!(management.contains("public visibility as default"));
 }
@@ -942,8 +904,8 @@ Reject operational guidance and repository-specific facts.\n\
 Remove anything repeated, unverified, outdated, or already done without the skill.\n\
 Use headings only when they aid navigation; never repeat the skill name.\n";
 
-    assert_eq!(include_str!("../modules/skill-editor/full.md"), EXPECTED);
-    assert_eq!(include_str!("../roles/skill-editor/full.md"), EXPECTED);
+    assert_eq!(include_str!("../skills/skill-editor.md"), EXPECTED);
+    assert_eq!(include_str!("../roles/skill-editor.md"), EXPECTED);
 
     let fixture = Fixture::new();
     fixture
@@ -1002,38 +964,38 @@ Use headings only when they aid navigation; never repeat the skill name.\n";
 fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
     let fields = ["turnBudget", "toolBudget", "timeoutMs", "maxRuntimeMs"];
     for (name, source) in [
-        ("management", include_str!("../modules/management/full.md")),
+        ("management", include_str!("../skills/management.md")),
         (
             "manager-boundary",
-            include_str!("../modules/manager-boundary/full.md"),
+            include_str!("../skills/manager-boundary.md"),
         ),
         (
             "manager-intent-classification",
-            include_str!("../modules/manager-intent-classification/full.md"),
+            include_str!("../skills/manager-intent-classification.md"),
         ),
         (
             "manager-safeguards",
-            include_str!("../modules/manager-safeguards/full.md"),
+            include_str!("../skills/manager-safeguards.md"),
         ),
         (
             "manager-dispatch",
-            include_str!("../modules/manager-dispatch/full.md"),
+            include_str!("../skills/manager-dispatch.md"),
         ),
         (
             "manager-liveness",
-            include_str!("../modules/manager-liveness/full.md"),
+            include_str!("../skills/manager-liveness.md"),
         ),
         (
             "manager-decisions",
-            include_str!("../modules/manager-decisions/full.md"),
+            include_str!("../skills/manager-decisions.md"),
         ),
         (
             "manager-communication",
-            include_str!("../modules/manager-communication/full.md"),
+            include_str!("../skills/manager-communication.md"),
         ),
         (
             "manager-synthesis",
-            include_str!("../modules/manager-synthesis/full.md"),
+            include_str!("../skills/manager-synthesis.md"),
         ),
     ] {
         for field in fields {
@@ -1080,7 +1042,7 @@ fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
 
 #[test]
 fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
-    let protocol = include_str!("../modules/pi-extension-updates/full.md");
+    let protocol = include_str!("../skills/pi-extension-updates.md");
     for required in [
         "Reconcile each local extension change with upstream evidence.",
         "Change the source and declarative package owner, not installed output.",
@@ -1112,7 +1074,7 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
 
 #[test]
 fn management_claude_overlay_is_source_driven_and_target_scoped() {
-    let management = include_str!("../modules/management/full.md");
+    let management = include_str!("../skills/management.md");
     assert!(!management.trim().is_empty(), "management has directives");
     let headings: Vec<_> = management
         .lines()
@@ -1131,10 +1093,10 @@ fn management_claude_overlay_is_source_driven_and_target_scoped() {
     );
     assert!(
         !Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("modules/claude-management/full.md")
+            .join("skills/claude-management.md")
             .exists()
     );
-    let claude_overlay = include_str!("../modules/claude-manager-non-fable/full.md").trim();
+    let claude_overlay = include_str!("../skills/claude-manager-non-fable.md").trim();
 
     let fixture = Fixture::new();
     fixture
@@ -1190,8 +1152,8 @@ fn generated_manager_and_recorder_packets_preserve_matter_not_intent_classificat
 #[test]
 fn host_reboot_requires_specific_psyche_approval() {
     for source in [
-        include_str!("../modules/manager-safeguards/full.md"),
-        include_str!("../modules/operating-system-operations/full.md"),
+        include_str!("../skills/manager-safeguards.md"),
+        include_str!("../skills/operating-system-operations.md"),
     ] {
         assert!(source.contains("Require explicit psyche approval"));
         assert!(source.contains("reboot"));
@@ -1203,15 +1165,15 @@ fn role_generation_expands_dependencies_in_order_and_writes_harness_paths() {
     let fixture = Fixture::new();
     fixture.write_role_generation_sources();
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nGenerated-file notices stay out.\n",
     );
     fixture.write_source_file(
-        "modules/shared/full.md",
+        "skills/shared.md",
         "# Module - shared\n\n## Shared Rule\n\nDependency first.\n",
     );
     fixture.write_source_file(
-        "modules/feature/full.md",
+        "skills/feature.md",
         "# Module - feature\n\n## Feature Rule\n\nDependent second.\n",
     );
 
@@ -1260,15 +1222,15 @@ fn generation_rejects_configured_execution_limit_fields_in_agent_packets() {
     let fixture = Fixture::new();
     fixture.write_role_generation_sources();
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\ntimeoutMs: 1\n",
     );
     fixture.write_source_file(
-        "modules/shared/full.md",
+        "skills/shared.md",
         "# Module - shared\n\n## Shared Rule\n\nShared rule.\n",
     );
     fixture.write_source_file(
-        "modules/feature/full.md",
+        "skills/feature.md",
         "# Module - feature\n\n## Feature Rule\n\nFeature rule.\n",
     );
 
@@ -1291,11 +1253,11 @@ fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(manager roles/manager/full.md [] RoleSource) (shared roles/shared/full.md [] RoleSource) (pi-only roles/pi-only/full.md [] RoleSource) (claude-only roles/claude-only/full.md [] RoleSource) (codex-only roles/codex-only/full.md [] RoleSource)]\n",
+        "[(manager roles/manager.md [] RoleSource) (shared roles/shared.md [] RoleSource) (pi-only roles/pi-only.md [] RoleSource) (claude-only roles/claude-only.md [] RoleSource) (codex-only roles/codex-only.md [] RoleSource)]\n",
     );
     for role in ["manager", "shared", "pi-only", "claude-only", "codex-only"] {
         fixture.write_source_file(
-            &format!("roles/{role}/full.md"),
+            &format!("roles/{role}.md"),
             &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
         );
     }
@@ -1568,7 +1530,7 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
         );
     }
 
-    let claude_manager_module = include_str!("../modules/claude-manager-non-fable/full.md").trim();
+    let claude_manager_module = include_str!("../skills/claude-manager-non-fable.md").trim();
     assert!(
         fixture
             .read_workspace_file(".claude/skills/management/SKILL.md")
@@ -1609,7 +1571,7 @@ fn generated_packets_keep_rosters_and_exclude_disallowed_worker_models() {
 
 #[test]
 fn general_instructions_compose_once_and_keep_authority_gates() {
-    let general = include_str!("../modules/general-instructions/full.md");
+    let general = include_str!("../skills/general-instructions.md");
     assert!(general.contains("Use plain established language."));
     assert!(general.contains("Do not introduce limits on agent execution."));
     assert!(general.contains("explicit psyche approval"));
@@ -1783,14 +1745,14 @@ fn role_profiles_and_optional_skills_render_without_preloading_skill_bodies() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+        "[(example skills/example.md [] RuntimeSkill) (worker roles/worker.md [] RoleSource)]\n",
     );
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill - example\n\n## Example Rule\n\nThis body must not be preloaded.\n",
     );
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_role_metadata(&["worker"]);
@@ -2001,7 +1963,7 @@ fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
     );
     duplicate.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+        "[(example skills/example.md [] RuntimeSkill) (worker roles/worker.md [] RoleSource)]\n",
     );
     duplicate.write_role_metadata(&["worker"]);
     duplicate.write_source_file(
@@ -2023,7 +1985,7 @@ fn optional_skill_metadata_rejects_duplicate_and_target_incompatible_skills() {
     );
     incompatible.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(example modules/example/full.md [] RuntimeSkill) (worker roles/worker/full.md [] RoleSource)]\n",
+        "[(example skills/example.md [] RuntimeSkill) (worker roles/worker.md [] RoleSource)]\n",
     );
     incompatible.write_role_metadata(&["worker"]);
     incompatible.write_source_file(
@@ -2049,19 +2011,19 @@ fn universal_role_modules_expand_into_every_role_packet_without_per_role_manifes
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (universal modules/universal/full.md [] RoleComposition) (feature modules/feature/full.md [] RoleComposition)]\n",
+        "[(worker roles/worker.md [] RoleSource) (universal skills/universal.md [] RoleComposition) (feature skills/feature.md [] RoleComposition)]\n",
     );
     fixture.write_source_file("manifests/universal-role-modules.nota", "[universal]\n");
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_source_file(
-        "modules/universal/full.md",
+        "skills/universal.md",
         "# Module - universal\n\n## Universal Rule\n\nUniversal doctrine.\n",
     );
     fixture.write_source_file(
-        "modules/feature/full.md",
+        "skills/feature.md",
         "# Module - feature\n\n## Feature Rule\n\nPer-role doctrine.\n",
     );
 
@@ -2094,9 +2056,9 @@ fn universal_role_modules_expand_into_every_role_packet_without_per_role_manifes
 #[test]
 fn generation_strips_source_maintenance_notes_from_runtime_surfaces() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill - example\n\n## Rule\n\nGenerated.\n\n## Source Maintenance Notes\n\nMaintainer-only synchronization steps.\n",
     );
 
@@ -2122,22 +2084,22 @@ fn target_module_insertions_apply_only_to_matching_generated_surfaces() {
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource) (management modules/management/full.md [] RuntimeSkill) (claude-management modules/claude-management/full.md [] RuntimeSkill)]\n",
+        "[(worker roles/worker.md [] RoleSource) (management skills/management.md [] RuntimeSkill) (claude-management skills/claude-management.md [] RuntimeSkill)]\n",
     );
     fixture.write_source_file(
         "manifests/target-module-insertions.nota",
         "[(management ClaudeSkill [claude-management]) (management ClaudeAgent [claude-management])]\n",
     );
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nRole body.\n",
     );
     fixture.write_source_file(
-        "modules/management/full.md",
+        "skills/management.md",
         "# Skill - management\n\n## Shared Rule\n\nShared management.\n",
     );
     fixture.write_source_file(
-        "modules/claude-management/full.md",
+        "skills/claude-management.md",
         "# Module - Target reply surface\n\n## Clarification UI\n\nTarget overlay.\n",
     );
 
@@ -2178,17 +2140,17 @@ fn role_generation_rejects_retired_current_destination_prose() {
         let fixture = Fixture::new();
         fixture.write_role_generation_sources();
         fixture.write_source_file(
-            "roles/worker/full.md",
+            "roles/worker.md",
             &format!(
                 "# Role - worker\n\n## Contract\n\nDo not assign current closeout to {phrase}.\n"
             ),
         );
         fixture.write_source_file(
-            "modules/shared/full.md",
+            "skills/shared.md",
             "# Module - shared\n\n## Shared Rule\n\nDependency first.\n",
         );
         fixture.write_source_file(
-            "modules/feature/full.md",
+            "skills/feature.md",
             "# Module - feature\n\n## Feature Rule\n\nDependent second.\n",
         );
 
@@ -2215,7 +2177,7 @@ fn generation_rejects_direct_module_dependency_cycle() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(example modules/example/full.md [example] RuntimeSkill)]\n",
+        "[(example skills/example.md [example] RuntimeSkill)]\n",
     );
 
     let error = fixture
@@ -2246,7 +2208,7 @@ fn generation_rejects_transitive_module_dependency_cycle() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(first modules/first/full.md [second] RuntimeSkill) (second modules/second/full.md [third] RuntimeSkill) (third modules/third/full.md [second] RuntimeSkill)]\n",
+        "[(first skills/first.md [second] RuntimeSkill) (second skills/second.md [third] RuntimeSkill) (third skills/third.md [second] RuntimeSkill)]\n",
     );
 
     let error = fixture
@@ -2278,7 +2240,7 @@ fn generation_rejects_duplicate_role_output_paths_before_write() {
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource)]\n",
+        "[(worker roles/worker.md [] RoleSource)]\n",
     );
 
     let error = fixture
@@ -2313,7 +2275,7 @@ fn generation_rejects_role_composition_module_as_skill_output() {
     );
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(edit-coordination-core modules/edit-coordination-core/full.md [] RoleComposition)]\n",
+        "[(edit-coordination-core skills/edit-coordination-core.md [] RoleComposition)]\n",
     );
 
     let error = fixture
@@ -2352,7 +2314,7 @@ fn generation_rejects_runtime_module_as_role_source() {
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RuntimeSkill)]\n",
+        "[(worker skills/worker.md [] RuntimeSkill)]\n",
     );
 
     let error = fixture
@@ -2384,10 +2346,10 @@ fn generation_rejects_role_required_module_missing_from_dependency_index() {
     fixture.write_role_metadata(&["worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(worker roles/worker/full.md [] RoleSource)]\n",
+        "[(worker roles/worker.md [] RoleSource)]\n",
     );
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nBody.\n",
     );
 
@@ -2411,15 +2373,15 @@ fn write_mode_removes_only_inventory_owned_stale_role_outputs() {
     let fixture = Fixture::new();
     fixture.write_role_generation_sources();
     fixture.write_source_file(
-        "roles/worker/full.md",
+        "roles/worker.md",
         "# Role - worker\n\n## Contract\n\nBody.\n",
     );
     fixture.write_source_file(
-        "modules/shared/full.md",
+        "skills/shared.md",
         "# Module - shared\n\n## Shared Rule\n\nBody.\n",
     );
     fixture.write_source_file(
-        "modules/feature/full.md",
+        "skills/feature.md",
         "# Module - feature\n\n## Feature Rule\n\nBody.\n",
     );
     fixture.write_workspace_file(
@@ -2459,9 +2421,9 @@ fn write_mode_removes_only_inventory_owned_stale_role_outputs() {
 #[test]
 fn check_mode_reports_stale_output_with_guidance() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Rule\n\nGenerated.\n",
     );
     fixture.write_workspace_file(".agents/skills/example/SKILL.md", "old\n");
@@ -2481,9 +2443,9 @@ fn check_mode_reports_stale_output_with_guidance() {
 #[test]
 fn generation_rejects_skill_with_oversized_serialized_block() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         &format!("# Skill — example\n\n## Rule\n\n{}\n", "x".repeat(33_000)),
     );
 
@@ -2518,28 +2480,6 @@ fn generation_rejects_skill_with_oversized_serialized_block() {
 }
 
 #[test]
-fn check_mode_reports_archived_or_deleted_stale_skill_outputs() {
-    let fixture = Fixture::new();
-    fixture.write_legacy_roster(
-        "(skills/archive [(old modules/old/full.md Deleted NoEmission [])] [])\n",
-    );
-    fixture.write_workspace_file("skills/skills.nota", "old retired index\n");
-    fixture.write_workspace_file(".agents/skills/old/SKILL.md", "stale\n");
-
-    let error = fixture
-        .generate_with_manifest(GenerationMode::Check, "manifests/skills-roster.nota")
-        .expect_err("stale deleted output fails check mode");
-
-    assert!(
-        matches!(error, Error::StaleGeneratedOutput { .. }),
-        "{error:?}"
-    );
-    assert!(!error.to_string().contains("skills.nota"));
-    assert!(error.to_string().contains("archived/deleted"));
-    assert!(error.to_string().contains("generate-skills"));
-}
-
-#[test]
 fn check_mode_accepts_current_outputs_with_orphaned_retired_skill_index() {
     let fixture = Fixture::new();
     fixture
@@ -2560,9 +2500,9 @@ fn check_mode_accepts_current_outputs_with_orphaned_retired_skill_index() {
 #[test]
 fn write_mode_prunes_generated_skill_directories_before_writing() {
     let fixture = Fixture::new();
-    fixture.write_default_roster();
+    fixture.write_default_manifest();
     fixture.write_source_file(
-        "modules/example/full.md",
+        "skills/example.md",
         "# Skill — example\n\n## Rule\n\nGenerated.\n",
     );
     fixture.write_workspace_file(".agents/skills/old/SKILL.md", "stale\n");
@@ -2605,14 +2545,14 @@ fn write_mode_prunes_removed_or_renamed_skill_and_role_outputs() {
     fixture.write_role_metadata(&["new-worker"]);
     fixture.write_source_file(
         "manifests/module-dependencies.nota",
-        "[(new-skill modules/new-skill/full.md [] RuntimeSkill) (new-worker roles/new-worker/full.md [] RoleSource)]\n",
+        "[(new-skill skills/new-skill.md [] RuntimeSkill) (new-worker roles/new-worker.md [] RoleSource)]\n",
     );
     fixture.write_source_file(
-        "modules/new-skill/full.md",
+        "skills/new-skill.md",
         "# Skill — new-skill\n\n## Rule\n\nGenerated.\n",
     );
     fixture.write_source_file(
-        "roles/new-worker/full.md",
+        "roles/new-worker.md",
         "# Role - new-worker\n\n## Contract\n\nGenerated.\n",
     );
     fixture.write_workspace_file(".agents/skills/old-skill/SKILL.md", "stale skill\n");
@@ -2710,19 +2650,15 @@ impl Fixture {
         }
     }
 
-    fn write_default_roster(&self) {
+    fn write_default_manifest(&self) {
         self.write_source_file(
             "manifests/active-outputs.nota",
             "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill ClaudeSkill]))]\n",
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(example modules/example/full.md [] RuntimeSkill)]\n",
+            "[(example skills/example.md [] RuntimeSkill)]\n",
         );
-    }
-
-    fn write_legacy_roster(&self, text: &str) {
-        self.write_source_file("manifests/skills-roster.nota", text);
     }
 
     fn write_role_generation_sources(&self) {
@@ -2732,7 +2668,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(worker roles/worker/full.md [] RoleSource) (shared modules/shared/full.md [] RoleComposition) (feature modules/feature/full.md [shared] RoleComposition)]\n",
+            "[(worker roles/worker.md [] RoleSource) (shared skills/shared.md [] RoleComposition) (feature skills/feature.md [shared] RoleComposition)]\n",
         );
         self.write_role_metadata(&["worker"]);
     }
@@ -2744,7 +2680,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(planner roles/planner/full.md [] RoleSource) (reader roles/reader/full.md [] RoleSource) (writer roles/writer/full.md [] RoleSource)]\n",
+            "[(planner roles/planner.md [] RoleSource) (reader roles/reader.md [] RoleSource) (writer roles/writer.md [] RoleSource)]\n",
         );
         self.write_role_metadata(&["planner", "reader", "writer"]);
         self.write_source_file(
@@ -2752,12 +2688,12 @@ impl Fixture {
             "[(planner [(PiAgent gpt-test Medium)] [reader writer])]\n",
         );
         self.write_source_file(
-            "roles/planner/full.md",
+            "roles/planner.md",
             "# Role - planner\n\n## Contract\n\nPlan work.\n",
         );
         for role in ["reader", "writer"] {
             self.write_source_file(
-                &format!("roles/{role}/full.md"),
+                &format!("roles/{role}.md"),
                 &format!("# Role - {role}\n\n## Contract\n\n{role} work.\n"),
             );
         }
@@ -2770,7 +2706,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(manager roles/manager/full.md [] RoleSource) (parent roles/parent/full.md [] RoleSource) (nested-two roles/nested-two/full.md [] RoleSource) (child roles/child/full.md [] RoleSource) (claude-child roles/claude-child/full.md [] RoleSource)]\n",
+            "[(manager roles/manager.md [] RoleSource) (parent roles/parent.md [] RoleSource) (nested-two roles/nested-two.md [] RoleSource) (child roles/child.md [] RoleSource) (claude-child roles/claude-child.md [] RoleSource)]\n",
         );
         self.write_role_metadata(&["manager", "parent", "nested-two", "child", "claude-child"]);
         self.write_source_file("manifests/nested-role-relations.nota", relations);
@@ -2783,7 +2719,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(parent roles/parent/full.md [] RoleSource) (child roles/child/full.md [] RoleSource)]\n",
+            "[(parent roles/parent.md [] RoleSource) (child roles/child.md [] RoleSource)]\n",
         );
         self.write_source_file(
             "manifests/model-catalog.nota",
@@ -2803,7 +2739,7 @@ impl Fixture {
         );
         for role in ["parent", "child"] {
             self.write_source_file(
-                &format!("roles/{role}/full.md"),
+                &format!("roles/{role}.md"),
                 &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
             );
         }
@@ -2816,7 +2752,7 @@ impl Fixture {
         );
         self.write_source_file(
             "manifests/module-dependencies.nota",
-            "[(parent roles/parent/full.md [] RoleSource) (child roles/child/full.md [] RoleSource)]\n",
+            "[(parent roles/parent.md [] RoleSource) (child roles/child.md [] RoleSource)]\n",
         );
         self.write_source_file(
             "manifests/model-catalog.nota",
@@ -2838,7 +2774,7 @@ impl Fixture {
         );
         for role in ["parent", "child"] {
             self.write_source_file(
-                &format!("roles/{role}/full.md"),
+                &format!("roles/{role}.md"),
                 &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
             );
         }
@@ -2899,22 +2835,6 @@ impl Fixture {
                 self.workspace.path().to_string_lossy().into_owned(),
             ),
             manifest_path: ManifestPath::new("manifests/active-outputs.nota"),
-            generation_mode,
-        }
-        .generate()
-    }
-
-    fn generate_with_manifest(
-        &self,
-        generation_mode: GenerationMode,
-        manifest_path: &str,
-    ) -> Result<skills::schema::assembly::GenerationReport, Error> {
-        GenerationRequest {
-            source_root: SourceRoot::new(self.source.path().to_string_lossy().into_owned()),
-            workspace_root: WorkspaceRoot::new(
-                self.workspace.path().to_string_lossy().into_owned(),
-            ),
-            manifest_path: ManifestPath::new(manifest_path),
             generation_mode,
         }
         .generate()

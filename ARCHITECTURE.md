@@ -4,14 +4,14 @@
 
 ## TL;DR
 
-This repository owns source modules, output manifests, and the Rust generator
-that assembles harness-native skill and role files into consuming workspaces.
+This repository owns flat skill and role sources, output manifests, and the Rust
+generator that assembles harness-native skill and role files into consuming workspaces.
 The active surface is manifest-driven: active outputs are listed in one NOTA
 manifest, module source paths and dependencies live in sidecar NOTA indexes, and
 generated files are written into the workspace root passed to the CLI.
 
 The generator treats instruction prose as reusable source material. Harness
-metadata and output identity live in manifests, while markdown modules stay
+metadata and output identity live in manifests, while flat markdown sources stay
 focused on the instruction body they contribute to generated files.
 Generated role packets are the normal runtime doctrine bundle: the role body
 is emitted with curated included modules and dependency-expanded modules, so
@@ -19,9 +19,8 @@ workers do not discover doctrine through a runtime index.
 
 ## Source Surfaces
 
-- `modules/<name>/full.md`: source modules for workspace skills.
-- `roles/<name>/full.md`: source modules for generated worker role packets.
-- `skills/archive/`: archived source material with no active emission.
+- `skills/<name>.md`: flat source files for runtime skills and role-packet components.
+- `roles/<name>.md`: flat source files for generated worker role packets.
 - `manifests/active-outputs.nota`: active `Skill` and `Role` outputs; presence means active.
 - `manifests/module-dependencies.nota`: module identifier, source path, dependency module identifiers, and explicit source module kind (`RuntimeSkill`, `RoleSource`, or `RoleComposition`).
 - `manifests/target-module-insertions.nota`: target-specific module overlays keyed by base module and output surface.
@@ -30,7 +29,6 @@ workers do not discover doctrine through a runtime index.
 - `manifests/role-model-assignments.nota`: exactly one Claude and one shared ChatGPT-family profile per active role.
 - `manifests/role-optional-skills.nota`: validated active skill identifiers available for each role to load without preloading their bodies.
 - `manifests/nested-role-relations.nota`: typed nested roles, target-relative minimum models, and exclusive allowed leaf-role edges.
-- `manifests/skills-roster.nota`: compatibility input for legacy checks and archived/deleted module modeling.
 - `schema/assembly.schema`: schema-authored generator interface source.
 - `src/schema/assembly.rs`: generated Rust interface from `schema/assembly.schema`.
 
@@ -56,7 +54,7 @@ Derived inventory:
 The active source surface is manifest-owned: one active-outputs manifest lists
 generated `Skill` and `Role` outputs, where presence means active; sidecar
 indexes map module identifiers to source paths, dependencies, target overlays,
-and universal role modules. `modules/general-instructions/full.md` is the sole
+and universal role modules. `skills/general-instructions.md` is the sole
 source of universal cross-agent role doctrine; role-, skill-, repository-, and
 harness-specific instruction stays in its owning source. Role sidecars assign
 validated model profiles and optional skills. Nested-role relations add
@@ -87,8 +85,7 @@ model choice: a base module, output surface, and inserted module list determine
 which overlay appears in a generated harness surface. Universal role modules
 are data, not repeated role prose; the generator includes them in every role
 packet. Generation metadata such as descriptions, tiers, frontmatter, target
-surfaces, role output identity, model profiles, and optional skills, nested-role edges, and minimum models live in manifests or the
-compatibility roster.
+surfaces, role output identity, model profiles, and optional skills, nested-role edges, and minimum models live in manifests.
 
 ## Ownership Boundaries
 
@@ -99,9 +96,7 @@ profiles, and optional-skill lists.
 Generated outputs carry the harness-required frontmatter or TOML wrapper, but
 they carry no provenance header. The source repository is the provenance.
 
-Archived modules stay in `skills/archive/` and have no active manifest entry.
-Deleted modules are modeled by compatibility checks and emit no surfaces.
-`subagent-session-workflow` is obsolete and remains deleted.
+Only manifest-indexed flat sources are retained. Removed sources have no archive or compatibility model.
 
 ## Constraints
 
