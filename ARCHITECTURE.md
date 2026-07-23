@@ -49,6 +49,12 @@ Derived inventory:
 
 - `skills/generated-role-outputs.nota`: stale generated role cleanup inventory.
 
+Visualization:
+
+- `visualize-skills`: a non-writing, manifest-derived NOTA report of role dispatch
+  kind, target packet composition, and every virtual generated output's bytes and
+  newline count.
+
 ## Assembly Model
 
 The active source surface is manifest-owned: one active-outputs manifest lists

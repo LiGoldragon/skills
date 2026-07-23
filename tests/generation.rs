@@ -9,9 +9,9 @@ use skills::{
     Error,
     schema::assembly::{
         ActiveOutputs, EffortLevel, GenerationMode, GenerationRequest, ManifestPath, ModelCatalog,
-        ModuleDependencies, ModuleKind, NestedRoleRelations, RoleModelAssignments,
-        RoleOptionalSkills, RoleTargetSurface, SourceRoot, TargetModuleInsertions,
-        UniversalRoleModules, WorkspaceRoot,
+        ModuleDependencies, ModuleKind, NestedRoleRelations, RoleGenerationKind,
+        RoleModelAssignments, RoleOptionalSkills, RoleTargetSurface, SourceRoot,
+        TargetModuleInsertions, UniversalRoleModules, VisualizationRequest, WorkspaceRoot,
     },
     trunk_guard::{TrunkDescendantGuard, TrunkDivergence},
 };
@@ -1324,6 +1324,112 @@ fn manager_rosters_are_target_relative_and_never_instruct_role_listing() {
         assert!(!packet.contains("`list`"));
         assert!(!packet.contains("Orchestrator"));
         assert!(!roster(packet).contains(&"manager".to_owned()));
+    }
+}
+
+#[test]
+fn visualization_reports_role_kinds_composition_and_virtual_output_sizes() {
+    let fixture = Fixture::new();
+    fixture.write_source_file(
+        "manifests/active-outputs.nota",
+        "[(Skill (example example Craft Topic [Example skill.] [AgentsSkill])) (Role (manager manager [] [Manager root.] [PiAgent])) (Role (planner planner [shared] [Planner role.] [PiAgent])) (Role (worker worker [] [Worker role.] [PiAgent]))]\n",
+    );
+    fixture.write_source_file(
+        "manifests/module-dependencies.nota",
+        "[(example skills/example.md [] RuntimeSkill) (shared skills/shared.md [] RoleComposition) (manager roles/manager.md [] RoleSource) (planner roles/planner.md [] RoleSource) (worker roles/worker.md [] RoleSource)]\n",
+    );
+    fixture.write_role_metadata(&["manager", "planner", "worker"]);
+    fixture.write_source_file(
+        "manifests/nested-role-relations.nota",
+        "[(planner [(PiAgent gpt-test Medium)] [worker])]\n",
+    );
+    fixture.write_source_file("skills/example.md", "# Skill - example\n\nExample.\n");
+    fixture.write_source_file("skills/shared.md", "# Module - shared\n\nShared.\n");
+    for role in ["manager", "planner", "worker"] {
+        fixture.write_source_file(
+            &format!("roles/{role}.md"),
+            &format!("# Role - {role}\n\n## Contract\n\nRole body.\n"),
+        );
+    }
+
+    let visualization = fixture.visualize().expect("visualization succeeds");
+    let roles = visualization.role_visualizations.payload();
+    let manager = roles
+        .iter()
+        .find(|role| role.output_identifier.as_ref() == "manager")
+        .expect("Manager visualization exists");
+    assert_eq!(
+        manager.role_generation_kind,
+        RoleGenerationKind::RootManager
+    );
+    assert_eq!(
+        manager.role_packet_compositions.payload()[0]
+            .dispatchable_roles
+            .payload()
+            .iter()
+            .map(|role| role.as_ref())
+            .collect::<Vec<_>>(),
+        ["planner", "worker"]
+    );
+
+    let planner = roles
+        .iter()
+        .find(|role| role.output_identifier.as_ref() == "planner")
+        .expect("nested role visualization exists");
+    assert_eq!(
+        planner.role_generation_kind,
+        RoleGenerationKind::DispatchableNestedRole
+    );
+    let planner_packet = &planner.role_packet_compositions.payload()[0];
+    assert_eq!(
+        planner_packet
+            .modules
+            .payload()
+            .iter()
+            .map(|module| module.as_ref())
+            .collect::<Vec<_>>(),
+        ["roles/planner.md", "skills/shared.md"]
+    );
+    assert_eq!(
+        planner_packet
+            .dispatchable_roles
+            .payload()
+            .iter()
+            .map(|role| role.as_ref())
+            .collect::<Vec<_>>(),
+        ["worker"]
+    );
+    assert_eq!(
+        roles
+            .iter()
+            .find(|role| role.output_identifier.as_ref() == "worker")
+            .expect("leaf role visualization exists")
+            .role_generation_kind,
+        RoleGenerationKind::DispatchableLeafRole
+    );
+
+    let generated = fixture
+        .generate(GenerationMode::Write)
+        .expect("generation succeeds");
+    let generated_sizes = generated
+        .payload()
+        .payload()
+        .iter()
+        .map(|file| (file.output_path.as_ref(), file.byte_count.payload()))
+        .collect::<BTreeMap<_, _>>();
+    let visualized_sizes = visualization
+        .generated_output_visualizations
+        .payload()
+        .iter()
+        .map(|file| (file.output_path.as_ref(), file.byte_count.payload()))
+        .collect::<BTreeMap<_, _>>();
+    assert_eq!(visualized_sizes, generated_sizes);
+    for output in visualization.generated_output_visualizations.payload() {
+        let rendered = fixture.read_workspace_file(output.output_path.as_ref());
+        assert_eq!(
+            *output.line_count.payload(),
+            rendered.matches('\n').count() as u64
+        );
     }
 }
 
@@ -2947,6 +3053,17 @@ impl Fixture {
             generation_mode,
         }
         .generate()
+    }
+
+    fn visualize(&self) -> Result<skills::schema::assembly::VisualizationReport, Error> {
+        VisualizationRequest {
+            source_root: SourceRoot::new(self.source.path().to_string_lossy().into_owned()),
+            workspace_root: WorkspaceRoot::new(
+                self.workspace.path().to_string_lossy().into_owned(),
+            ),
+            manifest_path: ManifestPath::new("manifests/active-outputs.nota"),
+        }
+        .visualize()
     }
 
     fn generate_from_repo(

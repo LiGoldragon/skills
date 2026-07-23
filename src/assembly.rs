@@ -12,14 +12,17 @@ use crate::{
     schema::assembly::{
         ActiveOutput, ActiveOutputs, ActiveRole, ActiveSkill, ByteCount, ChatGptModelAssignment,
         ClaudeModelAssignment, EffortLevel, Frontmatter, FrontmatterEntry, FrontmatterKey,
-        FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedRoleOutputs, GenerationMode,
-        GenerationOutcome, GenerationReport, GenerationRequest, Manifest, ManifestPath,
-        ModelCatalog, ModelCatalogEntry, ModelEffortStrength, ModelIdentifier, ModelStrength,
-        ModuleDependencies, ModuleDependency, ModuleIdentifier, ModuleKind, ModulePath, Modules,
+        FrontmatterValue, GeneratedFile, GeneratedFiles, GeneratedOutputVisualization,
+        GeneratedOutputVisualizations, GeneratedRoleOutputs, GenerationMode, GenerationOutcome,
+        GenerationReport, GenerationRequest, LineCount, Manifest, ManifestPath, ModelCatalog,
+        ModelCatalogEntry, ModelEffortStrength, ModelIdentifier, ModelStrength, ModuleDependencies,
+        ModuleDependency, ModuleIdentifier, ModuleKind, ModulePath, Modules,
         NestedRoleMinimumModel, NestedRoleRelations, Operation, OptionalSkills, OutputIdentifier,
-        OutputKind, OutputPath, OutputSurface, RoleModelAssignment, RoleModelAssignments,
-        RoleOptionalSkills, RoleTargetSurface, TargetModuleInsertion, TargetModuleInsertions,
-        TargetSurface, UniversalRoleModules,
+        OutputKind, OutputPath, OutputSurface, RoleGenerationKind, RoleModelAssignment,
+        RoleModelAssignments, RoleOptionalSkills, RolePacketComposition, RolePacketCompositions,
+        RoleTargetSurface, RoleVisualization, RoleVisualizations, TargetModuleInsertion,
+        TargetModuleInsertions, TargetSurface, UniversalRoleModules, VisualizationReport,
+        VisualizationRequest,
     },
     trunk_guard::TrunkDescendantGuard,
     workspace_path::WorkspacePath,
@@ -134,12 +137,14 @@ impl Operation {
     fn guard_source(&self) -> Result<()> {
         match self {
             Self::Generate(request) => request.guard_source(),
+            Self::Visualize(request) => request.guard_source(),
         }
     }
 
     pub fn execute(self) -> Result<GenerationOutcome> {
         match self {
             Self::Generate(request) => request.generate().map(GenerationOutcome::Generated),
+            Self::Visualize(request) => request.visualize().map(GenerationOutcome::Visualized),
         }
     }
 }
@@ -166,6 +171,32 @@ impl GenerationRequest {
         }
         StaleOutputScan::new(workspace_root, configuration).validate()?;
         Ok(GenerationReport::new(GeneratedFiles::new(files)))
+    }
+}
+
+impl VisualizationRequest {
+    fn guard_source(&self) -> Result<()> {
+        let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
+        TrunkDescendantGuard::new(source_root).verify()
+    }
+
+    pub fn visualize(&self) -> Result<VisualizationReport> {
+        let source_root = RootPath::new(self.source_root.as_ref()).to_path_buf()?;
+        let workspace_root = RootPath::new(self.workspace_root.as_ref()).to_path_buf()?;
+        let configuration =
+            GenerationSource::new(source_root.clone(), self.manifest_path.clone()).read()?;
+        let jobs =
+            GenerationJobs::new(source_root, workspace_root, configuration.clone()).jobs()?;
+        let mut generated_outputs = jobs
+            .iter()
+            .map(GenerationJob::visualize)
+            .collect::<Result<Vec<_>>>()?;
+        generated_outputs
+            .sort_by(|left, right| left.output_path.as_ref().cmp(right.output_path.as_ref()));
+        Ok(VisualizationReport {
+            role_visualizations: RoleVisualizations::new(configuration.role_visualizations()?),
+            generated_output_visualizations: GeneratedOutputVisualizations::new(generated_outputs),
+        })
     }
 }
 
@@ -1164,6 +1195,62 @@ impl GenerationConfiguration {
         }
     }
 
+    fn role_visualizations(&self) -> Result<Vec<RoleVisualization>> {
+        let module_index = ModuleIndex::new(
+            self.module_dependencies.clone(),
+            self.target_module_insertions.clone(),
+        )?;
+        let active_roles = self.active_roles();
+        let mut visualizations = Vec::new();
+        for role in &active_roles {
+            let nested_role = self.role_metadata.nested_role(&role.output_identifier);
+            let metadata = self.role_metadata.metadata(&role.output_identifier)?;
+            let mut packet_compositions = Vec::new();
+            for manifest in role.manifests(
+                &module_index,
+                &self.universal_role_modules,
+                metadata,
+                nested_role,
+                &active_roles,
+            )? {
+                let output_surface = manifest.output_surface;
+                let mut dispatchable_roles = self
+                    .allowed_child_roles(&role.output_identifier, output_surface)
+                    .into_iter()
+                    .map(|child| child.output_identifier)
+                    .collect::<Vec<_>>();
+                dispatchable_roles.sort_by(|left, right| left.as_ref().cmp(right.as_ref()));
+                packet_compositions.push(RolePacketComposition {
+                    output_path: manifest.output_path,
+                    output_surface,
+                    modules: manifest.modules,
+                    dispatchable_roles: crate::schema::assembly::DispatchableRoles::new(
+                        dispatchable_roles,
+                    ),
+                });
+            }
+            packet_compositions
+                .sort_by(|left, right| left.output_path.as_ref().cmp(right.output_path.as_ref()));
+            visualizations.push(RoleVisualization {
+                output_identifier: role.output_identifier.clone(),
+                role_generation_kind: if role.output_identifier.as_ref() == "manager" {
+                    RoleGenerationKind::RootManager
+                } else if nested_role.is_some() {
+                    RoleGenerationKind::DispatchableNestedRole
+                } else {
+                    RoleGenerationKind::DispatchableLeafRole
+                },
+                role_packet_compositions: RolePacketCompositions::new(packet_compositions),
+            });
+        }
+        visualizations.sort_by(|left, right| {
+            left.output_identifier
+                .as_ref()
+                .cmp(right.output_identifier.as_ref())
+        });
+        Ok(visualizations)
+    }
+
     fn role_output_inventory(&self) -> RoleOutputInventory {
         RoleOutputInventory::new(
             self.active_roles()
@@ -1198,6 +1285,39 @@ impl GenerationJob {
             Self::Manifest(assembler) => assembler.generate(mode),
             Self::Rendered(output) => output.write(mode),
         }
+    }
+
+    fn visualize(&self) -> Result<GeneratedOutputVisualization> {
+        let (output_path, rendered) = match self {
+            Self::Manifest(assembler) => {
+                let output_path = WorkspacePath::new(
+                    assembler.workspace_root.clone(),
+                    PathBuf::from(assembler.manifest.output_path.as_ref()),
+                )?;
+                let rendered = assembler.render(&output_path)?;
+                (
+                    OutputPath::new(output_path.relative_path().to_string_lossy().into_owned()),
+                    rendered,
+                )
+            }
+            Self::Rendered(output) => (
+                OutputPath::new(
+                    output
+                        .output_path
+                        .relative_path()
+                        .to_string_lossy()
+                        .into_owned(),
+                ),
+                output.rendered.clone(),
+            ),
+        };
+        Ok(GeneratedOutputVisualization {
+            output_path,
+            byte_count: ByteCount::new(rendered.len() as u64),
+            line_count: LineCount::new(
+                rendered.bytes().filter(|byte| *byte == b'\n').count() as u64
+            ),
+        })
     }
 
     fn output_path(&self) -> Result<WorkspacePath> {

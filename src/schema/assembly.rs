@@ -21,6 +21,7 @@ pub use nota::{NotaDecodeError, NotaEncode, NotaSource};
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Operation {
     Generate(GenerationRequest),
+    Visualize(VisualizationRequest),
 }
 
 #[rustfmt::skip]
@@ -31,6 +32,7 @@ pub enum Operation {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum GenerationOutcome {
     Generated(GenerationReport),
+    Visualized(VisualizationReport),
 }
 
 #[rustfmt::skip]
@@ -44,6 +46,18 @@ pub struct GenerationRequest {
     pub workspace_root: WorkspaceRoot,
     pub manifest_path: ManifestPath,
     pub generation_mode: GenerationMode,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct VisualizationRequest {
+    pub source_root: SourceRoot,
+    pub workspace_root: WorkspaceRoot,
+    pub manifest_path: ManifestPath,
 }
 
 #[rustfmt::skip]
@@ -123,6 +137,107 @@ pub struct GeneratedFile {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct VisualizationReport {
+    pub role_visualizations: RoleVisualizations,
+    pub generated_output_visualizations: GeneratedOutputVisualizations,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleVisualizations(Vec<RoleVisualization>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleVisualization {
+    pub output_identifier: OutputIdentifier,
+    pub role_generation_kind: RoleGenerationKind,
+    pub role_packet_compositions: RolePacketCompositions,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum RoleGenerationKind {
+    RootManager,
+    DispatchableNestedRole,
+    DispatchableLeafRole,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RolePacketCompositions(Vec<RolePacketComposition>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RolePacketComposition {
+    pub output_path: OutputPath,
+    pub output_surface: OutputSurface,
+    pub modules: Modules,
+    pub dispatchable_roles: DispatchableRoles,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct DispatchableRoles(Vec<OutputIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct GeneratedOutputVisualizations(Vec<GeneratedOutputVisualization>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct GeneratedOutputVisualization {
+    pub output_path: OutputPath,
+    pub byte_count: ByteCount,
+    pub line_count: LineCount,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OutputPath(Path);
 
 #[rustfmt::skip]
@@ -132,6 +247,14 @@ pub struct OutputPath(Path);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ByteCount(Integer);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LineCount(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -872,6 +995,82 @@ impl From<Vec<GeneratedFile>> for GeneratedFiles {
 }
 
 #[rustfmt::skip]
+impl RoleVisualizations {
+    pub fn new(payload: Vec<RoleVisualization>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<RoleVisualization> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<RoleVisualization> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<RoleVisualization>> for RoleVisualizations {
+    fn from(payload: Vec<RoleVisualization>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RolePacketCompositions {
+    pub fn new(payload: Vec<RolePacketComposition>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<RolePacketComposition> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<RolePacketComposition> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<RolePacketComposition>> for RolePacketCompositions {
+    fn from(payload: Vec<RolePacketComposition>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl DispatchableRoles {
+    pub fn new(payload: Vec<OutputIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OutputIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OutputIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OutputIdentifier>> for DispatchableRoles {
+    fn from(payload: Vec<OutputIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl GeneratedOutputVisualizations {
+    pub fn new(payload: Vec<GeneratedOutputVisualization>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<GeneratedOutputVisualization> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<GeneratedOutputVisualization> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<GeneratedOutputVisualization>> for GeneratedOutputVisualizations {
+    fn from(payload: Vec<GeneratedOutputVisualization>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl OutputPath {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
@@ -904,6 +1103,25 @@ impl ByteCount {
 }
 #[rustfmt::skip]
 impl From<Integer> for ByteCount {
+    fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LineCount {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for LineCount {
     fn from(payload: Integer) -> Self {
         Self::new(payload)
     }
@@ -1566,6 +1784,27 @@ impl PartialOrd<u64> for ByteCount {
 }
 
 #[rustfmt::skip]
+impl std::fmt::Display for LineCount {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.payload().fmt(formatter)
+    }
+}
+
+#[rustfmt::skip]
+impl PartialEq<u64> for LineCount {
+    fn eq(&self, other: &u64) -> bool {
+        self.payload() == other
+    }
+}
+
+#[rustfmt::skip]
+impl PartialOrd<u64> for LineCount {
+    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+        self.payload().partial_cmp(other)
+    }
+}
+
+#[rustfmt::skip]
 impl std::fmt::Display for FrontmatterKey {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.payload().fmt(formatter)
@@ -1780,12 +2019,18 @@ impl Operation {
     pub fn generate(payload: GenerationRequest) -> Self {
         Self::Generate(payload)
     }
+    pub fn visualize(payload: VisualizationRequest) -> Self {
+        Self::Visualize(payload)
+    }
 }
 
 #[rustfmt::skip]
 impl GenerationOutcome {
     pub fn generated(payload: GeneratedFiles) -> Self {
         Self::Generated(GenerationReport::new(payload))
+    }
+    pub fn visualized(payload: VisualizationReport) -> Self {
+        Self::Visualized(payload)
     }
 }
 
@@ -1817,9 +2062,23 @@ impl From<GenerationRequest> for Operation {
 }
 
 #[rustfmt::skip]
+impl From<VisualizationRequest> for Operation {
+    fn from(payload: VisualizationRequest) -> Self {
+        Self::Visualize(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<GenerationReport> for GenerationOutcome {
     fn from(payload: GenerationReport) -> Self {
         Self::Generated(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<VisualizationReport> for GenerationOutcome {
+    fn from(payload: VisualizationReport) -> Self {
+        Self::Visualized(payload)
     }
 }
 

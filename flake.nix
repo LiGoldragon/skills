@@ -193,6 +193,7 @@
           };
           generate-skills = generatorApp "generate-skills" "skills-generate.nota";
           check-skills = generatorApp "check-skills" "skills-check.nota";
+          visualize-skills = generatorApp "visualize-skills" "skills-visualize.nota";
           default = skills;
         };
 

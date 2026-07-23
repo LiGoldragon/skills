@@ -1,9 +1,10 @@
 []
 []
 {
-  Operation [(Generate GenerationRequest)]
-  GenerationOutcome [(Generated GenerationReport)]
+  Operation [(Generate GenerationRequest) (Visualize VisualizationRequest)]
+  GenerationOutcome [(Generated GenerationReport) (Visualized VisualizationReport)]
   GenerationRequest { SourceRoot WorkspaceRoot ManifestPath GenerationMode }
+  VisualizationRequest { SourceRoot WorkspaceRoot ManifestPath }
   SourceRoot Path {| Display AsRef PartialEq |}
   WorkspaceRoot Path {| Display AsRef PartialEq |}
   ManifestPath Path {| Display AsRef PartialEq |}
@@ -11,8 +12,18 @@
   GenerationReport { GeneratedFiles }
   GeneratedFiles (Vector GeneratedFile)
   GeneratedFile { OutputPath ByteCount }
+  VisualizationReport { RoleVisualizations GeneratedOutputVisualizations }
+  RoleVisualizations (Vector RoleVisualization)
+  RoleVisualization { OutputIdentifier RoleGenerationKind RolePacketCompositions }
+  RoleGenerationKind [RootManager DispatchableNestedRole DispatchableLeafRole]
+  RolePacketCompositions (Vector RolePacketComposition)
+  RolePacketComposition { OutputPath OutputSurface Modules DispatchableRoles }
+  DispatchableRoles (Vector OutputIdentifier)
+  GeneratedOutputVisualizations (Vector GeneratedOutputVisualization)
+  GeneratedOutputVisualization { OutputPath ByteCount LineCount }
   OutputPath Path {| Display AsRef PartialEq |}
   ByteCount Integer {| Display PartialEq PartialOrd |}
+  LineCount Integer {| Display PartialEq PartialOrd |}
   Manifest { OutputPath OutputKind OutputSurface Frontmatter OptionalSkills Modules }
   OutputKind [Markdown Nota Toml]
   OutputSurface [Workspace AgentsSkill ClaudeSkill ClaudeAgent CodexAgent PiAgent]
