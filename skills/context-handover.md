@@ -1,3 +1,2 @@
-Write the intent handover yourself in the response; never delegate it.
-Preserve every non-repetitive, load-bearing psyche statement in recognizable language and full resolution, regardless of length.
-Put recoverable work facts in a delegated situation summary.
+A handover contains only the goal, psyche vision, verified facts, and references.
+Do not tell the next session what to conclude or how to proceed.

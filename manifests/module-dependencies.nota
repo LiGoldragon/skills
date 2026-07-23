@@ -6,7 +6,6 @@
 ;; Universal role packet modules live in universal-role-modules.nota.
 ;; The active output manifest decides what emits; this file records source module edges and kind.
 [
-  (agent-output-protocol skills/agent-output-protocol.md [] RoleComposition)
   (general-instructions skills/general-instructions.md [] RoleComposition)
   (psyche-facing-commitments skills/psyche-facing-commitments.md [] RoleComposition)
   (spirit-submission skills/spirit-submission.md [] RoleComposition)
@@ -22,7 +21,6 @@
   (edit-coordination skills/edit-coordination.md [] RuntimeSkill)
   (code-implementation skills/code-implementation.md [] RuntimeSkill)
   (repository-closeout skills/repository-closeout.md [] RuntimeSkill)
-  (skill-source-core skills/skill-source-core.md [] RoleComposition)
   (component-architecture skills/component-architecture.md [] RuntimeSkill)
   (structural-forms skills/structural-forms.md [] RuntimeSkill)
   (contract-repo skills/contract-repo.md [] RuntimeSkill)
@@ -72,7 +70,6 @@
   (bead-weaver skills/bead-weaver.md [] RoleComposition)
   (repository-publication skills/repository-publication.md [] RuntimeSkill)
   (repository-management skills/repository-management.md [] RuntimeSkill)
-  (harness-placement skills/harness-placement.md [] RuntimeSkill)
   (skill-editor skills/skill-editor.md [] RuntimeSkill)
   (claude-manager-non-fable skills/claude-manager-non-fable.md [] RuntimeSkill)
   (manager-boundary skills/manager-boundary.md [] RoleComposition)

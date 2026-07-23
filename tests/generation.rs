@@ -420,8 +420,60 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
             "{expected_path} is an active flat source"
         );
     }
+    let mut reachable_modules: BTreeSet<&str> = universal_role_modules
+        .payload()
+        .iter()
+        .map(|module| module.as_ref())
+        .collect();
+    for output in active_outputs.payload() {
+        match output {
+            skills::schema::assembly::ActiveOutput::Skill(skill) => {
+                reachable_modules.insert(skill.module_identifier.as_ref());
+            }
+            skills::schema::assembly::ActiveOutput::Role(role) => {
+                reachable_modules.insert(role.module_identifier.as_ref());
+                reachable_modules.extend(
+                    role.included_modules
+                        .payload()
+                        .iter()
+                        .map(|module| module.as_ref()),
+                );
+            }
+        }
+    }
+    loop {
+        let previous_count = reachable_modules.len();
+        for dependency in module_dependencies.payload() {
+            if reachable_modules.contains(dependency.module_identifier.as_ref()) {
+                reachable_modules.extend(
+                    dependency
+                        .dependency_modules
+                        .payload()
+                        .iter()
+                        .map(|module| module.as_ref()),
+                );
+            }
+        }
+        for insertion in target_module_insertions.payload() {
+            if reachable_modules.contains(insertion.module_identifier.as_ref()) {
+                reachable_modules.extend(
+                    insertion
+                        .included_modules
+                        .payload()
+                        .iter()
+                        .map(|module| module.as_ref()),
+                );
+            }
+        }
+        if reachable_modules.len() == previous_count {
+            break;
+        }
+    }
+    assert_eq!(
+        dependency_modules, reachable_modules,
+        "module index retains only active sources reachable from outputs, role composition, and target insertions"
+    );
     let role_composition_modules = [
-        "agent-output-protocol",
         "general-instructions",
         "psyche-facing-commitments",
         "codex-skill-loading",
@@ -433,7 +485,6 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
         "intent-core",
         "repo-scaffold-core",
         "repo-operation-core",
-        "skill-source-core",
         "architectural-truth-tests",
         "rust-discipline",
         "bead-weaver",
@@ -741,9 +792,8 @@ fn active_manifest_and_module_index_cover_current_skills_and_roles() {
 
 #[test]
 fn human_interaction_and_context_maintenance_are_removed_while_handover_and_deep_remain() {
-    const HANDOVER: &str = "Write the intent handover yourself in the response; never delegate it.\n\
-Preserve every non-repetitive, load-bearing psyche statement in recognizable language and full resolution, regardless of length.\n\
-Put recoverable work facts in a delegated situation summary.\n";
+    const HANDOVER: &str = "A handover contains only the goal, psyche vision, verified facts, and references.\n\
+Do not tell the next session what to conclude or how to proceed.\n";
 
     let manifest_text = include_str!("../manifests/active-outputs.nota");
     let index_text = include_str!("../manifests/module-dependencies.nota");
@@ -1041,7 +1091,7 @@ fn harness_api_fields_do_not_leak_into_general_management_doctrine() {
 }
 
 #[test]
-fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
+fn pi_extension_update_protocol_uses_declarative_source_ownership() {
     let protocol = include_str!("../skills/pi-extension-updates.md");
     for required in [
         "Reconcile each local extension change with upstream evidence.",
@@ -1053,22 +1103,6 @@ fn pi_extension_update_protocol_covers_fork_reconciliation_and_real_fixture() {
             protocol.contains(required),
             "missing Pi extension rule: {required}"
         );
-    }
-
-    let fixture = include_str!("fixtures/pi-subagents-0.31.0-to-0.34.0.md");
-    for required in [
-        "## Canonical ledger",
-        "CriomOS-home/packages/pi-subagents/fork-delta-ledger.md",
-        "## Immutable candidate",
-        "e4f06282d0c95856b36b7ec2893f4fd294ebfefe",
-        "8a6c5b154f7df63b65c6027ba41ea7c6496d60db",
-        "12a157d2a70b2f4cbc004c020c5f9213b6d8eea8",
-        "## Delta records",
-        "## Applicability evidence",
-        "patch --dry-run --forward --batch --verbose",
-        "Reversed notices are never counted as application.",
-    ] {
-        assert!(fixture.contains(required), "fixture contains {required}");
     }
 }
 
@@ -1579,6 +1613,71 @@ fn general_instructions_compose_once_and_keep_authority_gates() {
     assert!(
         include_str!("../manifests/universal-role-modules.nota").contains("[general-instructions]")
     );
+}
+
+#[test]
+fn cross_session_intercom_training_reaches_every_dispatch_capable_role() {
+    const RULES: [&str; 3] = [
+        "Cross-session intercom is prohibited unless the target explicitly invited contact or the psyche explicitly authorized that exact contact.",
+        "Apparent status, availability, or topic relevance never grants permission.",
+        "Parent-child communication is exempt.",
+    ];
+
+    let general = include_str!("../skills/general-instructions.md");
+    for rule in RULES {
+        assert!(general.contains(rule), "shared source contains {rule}");
+    }
+
+    let nested_role_relations =
+        NotaSource::new(include_str!("../manifests/nested-role-relations.nota"))
+            .parse::<NestedRoleRelations>()
+            .expect("nested-role relations parse");
+    let mut dispatch_capable_roles: BTreeSet<&str> = nested_role_relations
+        .payload()
+        .iter()
+        .map(|relation| relation.output_identifier.as_ref())
+        .collect();
+    dispatch_capable_roles.insert("manager");
+
+    let active_outputs = NotaSource::new(include_str!("../manifests/active-outputs.nota"))
+        .parse::<ActiveOutputs>()
+        .expect("active outputs parse");
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("active role packets generate");
+
+    for role in active_outputs
+        .payload()
+        .iter()
+        .filter_map(|output| match output {
+            skills::schema::assembly::ActiveOutput::Role(role)
+                if dispatch_capable_roles.contains(role.output_identifier.as_ref()) =>
+            {
+                Some(role)
+            }
+            skills::schema::assembly::ActiveOutput::Skill(_)
+            | skills::schema::assembly::ActiveOutput::Role(_) => None,
+        })
+    {
+        for surface in role.role_target_surfaces.payload() {
+            let path = match surface {
+                RoleTargetSurface::ClaudeAgent => {
+                    format!(".claude/agents/{}.md", role.output_identifier.as_ref())
+                }
+                RoleTargetSurface::CodexAgent => {
+                    format!(".codex/agents/{}.toml", role.output_identifier.as_ref())
+                }
+                RoleTargetSurface::PiAgent => {
+                    format!(".pi/agents/{}.md", role.output_identifier.as_ref())
+                }
+            };
+            let packet = fixture.read_workspace_file(&path).replace("\\n", "\n");
+            for rule in RULES {
+                assert!(packet.contains(rule), "{path} contains {rule}");
+            }
+        }
+    }
 }
 
 #[test]
@@ -2480,21 +2579,31 @@ fn generation_rejects_skill_with_oversized_serialized_block() {
 }
 
 #[test]
-fn check_mode_accepts_current_outputs_with_orphaned_retired_skill_index() {
+fn retired_skill_index_is_rejected_in_check_mode_and_pruned_in_write_mode() {
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
         .expect("current generated outputs write to fixture workspace");
     fixture.write_workspace_file("skills/skills.nota", "old retired index\n");
 
+    let error = fixture
+        .generate_from_repo(GenerationMode::Check)
+        .expect_err("retired skill index fails deployment check");
+    assert!(
+        matches!(error, Error::StaleGeneratedOutput { ref path } if path.ends_with("skills/skills.nota")),
+        "{error:?}"
+    );
+
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("write mode prunes retired skill index");
+    assert!(
+        !fixture.workspace.path().join("skills/skills.nota").exists(),
+        "retired skill index is removed"
+    );
     fixture
         .generate_from_repo(GenerationMode::Check)
-        .expect("retired skill index is neither generated nor stale");
-
-    assert_eq!(
-        fixture.read_workspace_file("skills/skills.nota"),
-        "old retired index\n"
-    );
+        .expect("pruned outputs satisfy deployment check");
 }
 
 #[test]

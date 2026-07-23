@@ -26,6 +26,7 @@ use crate::{
 };
 
 const GENERATED_SKILL_BLOCK_BYTE_LIMIT: usize = 32 * 1024;
+const RETIRED_SKILL_INDEX_PATH: &str = "skills/skills.nota";
 const RETIRED_CURRENT_DESTINATION_PHRASES: &[&str] = &[
     "Repo Operator",
     "Weave Operator",
@@ -2292,6 +2293,7 @@ impl WorkspacePruner {
     fn prune(&self) -> Result<()> {
         self.remove_relative_path(".agents/skills")?;
         self.remove_relative_path(".claude/skills")?;
+        self.remove_relative_path(RETIRED_SKILL_INDEX_PATH)?;
         RoleOutputInventoryFile::new(self.workspace_root.clone())
             .read()?
             .remove_stale(&self.configuration.role_output_inventory(), self)?;
@@ -2345,6 +2347,7 @@ impl StaleOutputScan {
         let expected = self.configuration.expected_outputs()?;
         self.require_no_unexpected_skill_files(".agents/skills", &expected)?;
         self.require_no_unexpected_skill_files(".claude/skills", &expected)?;
+        self.require_absent(RETIRED_SKILL_INDEX_PATH)?;
         RoleOutputInventoryFile::new(self.workspace_root.clone())
             .read()?
             .validate_no_stale_paths(&self.configuration.role_output_inventory(), self)
