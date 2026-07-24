@@ -945,8 +945,11 @@ fn repository_visibility_doctrine_defaults_public_without_weakening_privacy() {
 }
 
 #[test]
-fn skill_editor_is_exactly_minimal_and_has_no_runtime_operations() {
-    const EXPECTED: &str = "Keep only unusual guidance that changes agent behavior.\n\
+fn skill_editor_skill_is_the_approved_boundary_and_role_is_unchanged() {
+    const EXPECTED_SKILL: &str = "Before any skill change, show the psyche the exact full diff and get approval for that diff. Proposed wording is not approval to apply it.\n\
+Flag instructions that may not meet skill standards and explain why before proposing any change.\n\
+State which constraints, decision boundaries, and rationale each proposal preserves, changes, or removes.\n";
+    const EXPECTED_ROLE: &str = "Keep only unusual guidance that changes agent behavior.\n\
 Keep distinct instructions separate.\n\
 Shorten skills by deleting weak guidance, not by compressing it.\n\
 Make a skill only when the same guidance is needed across repositories.\n\
@@ -954,13 +957,13 @@ Reject operational guidance and repository-specific facts.\n\
 Remove anything repeated, unverified, outdated, or already done without the skill.\n\
 Use headings only when they aid navigation; never repeat the skill name.\n";
 
-    assert_eq!(include_str!("../skills/skill-editor.md"), EXPECTED);
-    assert_eq!(include_str!("../roles/skill-editor.md"), EXPECTED);
+    assert_eq!(include_str!("../skills/skill-editor.md"), EXPECTED_SKILL);
+    assert_eq!(include_str!("../roles/skill-editor.md"), EXPECTED_ROLE);
 
     let fixture = Fixture::new();
     fixture
         .generate_from_repo(GenerationMode::Write)
-        .expect("minimal Skill Editor generates");
+        .expect("approved Skill Editor boundary generates");
     for path in [
         ".agents/skills/skill-editor/SKILL.md",
         ".claude/skills/skill-editor/SKILL.md",
@@ -968,9 +971,9 @@ Use headings only when they aid navigation; never repeat the skill name.\n";
         assert_eq!(
             fixture.read_workspace_file(path),
             format!(
-                "---\nname: skill-editor\ndescription: 'Skill editor rules.'\n---\n\n{EXPECTED}"
+                "---\nname: skill-editor\ndescription: 'Skill editor rules.'\n---\n\n{EXPECTED_SKILL}"
             ),
-            "{path} is the exact minimal runtime skill"
+            "{path} is the exact approved runtime skill"
         );
     }
     for path in [
@@ -980,9 +983,9 @@ Use headings only when they aid navigation; never repeat the skill name.\n";
     ] {
         let output = fixture.read_workspace_file(path);
         let expected = if path.ends_with(".toml") {
-            EXPECTED.replace('\n', "\\n")
+            EXPECTED_ROLE.replace('\n', "\\n")
         } else {
-            EXPECTED.to_owned()
+            EXPECTED_ROLE.to_owned()
         };
         assert!(
             output.contains(&expected),
@@ -1008,6 +1011,32 @@ Use headings only when they aid navigation; never repeat the skill name.\n";
             .join("skills.md")
             .exists()
     );
+}
+
+#[test]
+fn management_delegation_prohibits_subagent_polling() {
+    const DIRECTIVE: &str = "Do not poll subagents; use one short wait only when idle.";
+
+    assert!(include_str!("../skills/management.md").contains(DIRECTIVE));
+
+    let fixture = Fixture::new();
+    fixture
+        .generate_from_repo(GenerationMode::Write)
+        .expect("management polling directive generates");
+    for path in [
+        ".agents/skills/management/SKILL.md",
+        ".claude/skills/management/SKILL.md",
+        ".pi/agents/manager.md",
+        ".codex/agents/manager.toml",
+    ] {
+        assert!(
+            fixture
+                .read_workspace_file(path)
+                .replace("\\n", "\n")
+                .contains(DIRECTIVE),
+            "{path} includes the approved management polling directive"
+        );
+    }
 }
 
 #[test]

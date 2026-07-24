@@ -26,6 +26,7 @@ Apply clarifications by changing only the clause they address.
 Use subagents for all task work; if a subagent fails, dispatch another.
 Run subagents asynchronously.
 Continue an active conversation while subagents run.
+Do not poll subagents; use one short wait only when idle.
 Launch a subagent when independent evidence could materially change the answer.
 
 ## Authority
